@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Session {
+  id    String   @id
+  shop  String
+  state String
+  isOnline Boolean @default(false)
+  accessToken String?
+  scope String?
+  expires DateTime?
+  
+  // Shopify session fields
+  userId BigInt?
+  firstName String?
+  lastName String?
+  email String?
+  accountOwner Boolean @default(false)
+  locale String?
+  collaborator Boolean?
+  emailVerified Boolean?
+  refreshToken String?
+  refreshTokenExpires DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shop, state])
+}
+
+model Shop {
+  id          String    @id
+  name        String?
+  email       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  influencers Influencer[]
+  communicationLogs CommunicationLog[]
+}
+
+model Influencer {
+  id                    String    @id @default(cuid())
+  name                  String    // 创作者姓名
+  company               String    // 公司或频道名称
+  email                 String
+  location              String    // 所在地区
+  
+  // 社交媒体链接
+  youtubeUrl            String?
+  facebookUrl           String?
+  instagramUrl          String?
+  tiktokUrl             String?
+  
+  // 粉丝数量
+  youtubeFollowers      Int       @default(0)
+  facebookFollowers     Int       @default(0)
+  instagramFollowers    Int       @default(0)
+  tiktokFollowers       Int       @default(0)
+  
+  // 自动计算字段
+  totalFollowers        Int       @default(0)
+  ambassadorLevel       String    @default("NONE") // AMBASSADOR_1, AMBASSADOR_2, AMBASSADOR_3, NONE
+  
+  // 合作状态
+  collaborationStatus   String    @default("APPLIED") // APPLIED, CONTACTED, CALL_SCHEDULED, UNDER_REVIEW, APPROVED, REJECTED, ACTIVE_AMBASSADOR, PAST_PARTNER
+  
+  // CRM 相关字段
+  notes                 String?   // 沟通备注
+  contractStatus        String?   // 合同状态
+  productsOffered       String?   // 承诺提供的产品
+  deliverables          String?   // 交付内容
+  
+  // 跟进记录
+  lastContactDate       DateTime?
+  nextFollowUpDate      DateTime?
+  specialRequirements   String?   // 特殊交付要求
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  shopId                String
+  shop                  Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  communicationLogs     CommunicationLog[]
+
+  @@index([shopId])
+}
+
+// 沟通记录模型
+model CommunicationLog {
+  id            String    @id @default(cuid())
+  shopId        String
+  influencerId  String
+  type          String    @default("OTHER") // EMAIL, CALL, MEETING, OTHER
+  subject       String
+  content       String?
+  date          DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  shop          Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  influencer    Influencer @relation(fields: [influencerId], references: [id], onDelete: Cascade)
+
+  @@index([shopId])
+  @@index([influencerId])
+}

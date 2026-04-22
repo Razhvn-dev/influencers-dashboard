@@ -1,0 +1,147 @@
+/* ========================================
+   InfluencerForm 专用样式
+   ======================================== */
+
+/* 隐藏 number input 的上下箭头（spinner） */
+.numberInputNoSpinner {
+  -moz-appearance: textfield; /* Firefox */
+  appearance: textfield; /* 标准属性，用于未来浏览器兼容性 */
+}
+
+/* Chrome, Safari, Edge, Opera */
+.numberInputNoSpinner::-webkit-outer-spin-button,
+.numberInputNoSpinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none; /* 标准属性 */
+  margin: 0;
+}
+
+/* ========================================
+   未保存更改确认对话框样式
+   ======================================== */
+
+/* 对话框容器 - 现代化设计 */
+.confirmDialog {
+  border-radius: 24px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1) !important;
+  overflow: hidden;
+}
+
+/* 对话框标题区域 */
+.confirmDialogTitle {
+  padding: 28px 32px 20px !important;
+  background: #ffffff;
+  border-bottom: 5px solid #e0e0e0;
+}
+
+.confirmDialogTitle h2 {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', sans-serif !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #1a1a1a !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* 对话框内容区域 */
+.confirmDialogContent {
+  padding: 24px 32px !important;
+  background: #ffffff;
+}
+
+.confirmDialogContent p {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', sans-serif !important;
+  font-size: 15px !important;
+  line-height: 1.6 !important;
+  color: #4a4a4a !important;
+  text-align: center !important;
+  margin: 0 !important;
+  font-weight: 400 !important;
+}
+
+/* 对话框底部按钮区域 */
+.confirmDialogFooter {
+  padding: 20px 32px 28px !important;
+  background: #ffffff;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 2px solid #e0e0e0;
+}
+
+/* 次要按钮 - Keep Editing */
+.confirmDialogSecondary {
+  border-radius: 10px !important;
+  padding: 10px 20px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: 1.5px solid #e0e0e0 !important;
+  background: #ffffff !important;
+  color: #4a4a4a !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+.confirmDialogSecondary:hover {
+  background: #f8f8f8 !important;
+  border-color: #d0d0d0 !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08) !important;
+  transform: translateY(-1px) !important;
+}
+
+.confirmDialogSecondary:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* 主要按钮 - Save and exit (蓝色) */
+.confirmDialogPrimary {
+  border-radius: 10px !important;
+  padding: 10px 20px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: none !important;
+  background: linear-gradient(135deg, #008060 0%, #006e52 100%) !important;
+  color: #ffffff !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 12px rgba(0, 128, 96, 0.3) !important;
+}
+
+.confirmDialogPrimary:hover {
+  background: linear-gradient(135deg, #006e52 0%, #005c45 100%) !important;
+  box-shadow: 0 6px 16px rgba(0, 128, 96, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+.confirmDialogPrimary:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 8px rgba(0, 128, 96, 0.3) !important;
+}
+
+/* 破坏性按钮 - Discard changes (红色) */
+.confirmDialogDestructive {
+  border-radius: 10px !important;
+  padding: 10px 20px !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'San Francisco', 'Segoe UI', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  border: 1.5px solid #d72c0d !important;
+  background: #ffffff !important;
+  color: #d72c0d !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 4px rgba(215, 44, 13, 0.08) !important;
+}
+
+.confirmDialogDestructive:hover {
+  background: #fdf2f0 !important;
+  border-color: #c4260b !important;
+  color: #c4260b !important;
+  box-shadow: 0 4px 8px rgba(215, 44, 13, 0.12) !important;
+  transform: translateY(-1px) !important;
+}
+
+.confirmDialogDestructive:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 2px 4px rgba(215, 44, 13, 0.08) !important;
+}

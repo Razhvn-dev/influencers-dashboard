@@ -1,0 +1,75 @@
+/* ========================================
+   全局页面淡入动画 - 适用于所有页面
+   ======================================== */
+.pageContainer {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
+   创作者列表页专用样式
+   ======================================== */
+
+/* 创作者卡片平滑过渡 */
+.creatorCard {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.creatorCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* 按钮平滑效果 */
+.actionButton {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.actionButton:active {
+  transform: scale(0.98);
+}
+
+/* 分页控件淡入 */
+.paginationContainer {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 筛选器区域平滑过渡 */
+.filterSection {
+  transition: opacity 0.2s ease;
+}
+
+/* 统计卡片加载动画 */
+.statCard {
+  animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
