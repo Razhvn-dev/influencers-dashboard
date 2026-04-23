@@ -2,7 +2,7 @@
 
 client_id = "71d74d004f3bcb950c86e9ef0884be02"
 name = "razhvn_test"
-application_url = "https://techniques-tracking-markers-hobbies.trycloudflare.com"
+application_url = "https://hhhqxffevftf.sealoshzh.site"
 embedded = true
 
 [build]
@@ -26,9 +26,9 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
 
 [auth]
 redirect_urls = [
-  "https://techniques-tracking-markers-hobbies.trycloudflare.com/api/auth",
-  "https://techniques-tracking-markers-hobbies.trycloudflare.com/api/auth/callback",
-  "https://techniques-tracking-markers-hobbies.trycloudflare.com/api/auth/inline"
+  "https://hhhqxffevftf.sealoshzh.site/api/auth",
+  "https://hhhqxffevftf.sealoshzh.site/api/auth/callback",
+  "https://hhhqxffevftf.sealoshzh.site/api/auth/inline"
 ]
 
 [product.metafields.app.demo_info]

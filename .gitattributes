@@ -1,0 +1,27 @@
+# 1. 让 Git 自动处理所有文本文件的换行符
+* text=auto
+
+# 2. 确保特定类型的文件始终使用 LF 换行符
+# 这对于 Web 项目、脚本和配置文件至关重要
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.toml text eol=lf
+*.sql text eol=lf
+*.sh text eol=lf
+
+# 3. 明确标记二进制文件，防止 Git 错误地转换它们
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
