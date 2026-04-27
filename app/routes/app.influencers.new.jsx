@@ -4,18 +4,16 @@ import * as Polaris from "@shopify/polaris";
 
 import { InfluencerForm } from "../components/InfluencerForm";
 import { createInfluencer } from "../models/influencer.server";
+import { authenticate } from "../shopify.server";
 import styles from "../../app/app.influencers._index.styles.module.css";
 
-const DEV_MODE = process.env.DEV_MODE === "true";
-const DEV_SHOP = "dev-shop.myshopify.com";
-
 export const loader = async ({ request }) => {
-  const shop = DEV_MODE ? DEV_SHOP : new URL(request.url).searchParams.get("shop");
-  return { shop };
+  const { session } = await authenticate.admin(request);
+  return { shop: session.shop };
 };
 
 export const action = async ({ request }) => {
-  const shop = DEV_MODE ? DEV_SHOP : new URL(request.url).searchParams.get("shop");
+  const { session } = await authenticate.admin(request);
 
   if (request.method === "POST") {
     const formData = await request.formData();
@@ -28,10 +26,10 @@ export const action = async ({ request }) => {
       facebookUrl: formData.get("facebookUrl"),
       instagramUrl: formData.get("instagramUrl"),
       tiktokUrl: formData.get("tiktokUrl"),
-      youtubeFollowers: parseInt(formData.get("youtubeFollowers")) || 0,
-      facebookFollowers: parseInt(formData.get("facebookFollowers")) || 0,
-      instagramFollowers: parseInt(formData.get("instagramFollowers")) || 0,
-      tiktokFollowers: parseInt(formData.get("tiktokFollowers")) || 0,
+      youtubeFollowers: parseInt(formData.get("youtubeFollowers"), 10) || 0,
+      facebookFollowers: parseInt(formData.get("facebookFollowers"), 10) || 0,
+      instagramFollowers: parseInt(formData.get("instagramFollowers"), 10) || 0,
+      tiktokFollowers: parseInt(formData.get("tiktokFollowers"), 10) || 0,
       collaborationStatus: formData.get("collaborationStatus"),
       notes: formData.get("notes"),
       contractStatus: formData.get("contractStatus"),
@@ -40,7 +38,7 @@ export const action = async ({ request }) => {
       lastContactDate: formData.get("lastContactDate") || null,
       nextFollowUpDate: formData.get("nextFollowUpDate") || null,
       specialRequirements: formData.get("specialRequirements"),
-      shopId: shop,
+      shopId: session.shop,
     };
 
     try {
@@ -70,7 +68,6 @@ export default function NewInfluencerPage() {
     if (!actionData) return;
     setShowBanner(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
-    // 提交成功后重置未保存标志
     if (actionData.success) {
       setHasUnsavedChanges(false);
     }
@@ -84,7 +81,6 @@ export default function NewInfluencerPage() {
     }
   };
 
-  // 放弃更改
   const handleDiscardChanges = () => {
     setShowConfirmDialog(false);
     setHasUnsavedChanges(false);
@@ -99,51 +95,50 @@ export default function NewInfluencerPage() {
         backAction={{ content: "Back", onAction: handleBack }}
       >
         <Polaris.Layout>
-        {actionData?.success && showBanner && (
+          {actionData?.success && showBanner && (
+            <Polaris.Layout.Section>
+              <Polaris.Banner tone="success" onDismiss={() => setShowBanner(false)}>
+                <p>{actionData.message}</p>
+              </Polaris.Banner>
+            </Polaris.Layout.Section>
+          )}
+
+          {actionData?.error && (
+            <Polaris.Layout.Section>
+              <Polaris.Banner tone="critical">
+                <p>{actionData.error}</p>
+              </Polaris.Banner>
+            </Polaris.Layout.Section>
+          )}
+
           <Polaris.Layout.Section>
-            <Polaris.Banner tone="success" onDismiss={() => setShowBanner(false)}>
-              <p>{actionData.message}</p>
-            </Polaris.Banner>
+            <InfluencerForm onDirtyChange={setHasUnsavedChanges} />
           </Polaris.Layout.Section>
-        )}
+        </Polaris.Layout>
 
-        {actionData?.error && (
-          <Polaris.Layout.Section>
-            <Polaris.Banner tone="critical">
-              <p>{actionData.error}</p>
-            </Polaris.Banner>
-          </Polaris.Layout.Section>
-        )}
-
-        <Polaris.Layout.Section>
-          <InfluencerForm onDirtyChange={setHasUnsavedChanges} />
-        </Polaris.Layout.Section>
-      </Polaris.Layout>
-
-      {/* 未保存更改确认对话框 */}
-      <Polaris.Modal
-        open={showConfirmDialog}
-        onClose={() => setShowConfirmDialog(false)}
-        title="Unsaved changes"
-        primaryAction={{
-          content: "Discard changes",
-          destructive: true,
-          onAction: handleDiscardChanges,
-        }}
-        secondaryActions={[
-          {
-            content: "Keep editing",
-            onAction: () => setShowConfirmDialog(false),
-          },
-        ]}
-      >
-        <div style={{ padding: "40px 32px", textAlign: "center" }}>
-          <Polaris.Text as="p">
-            You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
-          </Polaris.Text>
-        </div>
-      </Polaris.Modal>
-    </Polaris.Page>
+        <Polaris.Modal
+          open={showConfirmDialog}
+          onClose={() => setShowConfirmDialog(false)}
+          title="Unsaved changes"
+          primaryAction={{
+            content: "Discard changes",
+            destructive: true,
+            onAction: handleDiscardChanges,
+          }}
+          secondaryActions={[
+            {
+              content: "Keep editing",
+              onAction: () => setShowConfirmDialog(false),
+            },
+          ]}
+        >
+          <div style={{ padding: "40px 32px", textAlign: "center" }}>
+            <Polaris.Text as="p">
+              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
+            </Polaris.Text>
+          </div>
+        </Polaris.Modal>
+      </Polaris.Page>
     </div>
   );
 }

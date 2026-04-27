@@ -1,13 +1,15 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "71d74d004f3bcb950c86e9ef0884be02"
+client_id = "2d22041b758fb22c24c1d94cfd4ea703"
 name = "razhvn_test"
 application_url = "https://alujcacxsmyc.sealoshzh.site"
 embedded = true
 
+
+
 [build]
 automatically_update_urls_on_dev = true
-dev_store_url = "razhvn-test-shop.myshopify.com"
+dev_store_url = "acesefi.myshopify.com"
 
 [webhooks]
 api_version = "2026-07"
@@ -26,9 +28,9 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
 
 [auth]
 redirect_urls = [
-  "https://alujcacxsmyc.sealoshzh.site/api/auth",
-  "https://alujcacxsmyc.sealoshzh.site/api/auth/callback",
-  "https://alujcacxsmyc.sealoshzh.site/api/auth/inline"
+  "https://alujcacxsmyc.sealoshzh.site/auth",
+  "https://alujcacxsmyc.sealoshzh.site/auth/callback",
+  "https://alujcacxsmyc.sealoshzh.site/auth/inline"
 ]
 
 [product.metafields.app.demo_info]

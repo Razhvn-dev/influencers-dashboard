@@ -7,26 +7,24 @@ import { deleteInfluencer, deleteInfluencers, getInfluencers } from "../models/i
 import { authenticate } from "../shopify.server";
 import styles from "../../app/app.influencers._index.styles.module.css";
 
-const DEV_MODE = process.env.DEV_MODE === "true";
-const DEV_SHOP = "dev-shop.myshopify.com";
-
 function readText(formData, key) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
 }
 
 export const loader = async ({ request }) => {
-  const shopDomain = DEV_MODE ? DEV_SHOP : (await authenticate.admin(request)).session.shop;
+  const { session } = await authenticate.admin(request);
+  const shopDomain = session.shop;
   const influencers = await getInfluencers(shopDomain);
 
   return {
     influencers,
-    devMode: DEV_MODE,
   };
 };
 
 export const action = async ({ request }) => {
-  const shopDomain = DEV_MODE ? DEV_SHOP : (await authenticate.admin(request)).session.shop;
+  const { session } = await authenticate.admin(request);
+  const shopDomain = session.shop;
   const formData = await request.formData();
   const intent = readText(formData, "intent");
 

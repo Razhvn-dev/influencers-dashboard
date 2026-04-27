@@ -7,8 +7,6 @@ import { authenticate } from "../shopify.server";
 import { deleteInfluencer, getInfluencers, getShopStats } from "../models/influencer.server";
 import styles from "../app.influencers._index.styles.module.css";
 
-const DEV_MODE = process.env.DEV_MODE === "true";
-const DEV_SHOP = "dev-shop.myshopify.com";
 const ITEMS_PER_PAGE = 10;
 
 const STATUS_OPTIONS = [
@@ -37,17 +35,20 @@ function readText(formData, key) {
 }
 
 export const loader = async ({ request }) => {
-  const shopDomain = DEV_MODE ? DEV_SHOP : (await authenticate.admin(request)).session.shop;
-  // 并行获取创作者列表和统计信息
+  const { session } = await authenticate.admin(request);
+  const shopDomain = session.shop;
+
   const [influencers, stats] = await Promise.all([
     getInfluencers(shopDomain),
     getShopStats(shopDomain),
   ]);
+
   return { influencers, stats };
 };
 
 export const action = async ({ request }) => {
-  const shopDomain = DEV_MODE ? DEV_SHOP : (await authenticate.admin(request)).session.shop;
+  const { session } = await authenticate.admin(request);
+  const shopDomain = session.shop;
   const formData = await request.formData();
   const intent = readText(formData, "intent");
 
@@ -92,18 +93,15 @@ export default function InfluencersIndex() {
     }
   }, [actionData]);
 
-  // 重置页码到第一页
   useEffect(() => {
     setCurrentPage(1);
   }, [query, status, level, location]);
 
-  // 分页时平滑滚动到页面最上方
   useEffect(() => {
-    // 使用 requestAnimationFrame 确保在浏览器重绘前执行滚动
     requestAnimationFrame(() => {
       window.scrollTo({
         top: 0,
-        behavior: 'smooth'
+        behavior: "smooth",
       });
     });
   }, [currentPage]);
@@ -142,7 +140,6 @@ export default function InfluencersIndex() {
     });
   }, [influencers, query, status, level, location]);
 
-  // 分页计算
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
@@ -251,11 +248,10 @@ export default function InfluencersIndex() {
             </Polaris.Card>
           </Polaris.Layout.Section>
 
-          {/* 分页控件 - 放在表格下方居中 */}
           {filtered.length > ITEMS_PER_PAGE && (
             <Polaris.Layout.Section>
               <Polaris.Box paddingBlockStart="400" paddingBlockEnd="200">
-                <div className={styles.paginationContainer} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                <div className={styles.paginationContainer} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
                   <Polaris.Pagination
                     label={`Showing ${startIndex + 1}-${Math.min(endIndex, filtered.length)} of ${filtered.length} creators`}
                     hasPrevious={currentPage > 1}

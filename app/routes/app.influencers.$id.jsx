@@ -4,11 +4,9 @@ import * as Polaris from "@shopify/polaris";
 
 import { InfluencerForm } from "../components/InfluencerForm";
 import { getInfluencer, updateInfluencer } from "../models/influencer.server";
+import { authenticate } from "../shopify.server";
 import { formatFollowers } from "../utils/calculations";
 import styles from "../../app/app.influencers._index.styles.module.css";
-
-const DEV_MODE = process.env.DEV_MODE === "true";
-const DEV_SHOP = "dev-shop.myshopify.com";
 
 const LEVEL_LABELS = {
   AMBASSADOR_1: "Ambassador Level 1",
@@ -29,9 +27,8 @@ const STATUS_LABELS = {
 };
 
 export const loader = async ({ params, request }) => {
-  const shop =
-    DEV_MODE ? DEV_SHOP : new URL(request.url).searchParams.get("shop") || "razhvn-test-shop.myshopify.com";
-  const influencer = await getInfluencer(params.id, shop);
+  const { session } = await authenticate.admin(request);
+  const influencer = await getInfluencer(params.id, session.shop);
 
   if (!influencer) {
     throw new Response("Creator not found", { status: 404 });
@@ -41,8 +38,7 @@ export const loader = async ({ params, request }) => {
 };
 
 export const action = async ({ params, request }) => {
-  const shop =
-    DEV_MODE ? DEV_SHOP : new URL(request.url).searchParams.get("shop") || "razhvn-test-shop.myshopify.com";
+  const { session } = await authenticate.admin(request);
 
   if (request.method === "POST") {
     const formData = await request.formData();
@@ -55,10 +51,10 @@ export const action = async ({ params, request }) => {
       facebookUrl: formData.get("facebookUrl"),
       instagramUrl: formData.get("instagramUrl"),
       tiktokUrl: formData.get("tiktokUrl"),
-      youtubeFollowers: parseInt(formData.get("youtubeFollowers")) || 0,
-      facebookFollowers: parseInt(formData.get("facebookFollowers")) || 0,
-      instagramFollowers: parseInt(formData.get("instagramFollowers")) || 0,
-      tiktokFollowers: parseInt(formData.get("tiktokFollowers")) || 0,
+      youtubeFollowers: parseInt(formData.get("youtubeFollowers"), 10) || 0,
+      facebookFollowers: parseInt(formData.get("facebookFollowers"), 10) || 0,
+      instagramFollowers: parseInt(formData.get("instagramFollowers"), 10) || 0,
+      tiktokFollowers: parseInt(formData.get("tiktokFollowers"), 10) || 0,
       collaborationStatus: formData.get("collaborationStatus"),
       notes: formData.get("notes"),
       contractStatus: formData.get("contractStatus"),
@@ -70,7 +66,7 @@ export const action = async ({ params, request }) => {
     };
 
     try {
-      await updateInfluencer(params.id, shop, data);
+      await updateInfluencer(params.id, session.shop, data);
       return { success: true, message: "Creator information updated." };
     } catch (error) {
       console.error("Error updating influencer:", error);
@@ -93,7 +89,6 @@ export default function InfluencerDetailsPage() {
     if (actionData?.success || actionData?.error) {
       setShowBanner(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
-      // 提交成功后重置未保存标志
       if (actionData.success) {
         setHasUnsavedChanges(false);
       }
@@ -108,7 +103,6 @@ export default function InfluencerDetailsPage() {
     }
   };
 
-  // 放弃更改
   const handleDiscardChanges = () => {
     setShowConfirmDialog(false);
     setHasUnsavedChanges(false);
@@ -131,83 +125,82 @@ export default function InfluencerDetailsPage() {
         subtitle={`${influencer.company || "No company"} | ${influencer.location || "No region"}`}
         backAction={{ content: "Back", onAction: handleBack }}
       >
-      <Polaris.Layout>
-        {showBanner && actionData?.success && (
-          <Polaris.Layout.Section>
-            <Polaris.Banner tone="success" onDismiss={() => setShowBanner(false)}>
-              <p>{actionData.message || "Saved successfully."}</p>
-            </Polaris.Banner>
-          </Polaris.Layout.Section>
-        )}
-        {showBanner && actionData?.error && (
-          <Polaris.Layout.Section>
-            <Polaris.Banner tone="critical" onDismiss={() => setShowBanner(false)}>
-              <p>{actionData.error}</p>
-            </Polaris.Banner>
-          </Polaris.Layout.Section>
-        )}
+        <Polaris.Layout>
+          {showBanner && actionData?.success && (
+            <Polaris.Layout.Section>
+              <Polaris.Banner tone="success" onDismiss={() => setShowBanner(false)}>
+                <p>{actionData.message || "Saved successfully."}</p>
+              </Polaris.Banner>
+            </Polaris.Layout.Section>
+          )}
+          {showBanner && actionData?.error && (
+            <Polaris.Layout.Section>
+              <Polaris.Banner tone="critical" onDismiss={() => setShowBanner(false)}>
+                <p>{actionData.error}</p>
+              </Polaris.Banner>
+            </Polaris.Layout.Section>
+          )}
 
-        <Polaris.Layout.Section>
-          <Polaris.Card>
-            <Polaris.InlineGrid columns={{ xs: 1, sm: 3 }} gap="400">
-              <Polaris.BlockStack gap="100">
-                <Polaris.Text as="p" tone="subdued" variant="bodySm">
-                  Total Followers
-                </Polaris.Text>
-                <Polaris.Text as="p" variant="headingLg">
-                  {formatFollowers(influencer.totalFollowers || 0)}
-                </Polaris.Text>
-              </Polaris.BlockStack>
-              <Polaris.BlockStack gap="100">
-                <Polaris.Text as="p" tone="subdued" variant="bodySm">
-                  Ambassador Level
-                </Polaris.Text>
-                <Polaris.Badge tone="info">{levelText}</Polaris.Badge>
-              </Polaris.BlockStack>
-              <Polaris.BlockStack gap="100">
-                <Polaris.Text as="p" tone="subdued" variant="bodySm">
-                  Collaboration Status
-                </Polaris.Text>
-                <Polaris.Badge tone="success">{statusText}</Polaris.Badge>
-              </Polaris.BlockStack>
-            </Polaris.InlineGrid>
-          </Polaris.Card>
-        </Polaris.Layout.Section>
+          <Polaris.Layout.Section>
+            <Polaris.Card>
+              <Polaris.InlineGrid columns={{ xs: 1, sm: 3 }} gap="400">
+                <Polaris.BlockStack gap="100">
+                  <Polaris.Text as="p" tone="subdued" variant="bodySm">
+                    Total Followers
+                  </Polaris.Text>
+                  <Polaris.Text as="p" variant="headingLg">
+                    {formatFollowers(influencer.totalFollowers || 0)}
+                  </Polaris.Text>
+                </Polaris.BlockStack>
+                <Polaris.BlockStack gap="100">
+                  <Polaris.Text as="p" tone="subdued" variant="bodySm">
+                    Ambassador Level
+                  </Polaris.Text>
+                  <Polaris.Badge tone="info">{levelText}</Polaris.Badge>
+                </Polaris.BlockStack>
+                <Polaris.BlockStack gap="100">
+                  <Polaris.Text as="p" tone="subdued" variant="bodySm">
+                    Collaboration Status
+                  </Polaris.Text>
+                  <Polaris.Badge tone="success">{statusText}</Polaris.Badge>
+                </Polaris.BlockStack>
+              </Polaris.InlineGrid>
+            </Polaris.Card>
+          </Polaris.Layout.Section>
 
-        <Polaris.Layout.Section>
-          <Polaris.BlockStack gap="300">
-            <Polaris.Text as="h2" variant="headingMd">
-              Edit Influencer Info
+          <Polaris.Layout.Section>
+            <Polaris.BlockStack gap="300">
+              <Polaris.Text as="h2" variant="headingMd">
+                Edit Influencer Info
+              </Polaris.Text>
+              <InfluencerForm influencer={influencer} onDirtyChange={setHasUnsavedChanges} />
+            </Polaris.BlockStack>
+          </Polaris.Layout.Section>
+        </Polaris.Layout>
+
+        <Polaris.Modal
+          open={showConfirmDialog}
+          onClose={() => setShowConfirmDialog(false)}
+          title="Unsaved changes"
+          primaryAction={{
+            content: "Discard changes",
+            destructive: true,
+            onAction: handleDiscardChanges,
+          }}
+          secondaryActions={[
+            {
+              content: "Keep editing",
+              onAction: () => setShowConfirmDialog(false),
+            },
+          ]}
+        >
+          <div style={{ padding: "40px 32px", textAlign: "center" }}>
+            <Polaris.Text as="p">
+              You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
             </Polaris.Text>
-            <InfluencerForm influencer={influencer} onDirtyChange={setHasUnsavedChanges} />
-          </Polaris.BlockStack>
-        </Polaris.Layout.Section>
-      </Polaris.Layout>
-
-      {/* 未保存更改确认对话框 */}
-      <Polaris.Modal
-        open={showConfirmDialog}
-        onClose={() => setShowConfirmDialog(false)}
-        title="Unsaved changes"
-        primaryAction={{
-          content: "Discard changes",
-          destructive: true,
-          onAction: handleDiscardChanges,
-        }}
-        secondaryActions={[
-          {
-            content: "Keep editing",
-            onAction: () => setShowConfirmDialog(false),
-          },
-        ]}
-      >
-        <div style={{ padding: "40px 32px", textAlign: "center" }}>
-          <Polaris.Text as="p">
-            You have unsaved changes. Are you sure you want to leave? Your changes will be lost.
-          </Polaris.Text>
-        </div>
-      </Polaris.Modal>
-    </Polaris.Page>
+          </div>
+        </Polaris.Modal>
+      </Polaris.Page>
     </div>
   );
 }
