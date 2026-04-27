@@ -1,4 +1,4 @@
-import { Outlet, useLoaderData, useRouteError, Link } from "react-router";
+import { Outlet, useLoaderData, useRouteError, Link, useLocation } from "react-router";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import "@shopify/polaris/build/esm/styles.css";
@@ -18,6 +18,7 @@ export const loader = async ({ request }) => {
 
 export default function App() {
   const { apiKey } = useLoaderData();
+  const location = useLocation();
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
@@ -43,13 +44,8 @@ export default function App() {
                   }}
                 >
                   <li>
-                    <Link to="/app" style={{ textDecoration: "none", color: "white" }}>
+                    <Link to={{ pathname: "/app", search: location.search }} style={{ textDecoration: "none", color: "white" }}>
                       Home
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/auth/login" style={{ textDecoration: "none", color: "#fbbf24" }}>
-                      Switch Shop
                     </Link>
                   </li>
                 </ul>

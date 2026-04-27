@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useActionData, useLoaderData, useNavigate, useSubmit } from "react-router";
+import { useActionData, useLoaderData, useLocation, useNavigate, useSubmit } from "react-router";
 import * as Polaris from "@shopify/polaris";
 
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
@@ -73,6 +73,7 @@ function formatCompact(num) {
 export default function InfluencersIndex() {
   const { influencers, stats } = useLoaderData();
   const actionData = useActionData();
+  const routeLocation = useLocation();
   const navigate = useNavigate();
   const submit = useSubmit();
 
@@ -151,7 +152,7 @@ export default function InfluencersIndex() {
         title="Creator Dashboard"
         primaryAction={{
           content: "Add Creator",
-          onAction: () => navigate("/app/influencers/new"),
+          onAction: () => navigate(`/app/influencers/new${routeLocation.search || ""}`),
         }}
       >
         <Polaris.Layout>
@@ -228,7 +229,7 @@ export default function InfluencersIndex() {
                         </Polaris.Text>
                       </Polaris.BlockStack>
                       <Polaris.InlineStack gap="200">
-                        <Polaris.Button size="slim" className={styles.actionButton} onClick={() => navigate(`/app/influencers/${item.id}`)}>View</Polaris.Button>
+                        <Polaris.Button size="slim" className={styles.actionButton} onClick={() => navigate(`/app/influencers/${item.id}${routeLocation.search || ""}`)}>View</Polaris.Button>
                         <Polaris.Button size="slim" tone="critical" className={styles.actionButton} onClick={() => setPendingDelete({ id: item.id, name: item.name })}>
                           Delete
                         </Polaris.Button>

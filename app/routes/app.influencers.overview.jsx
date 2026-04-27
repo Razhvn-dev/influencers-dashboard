@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useActionData, useLoaderData, useNavigate, useSearchParams, useSubmit } from "react-router";
+import { useActionData, useLoaderData, useLocation, useNavigate, useSearchParams, useSubmit } from "react-router";
 import * as Polaris from "@shopify/polaris";
 
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
@@ -71,6 +71,7 @@ const LEVEL_LABELS = {
 export default function InfluencersOverview() {
   const { influencers } = useLoaderData();
   const actionData = useActionData();
+  const location = useLocation();
   const navigate = useNavigate();
   const submit = useSubmit();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -121,8 +122,8 @@ export default function InfluencersOverview() {
     resourceIDResolver: (item) => item.id,
   });
 
-  const handleNavigateToNew = () => navigate("/app/influencers/new");
-  const handleViewDetail = (id) => navigate(`/app/influencers/${id}`);
+  const handleNavigateToNew = () => navigate(`/app/influencers/new${location.search || ""}`);
+  const handleViewDetail = (id) => navigate(`/app/influencers/${id}${location.search || ""}`);
   const handleDelete = (id, name) => setPendingDelete({ id, name });
 
   const confirmDelete = () => {

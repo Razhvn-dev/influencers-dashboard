@@ -1,18 +1,15 @@
-import { useLoaderData } from "react-router";
+import { Link, useLocation } from "react-router";
 import { authenticate } from "../shopify.server";
 import styles from "../../app/app.influencers._index.styles.module.css";
 
 export const loader = async ({ request }) => {
-  const { session } = await authenticate.admin(request);
-
-  return {
-    shop: session.shop,
-    timestamp: new Date().toLocaleString("en-US"),
-  };
+  await authenticate.admin(request);
+  return null;
 };
 
 export default function Index() {
-  const { shop, timestamp } = useLoaderData();
+  const location = useLocation();
+  const search = location.search || "";
 
   return (
     <div className={styles.pageContainer} style={{ maxWidth: "800px", margin: "0 auto" }}>
@@ -27,28 +24,22 @@ export default function Index() {
         <Card
           title="Creator Management"
           description="Manage influencer info, follower data, and partnership status."
-          link="/app/influencers"
-          icon="CM"
+          link={`/app/influencers${search}`}
         />
         <Card
           title="Creator Overview"
           description="View all creator information with search, sort, and quick view features."
-          link="/app/influencers/overview"
-          icon="OV"
+          link={`/app/influencers/overview${search}`}
         />
-      </div>
-
-      <div style={{ color: "#6b7280", fontSize: "12px" }}>
-        Current shop: {shop} | Last refresh: {timestamp}
       </div>
     </div>
   );
 }
 
-function Card({ title, description, link, icon }) {
+function Card({ title, description, link }) {
   return (
-    <a
-      href={link}
+    <Link
+      to={link}
       style={{
         display: "block",
         padding: "16px",
@@ -69,9 +60,8 @@ function Card({ title, description, link, icon }) {
         e.currentTarget.style.transform = "translateY(0)";
       }}
     >
-      <div style={{ fontSize: "24px", marginBottom: "8px" }}>{icon}</div>
       <h3 style={{ margin: "0 0 8px 0", color: "#1f2937" }}>{title}</h3>
       <p style={{ margin: 0, color: "#6b7280", fontSize: "14px" }}>{description}</p>
-    </a>
+    </Link>
   );
 }
