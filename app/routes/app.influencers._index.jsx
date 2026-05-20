@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useActionData, useLoaderData, useLocation, useNavigate, useSubmit } from "react-router";
+import { useLoaderData, useLocation, useNavigate } from "react-router";
+import { useShopifyFetcher } from "../hooks/useShopifyFetcher";
 import * as Polaris from "@shopify/polaris";
 
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
@@ -52,15 +53,16 @@ export const action = async ({ request }) => {
   const formData = await request.formData();
   const intent = readText(formData, "intent");
 
-  try {
-    if (intent === "delete") {
+  if (intent === "delete") {
+    try {
       await deleteInfluencer(readText(formData, "id"), shopDomain);
       return { success: true, message: "Creator deleted successfully" };
+    } catch (error) {
+      return { success: false, error: error.message || "Operation failed" };
     }
-    return { success: false, error: "Unknown action" };
-  } catch (error) {
-    return { success: false, error: error.message || "Operation failed" };
   }
+  
+  return { success: false, error: "Unknown action" };
 };
 
 function formatCompact(num) {
@@ -72,10 +74,9 @@ function formatCompact(num) {
 
 export default function InfluencersIndex() {
   const { influencers, stats } = useLoaderData();
-  const actionData = useActionData();
+  const fetcher = useShopifyFetcher();
   const routeLocation = useLocation();
   const navigate = useNavigate();
-  const submit = useSubmit();
 
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("ALL");
@@ -86,13 +87,15 @@ export default function InfluencersIndex() {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    if (!actionData) return;
-    if (actionData.success) {
-      setBanner({ show: true, tone: "success", message: actionData.message || "Operation successful" });
-    } else if (actionData.error) {
-      setBanner({ show: true, tone: "critical", message: actionData.error });
+    if (!fetcher.data || fetcher.state !== "idle") return;
+    if (fetcher.data.success) {
+      setBanner({ show: true, tone: "success", message: fetcher.data.message || "Operation successful" });
+      setPendingDelete(null);
+    } else if (fetcher.data.error) {
+      setBanner({ show: true, tone: "critical", message: fetcher.data.error });
+      setPendingDelete(null);
     }
-  }, [actionData]);
+  }, [fetcher.data, fetcher.state]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -162,8 +165,10 @@ export default function InfluencersIndex() {
             onCancel={() => setPendingDelete(null)}
             onConfirm={() => {
               if (!pendingDelete) return;
-              submit({ intent: "delete", id: pendingDelete.id }, { method: "post" });
-              setPendingDelete(null);
+              fetcher.submit(
+                { intent: "delete", id: pendingDelete.id },
+                { method: "post" },
+              );
             }}
           />
 

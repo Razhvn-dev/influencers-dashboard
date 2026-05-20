@@ -2,7 +2,7 @@
 
 client_id = "2d22041b758fb22c24c1d94cfd4ea703"
 name = "razhvn_test"
-application_url = "https://alujcacxsmyc.sealoshzh.site"
+application_url = "https://iuwtkeqiodjw.sealoshzh.site"
 embedded = true
 
 
@@ -28,9 +28,9 @@ scopes = "write_metaobject_definitions,write_metaobjects,write_products"
 
 [auth]
 redirect_urls = [
-  "https://alujcacxsmyc.sealoshzh.site/auth",
-  "https://alujcacxsmyc.sealoshzh.site/auth/callback",
-  "https://alujcacxsmyc.sealoshzh.site/auth/inline"
+  "https://iuwtkeqiodjw.sealoshzh.site/auth",
+  "https://iuwtkeqiodjw.sealoshzh.site/auth/callback",
+  "https://iuwtkeqiodjw.sealoshzh.site/auth/inline"
 ]
 
 [product.metafields.app.demo_info]

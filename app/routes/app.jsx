@@ -1,4 +1,6 @@
-import { Outlet, useLoaderData, useRouteError, Link, useLocation } from "react-router";
+import { useEffect } from "react";
+import { Outlet, useLoaderData, Link, useLocation, useRouteError } from "react-router";
+import { logShopifyDiagnostics } from "../utils/shopify-diagnostics.client";
 import { boundary } from "@shopify/shopify-app-react-router/server";
 import { AppProvider } from "@shopify/shopify-app-react-router/react";
 import "@shopify/polaris/build/esm/styles.css";
@@ -20,8 +22,12 @@ export default function App() {
   const { apiKey } = useLoaderData();
   const location = useLocation();
 
+  useEffect(() => {
+    logShopifyDiagnostics("embedded-app-layout");
+  }, []);
+
   return (
-    <AppProvider isEmbeddedApp apiKey={apiKey}>
+    <AppProvider embedded apiKey={apiKey}>
       <PolarisAppProvider i18n={enTranslations}>
         <div style={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
           <nav

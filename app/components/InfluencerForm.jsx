@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Form, useNavigation } from "react-router";
 import * as Polaris from "@shopify/polaris";
-import styles from "./InfluencerForm.module.css";
 
 const STATUS_OPTIONS = [
   { label: "Applied", value: "APPLIED" },
@@ -59,13 +58,10 @@ export function InfluencerForm({ influencer, onDirtyChange }) {
   const [form, setForm] = useState(initialForm);
 
   const setField = (field) => (value) => {
-    // 对于 followers 字段，只允许输入非负整数
     if (field.includes("Followers")) {
-      // 移除所有非数字字符
       const numericValue = value.replace(/\D/g, "");
       setForm((prev) => {
         const newForm = { ...prev, [field]: numericValue };
-        // 通知父组件表单已更改
         if (onDirtyChange) {
           onDirtyChange(true);
         }
@@ -74,7 +70,6 @@ export function InfluencerForm({ influencer, onDirtyChange }) {
     } else {
       setForm((prev) => {
         const newForm = { ...prev, [field]: value };
-        // 通知父组件表单已更改
         if (onDirtyChange) {
           onDirtyChange(true);
         }
@@ -147,7 +142,12 @@ export function InfluencerForm({ influencer, onDirtyChange }) {
         </Polaris.Card>
 
         <Polaris.InlineStack align="end">
-          <Polaris.Button submit variant="primary" loading={isSubmitting} disabled={isSubmitting}>
+          <Polaris.Button
+            submit
+            variant="primary"
+            loading={isSubmitting}
+            disabled={isSubmitting}
+          >
             {isSubmitting ? "Saving..." : "Save"}
           </Polaris.Button>
         </Polaris.InlineStack>

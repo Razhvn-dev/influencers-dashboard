@@ -7,9 +7,9 @@ export const loader = async ({ request }) => {
     throw redirect("/app");
   }
 
-  try {
-    const { session } = await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
 
+  try {
     const dbSession = await prisma.session.findFirst({
       where: { shop: session.shop },
     });

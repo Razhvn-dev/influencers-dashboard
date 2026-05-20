@@ -1,6 +1,15 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
 
-export default function App() {
+import { AppBridgeScript } from "./components/AppBridgeScript";
+import { ShopifySessionGuard } from "./components/ShopifySessionGuard";
+
+export async function loader() {
+  return {
+    apiKey: process.env.SHOPIFY_API_KEY || "",
+  };
+}
+
+export function Layout({ children }) {
   return (
     <html lang="en">
       <head>
@@ -15,10 +24,22 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        {children}
+        <ShopifySessionGuard />
         <ScrollRestoration />
         <Scripts />
       </body>
     </html>
+  );
+}
+
+export default function App() {
+  const { apiKey } = useLoaderData();
+
+  return (
+    <>
+      <AppBridgeScript apiKey={apiKey} />
+      <Outlet />
+    </>
   );
 }

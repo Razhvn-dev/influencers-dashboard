@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useActionData, useLoaderData, useLocation, useNavigate, useSearchParams, useSubmit } from "react-router";
+import { useLoaderData, useLocation, useNavigate, useSearchParams } from "react-router";
+import { useShopifyFetcher } from "../hooks/useShopifyFetcher";
 import * as Polaris from "@shopify/polaris";
 
 import { DeleteConfirmDialog } from "../components/DeleteConfirmDialog";
@@ -70,10 +71,9 @@ const LEVEL_LABELS = {
 
 export default function InfluencersOverview() {
   const { influencers } = useLoaderData();
-  const actionData = useActionData();
+  const fetcher = useShopifyFetcher();
   const location = useLocation();
   const navigate = useNavigate();
-  const submit = useSubmit();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [query, setQuery] = useState(searchParams.get("q") || "");
@@ -85,22 +85,6 @@ export default function InfluencersOverview() {
   useEffect(() => {
     setQuery(searchParams.get("q") || "");
   }, [searchParams]);
-
-  useEffect(() => {
-    if (!actionData) return;
-    if (actionData.success) {
-      setSuccessMessage(actionData.message || "Operation successful.");
-      setShowSuccessBanner(true);
-      setPendingDelete(null);
-      const timer = setTimeout(() => setShowSuccessBanner(false), 3000);
-      return () => clearTimeout(timer);
-    }
-    if (actionData.error) {
-      setSuccessMessage(actionData.error);
-      setShowSuccessBanner(true);
-      setPendingDelete(null);
-    }
-  }, [actionData]);
 
   const filtered = influencers.filter((item) => {
     if (!query) return true;
@@ -122,14 +106,34 @@ export default function InfluencersOverview() {
     resourceIDResolver: (item) => item.id,
   });
 
+  useEffect(() => {
+    if (!fetcher.data || fetcher.state !== "idle") return;
+    if (fetcher.data.success) {
+      setSuccessMessage(fetcher.data.message || "Operation successful.");
+      setShowSuccessBanner(true);
+      setPendingDelete(null);
+      setShowBulkDeleteModal(false);
+      clearSelection();
+      const timer = setTimeout(() => setShowSuccessBanner(false), 3000);
+      return () => clearTimeout(timer);
+    }
+    if (fetcher.data.error) {
+      setSuccessMessage(fetcher.data.error);
+      setShowSuccessBanner(true);
+      setPendingDelete(null);
+    }
+  }, [fetcher.data, fetcher.state, clearSelection]);
+
   const handleNavigateToNew = () => navigate(`/app/influencers/new${location.search || ""}`);
   const handleViewDetail = (id) => navigate(`/app/influencers/${id}${location.search || ""}`);
   const handleDelete = (id, name) => setPendingDelete({ id, name });
 
   const confirmDelete = () => {
     if (!pendingDelete) return;
-    submit({ intent: "delete", id: pendingDelete.id }, { method: "post" });
-    setPendingDelete(null);
+    fetcher.submit(
+      { intent: "delete", id: pendingDelete.id },
+      { method: "post" },
+    );
   };
 
   const handleBulkDelete = () => {
@@ -139,12 +143,10 @@ export default function InfluencersOverview() {
   };
 
   const confirmBulkDelete = () => {
-    submit(
+    fetcher.submit(
       { intent: "bulkDelete", ids: JSON.stringify(selectedItems) },
       { method: "post" },
     );
-    setShowBulkDeleteModal(false);
-    clearSelection();
   };
 
   const getStatusBadge = (status) => {
@@ -222,7 +224,7 @@ export default function InfluencersOverview() {
 
         {showSuccessBanner && (
           <Polaris.Layout.Section>
-            <Polaris.Banner tone={actionData?.error ? "critical" : "success"} onDismiss={() => setShowSuccessBanner(false)}>
+            <Polaris.Banner tone={fetcher.data?.error ? "critical" : "success"} onDismiss={() => setShowSuccessBanner(false)}>
               <p>{successMessage}</p>
             </Polaris.Banner>
           </Polaris.Layout.Section>
