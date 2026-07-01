@@ -1,0 +1,24 @@
+{
+  "name": "influencer-dashboard",
+  "version": "1.0.0",
+  "description": "Shopify Influencer Dashboard CRM backend",
+  "main": "server.js",
+  "scripts": {
+    "build": "npm run build --prefix client",
+    "start": "node server.js",
+    "test:db": "node db.js",
+    "build:client": "npm run build --prefix client",
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "node server.js",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "preview": "npm run build && npm start"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
