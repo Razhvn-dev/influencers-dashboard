@@ -38,10 +38,17 @@ async function parseResponse(response) {
     return response.text();
   }
 
-  const data = await response.json();
+  const text = await response.text();
+
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(text.trim() || 'Request failed');
+  }
 
   if (!response.ok || !data.success) {
-    throw new Error(data.message || 'Request failed');
+    throw new Error(data.message || text.trim() || 'Request failed');
   }
 
   return data;
@@ -106,6 +113,18 @@ export async function deleteSponsorshipRecord(id) {
     method: 'DELETE',
   });
   return parseResponse(response);
+}
+
+export async function deleteSponsorshipRecords(ids) {
+  for (const id of ids) {
+    await deleteSponsorshipRecord(id);
+  }
+
+  return {
+    success: true,
+    message: `Deleted ${ids.length} creator record(s) successfully`,
+    count: ids.length,
+  };
 }
 
 export async function importSponsorshipCsv(csvText) {

@@ -490,6 +490,50 @@ router.post('/import-csv', async (req, res) => {
   }
 });
 
+router.post('/bulk-delete', async (req, res) => {
+  try {
+    const shop = getShop(res);
+    const rawIds = req.body.ids;
+
+    if (!Array.isArray(rawIds) || rawIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Field "ids" must be a non-empty array',
+      });
+    }
+
+    const ids = rawIds
+      .map((value) => Number.parseInt(value, 10))
+      .filter((value) => !Number.isNaN(value));
+
+    if (ids.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid record IDs provided',
+      });
+    }
+
+    const result = await pool.query(
+      'DELETE FROM influencers WHERE shop = $1 AND id = ANY($2::int[]) RETURNING id',
+      [shop, ids]
+    );
+
+    console.log(`Bulk deleted ${result.rowCount} record(s), shop=${shop}`);
+
+    res.json({
+      success: true,
+      message: `Deleted ${result.rowCount} creator record(s) successfully`,
+      count: result.rowCount,
+    });
+  } catch (err) {
+    console.error('Failed to bulk delete records:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to bulk delete records',
+    });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const shop = getShop(res);

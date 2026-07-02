@@ -10,13 +10,16 @@ import {
   IndexTable,
   InlineStack,
   Layout,
+  Modal,
   Page,
   Select,
   Text,
   TextField,
+  useIndexResourceState,
 } from '@shopify/polaris';
 import {
   deleteSponsorshipRecord,
+  deleteSponsorshipRecords,
   exportSponsorshipCsv,
   fetchSponsorshipRecords,
   fetchSponsorshipStats,
@@ -33,6 +36,10 @@ import AddCreatorModal from './components/AddCreatorModal';
 import CreatorDetailModal from './components/CreatorDetailModal';
 import ImportCsvModal from './components/ImportCsvModal';
 import StatsCards from './components/StatsCards';
+import { useAutoDismiss } from './hooks/useAutoDismiss';
+
+const SUCCESS_DISMISS_MS = 4000;
+const resourceName = { singular: 'creator', plural: 'creators' };
 
 function MissingConfigPage({ missingConfig }) {
   const title =
@@ -74,18 +81,6 @@ function truncate(value, max = 48) {
   return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
-function latestContent(record) {
-  const periods = [...(record.monthly_progress || [])].reverse();
-  const match = periods.find((period) => period.content_delivered);
-  return match?.content_delivered || '—';
-}
-
-function latestLink(record) {
-  const periods = [...(record.monthly_progress || [])].reverse();
-  const match = periods.find((period) => period.link);
-  return match?.link || '—';
-}
-
 function isFollowupDue(record) {
   if (!record.next_followup_at) return false;
   const due = new Date(record.next_followup_at);
@@ -122,6 +117,22 @@ export default function App({ missingConfig = null, localPreview = false }) {
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const {
+    selectedResources,
+    allResourcesSelected,
+    handleSelectionChange,
+    clearSelection,
+  } = useIndexResourceState(records, {
+    resourceIDResolver: (record) => String(record.id),
+  });
+
+  const selectedItemsCount = allResourcesSelected ? 'All' : selectedResources.length;
+
+  const dismissSuccess = useCallback(() => setSuccess(''), []);
+  useAutoDismiss(success, dismissSuccess, SUCCESS_DISMISS_MS);
 
   const loadStats = useCallback(async () => {
     setStatsLoading(true);
@@ -235,7 +246,9 @@ export default function App({ missingConfig = null, localPreview = false }) {
 
   const handleRecordUpdated = (updated) => {
     setRecords((current) => current.map((item) => (item.id === updated.id ? updated : item)));
-    setSelectedRecord(updated);
+    setDetailOpen(false);
+    setSelectedRecord(null);
+    setSuccess('Creator record updated successfully.');
     loadStats();
   };
 
@@ -247,6 +260,37 @@ export default function App({ missingConfig = null, localPreview = false }) {
     refreshDashboard();
   };
 
+  const handleBulkDeleteConfirm = async () => {
+    setBulkDeleting(true);
+    setError('');
+
+    try {
+      const ids = allResourcesSelected
+        ? records.map((record) => record.id)
+        : selectedResources.map((id) => Number(id));
+
+      if (ids.length === 0) {
+        throw new Error('No creators selected');
+      }
+
+      const result = await deleteSponsorshipRecords(ids);
+
+      if (selectedRecord && ids.includes(selectedRecord.id)) {
+        setDetailOpen(false);
+        setSelectedRecord(null);
+      }
+
+      clearSelection();
+      setBulkDeleteOpen(false);
+      setSuccess(result.message || `Deleted ${ids.length} creator(s) successfully.`);
+      refreshDashboard();
+    } catch (err) {
+      setError(err.message || 'Failed to delete selected creators');
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
   if (missingConfig) {
     return <MissingConfigPage missingConfig={missingConfig} />;
   }
@@ -256,6 +300,7 @@ export default function App({ missingConfig = null, localPreview = false }) {
       id={String(record.id)}
       key={record.id}
       position={index}
+      selected={selectedResources.includes(String(record.id))}
       onClick={() => {
         setSelectedRecord(record);
         setDetailOpen(true);
@@ -287,15 +332,12 @@ export default function App({ missingConfig = null, localPreview = false }) {
       <IndexTable.Cell>
         {Number(record.total_followers || 0).toLocaleString('en-US')}
       </IndexTable.Cell>
-      <IndexTable.Cell>{truncate(latestContent(record), 24)}</IndexTable.Cell>
-      <IndexTable.Cell>{truncate(latestLink(record), 24)}</IndexTable.Cell>
     </IndexTable.Row>
   ));
 
   return (
     <Page
       title="Influencer Dashboard"
-      subtitle="CRM outreach, ambassador levels, sponsorship tracking, and monthly progress"
       primaryAction={{
         content: 'Add Creator',
         onAction: () => setAddModalOpen(true),
@@ -398,49 +440,59 @@ export default function App({ missingConfig = null, localPreview = false }) {
             </Card>
 
             <Card padding="0">
-              <Box overflowX="scroll">
-                <IndexTable
-                  resourceName={{ singular: 'creator', plural: 'creators' }}
-                  itemCount={records.length}
-                  headings={[
-                    { title: 'Name' },
-                    { title: 'Status' },
-                    { title: 'Ambassador Level' },
-                    { title: 'Channel' },
-                    { title: 'Affiliate Code' },
-                    { title: 'Commission' },
-                    { title: 'Total Followers' },
-                    { title: 'Latest Content Delivered' },
-                    { title: 'Latest Link' },
-                  ]}
-                  sortable={[true, true, true, true, true, true, true, false, false]}
-                  sortDirection={sortDirection}
-                  sortColumnIndex={sortColumnIndex}
-                  onSort={handleSort}
-                  loading={loading}
-                  selectable={false}
-                  emptyState={
-                    <EmptyState
-                      heading="No creators yet"
-                      image=""
-                      action={{
-                        content: 'Import CSV',
-                        onAction: () => setImportModalOpen(true),
-                      }}
-                      secondaryAction={{
-                        content: 'Add Creator',
-                        onAction: () => setAddModalOpen(true),
-                      }}
-                    >
-                      <p>
-                        Import the team spreadsheet or add the first creator manually.
-                      </p>
-                    </EmptyState>
-                  }
-                >
-                  {rowMarkup}
-                </IndexTable>
+              <Box padding="300" paddingBlockEnd="0">
+                <Text as="p" tone="subdued" variant="bodySm">
+                  Click a row to view sponsorship details, monthly progress, and notes.
+                </Text>
               </Box>
+              <IndexTable
+                resourceName={resourceName}
+                itemCount={records.length}
+                headings={[
+                  { title: 'Name' },
+                  { title: 'Status' },
+                  { title: 'Ambassador Level' },
+                  { title: 'Channel' },
+                  { title: 'Affiliate Code' },
+                  { title: 'Commission' },
+                  { title: 'Total Followers' },
+                ]}
+                sortable={[true, true, true, true, true, true, true]}
+                sortDirection={sortDirection}
+                sortColumnIndex={sortColumnIndex}
+                onSort={handleSort}
+                loading={loading}
+                selectable
+                selectedItemsCount={selectedItemsCount}
+                onSelectionChange={handleSelectionChange}
+                promotedBulkActions={[
+                  {
+                    content: 'Delete selected',
+                    onAction: () => setBulkDeleteOpen(true),
+                    destructive: true,
+                  },
+                ]}
+                emptyState={
+                  <EmptyState
+                    heading="No creators yet"
+                    image=""
+                    action={{
+                      content: 'Import CSV',
+                      onAction: () => setImportModalOpen(true),
+                    }}
+                    secondaryAction={{
+                      content: 'Add Creator',
+                      onAction: () => setAddModalOpen(true),
+                    }}
+                  >
+                    <p>
+                      Import the team spreadsheet or add the first creator manually.
+                    </p>
+                  </EmptyState>
+                }
+              >
+                {rowMarkup}
+              </IndexTable>
             </Card>
           </BlockStack>
         </Layout.Section>
@@ -459,6 +511,7 @@ export default function App({ missingConfig = null, localPreview = false }) {
       />
 
       <CreatorDetailModal
+        key={selectedRecord?.id ?? 'closed'}
         open={detailOpen}
         influencer={selectedRecord}
         onClose={() => {
@@ -468,6 +521,36 @@ export default function App({ missingConfig = null, localPreview = false }) {
         onUpdated={handleRecordUpdated}
         onDeleted={handleRecordDeleted}
       />
+
+      <Modal
+        open={bulkDeleteOpen}
+        onClose={() => {
+          if (!bulkDeleting) {
+            setBulkDeleteOpen(false);
+          }
+        }}
+        title="Delete selected creators?"
+        primaryAction={{
+          content: 'Delete',
+          onAction: handleBulkDeleteConfirm,
+          loading: bulkDeleting,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: 'Cancel',
+            onAction: () => setBulkDeleteOpen(false),
+            disabled: bulkDeleting,
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p" variant="bodyMd">
+            Delete {selectedItemsCount === 'All' ? 'all' : selectedItemsCount}{' '}
+            {selectedItemsCount === 1 ? 'creator' : 'creators'}? This action cannot be undone.
+          </Text>
+        </Modal.Section>
+      </Modal>
     </Page>
   );
 }
