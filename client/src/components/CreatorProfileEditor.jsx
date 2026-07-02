@@ -7,15 +7,22 @@ import {
   TextField,
 } from '@shopify/polaris';
 import {
-  STATUS_OPTIONS,
   displayAmbassadorLevel,
+  parseFollowerCount,
+  sanitizeFollowerInput,
+  STATUS_OPTIONS,
 } from '../constants';
+import DateTimeField from './DateTimeField';
+import UrlFieldWithOpen from './UrlFieldWithOpen';
 
-function toInputDate(value) {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 16);
+function followerFieldProps(field, form, onChange) {
+  return {
+    type: 'number',
+    min: 0,
+    value: form[field],
+    autoComplete: 'off',
+    onChange: (value) => onChange({ ...form, [field]: sanitizeFollowerInput(value) }),
+  };
 }
 
 export default function CreatorProfileEditor({ form, onChange, ambassadorLevel }) {
@@ -24,10 +31,10 @@ export default function CreatorProfileEditor({ form, onChange, ambassadorLevel }
   };
 
   const totalFollowers =
-    Number(form.youtube_followers || 0) +
-    Number(form.facebook_followers || 0) +
-    Number(form.instagram_followers || 0) +
-    Number(form.tiktok_followers || 0);
+    parseFollowerCount(form.youtube_followers) +
+    parseFollowerCount(form.facebook_followers) +
+    parseFollowerCount(form.instagram_followers) +
+    parseFollowerCount(form.tiktok_followers);
 
   return (
     <BlockStack gap="400">
@@ -77,19 +84,17 @@ export default function CreatorProfileEditor({ form, onChange, ambassadorLevel }
         />
 
         <FormLayout.Group>
-          <TextField
+          <DateTimeField
             label="Last Contacted"
-            type="datetime-local"
             value={form.last_contacted_at}
             onChange={updateField('last_contacted_at')}
-            autoComplete="off"
+            helpText="When you last reached out to this creator"
           />
-          <TextField
+          <DateTimeField
             label="Next Follow-up"
-            type="datetime-local"
             value={form.next_followup_at}
             onChange={updateField('next_followup_at')}
-            autoComplete="off"
+            helpText="Used for the Due for follow-up filter (within 7 days)"
           />
         </FormLayout.Group>
       </FormLayout>
@@ -99,34 +104,37 @@ export default function CreatorProfileEditor({ form, onChange, ambassadorLevel }
       <Text as="h3" variant="headingMd">
         Platform Links
       </Text>
+      <Text as="p" tone="subdued" variant="bodySm">
+        Paste a profile URL and click Open to visit the page in a new tab.
+      </Text>
 
       <FormLayout>
         <FormLayout.Group>
-          <TextField
+          <UrlFieldWithOpen
             label="YouTube URL"
             value={form.youtube_url}
             onChange={updateField('youtube_url')}
-            autoComplete="off"
+            placeholder="youtube.com/@channel"
           />
-          <TextField
+          <UrlFieldWithOpen
             label="Instagram URL"
             value={form.instagram_url}
             onChange={updateField('instagram_url')}
-            autoComplete="off"
+            placeholder="instagram.com/username"
           />
         </FormLayout.Group>
         <FormLayout.Group>
-          <TextField
+          <UrlFieldWithOpen
             label="Facebook URL"
             value={form.facebook_url}
             onChange={updateField('facebook_url')}
-            autoComplete="off"
+            placeholder="facebook.com/page"
           />
-          <TextField
+          <UrlFieldWithOpen
             label="TikTok URL"
             value={form.tiktok_url}
             onChange={updateField('tiktok_url')}
-            autoComplete="off"
+            placeholder="tiktok.com/@username"
           />
         </FormLayout.Group>
       </FormLayout>
@@ -147,38 +155,24 @@ export default function CreatorProfileEditor({ form, onChange, ambassadorLevel }
         <FormLayout.Group>
           <TextField
             label="YouTube Followers"
-            type="number"
-            value={form.youtube_followers}
-            onChange={updateField('youtube_followers')}
-            autoComplete="off"
+            {...followerFieldProps('youtube_followers', form, onChange)}
           />
           <TextField
             label="Facebook Followers"
-            type="number"
-            value={form.facebook_followers}
-            onChange={updateField('facebook_followers')}
-            autoComplete="off"
+            {...followerFieldProps('facebook_followers', form, onChange)}
           />
         </FormLayout.Group>
         <FormLayout.Group>
           <TextField
             label="Instagram Followers"
-            type="number"
-            value={form.instagram_followers}
-            onChange={updateField('instagram_followers')}
-            autoComplete="off"
+            {...followerFieldProps('instagram_followers', form, onChange)}
           />
           <TextField
             label="TikTok Followers"
-            type="number"
-            value={form.tiktok_followers}
-            onChange={updateField('tiktok_followers')}
-            autoComplete="off"
+            {...followerFieldProps('tiktok_followers', form, onChange)}
           />
         </FormLayout.Group>
       </FormLayout>
     </BlockStack>
   );
 }
-
-export { toInputDate };

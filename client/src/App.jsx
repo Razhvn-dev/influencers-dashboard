@@ -20,13 +20,14 @@ import {
 import {
   deleteSponsorshipRecord,
   deleteSponsorshipRecords,
-  exportSponsorshipCsv,
+  exportInfluencersXlsx,
   fetchSponsorshipRecords,
   fetchSponsorshipStats,
 } from './api';
 import {
   COMMISSION_FILTER_OPTIONS,
   displayAmbassadorLevel,
+  FOLLOWUP_FILTER_HELP,
   LEVEL_OPTIONS,
   levelTone,
   STATUS_FILTER_OPTIONS,
@@ -220,16 +221,15 @@ export default function App({ missingConfig = null, localPreview = false }) {
 
   const handleExport = async () => {
     try {
-      const csv = await exportSponsorshipCsv(appliedFilters);
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const blob = await exportInfluencersXlsx(appliedFilters);
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'Sponsorship Progress Tracking - Sheet1.csv';
+      link.download = 'influencers.xlsx';
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setError(err.message || 'Failed to export CSV');
+      setError(err.message || 'Failed to export Excel file');
     }
   };
 
@@ -348,7 +348,7 @@ export default function App({ missingConfig = null, localPreview = false }) {
           onAction: () => setImportModalOpen(true),
         },
         {
-          content: 'Export CSV',
+          content: 'Export Excel',
           onAction: handleExport,
           disabled: records.length === 0,
         },
@@ -428,23 +428,23 @@ export default function App({ missingConfig = null, localPreview = false }) {
                     />
                   </Box>
                   <Box paddingBlockStart="600">
-                    <Button
-                      pressed={dueFollowupOnly}
-                      onClick={() => setDueFollowupOnly((current) => !current)}
-                    >
-                      Due for follow-up
-                    </Button>
+                    <BlockStack gap="100">
+                      <Button
+                        pressed={dueFollowupOnly}
+                        onClick={() => setDueFollowupOnly((current) => !current)}
+                      >
+                        Due for follow-up
+                      </Button>
+                      <Text as="p" tone="subdued" variant="bodySm">
+                        {FOLLOWUP_FILTER_HELP}
+                      </Text>
+                    </BlockStack>
                   </Box>
                 </InlineStack>
               </BlockStack>
             </Card>
 
             <Card padding="0">
-              <Box padding="300" paddingBlockEnd="0">
-                <Text as="p" tone="subdued" variant="bodySm">
-                  Click a row to view sponsorship details, monthly progress, and notes.
-                </Text>
-              </Box>
               <IndexTable
                 resourceName={resourceName}
                 itemCount={records.length}

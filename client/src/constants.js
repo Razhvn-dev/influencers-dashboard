@@ -34,6 +34,37 @@ export const COMMISSION_FILTER_OPTIONS = [
   { label: 'NO', value: 'NO' },
 ];
 
+export const FOLLOWUP_FILTER_HELP =
+  'Shows creators with Next Follow-up set within the next 7 days, including overdue dates.';
+
+export function normalizeExternalUrl(value) {
+  const trimmed = String(value || '').trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+export function openExternalUrl(value) {
+  const url = normalizeExternalUrl(value);
+  if (!url) return false;
+  window.open(url, '_blank', 'noopener,noreferrer');
+  return true;
+}
+
+export function sanitizeFollowerInput(value) {
+  if (value === '' || value == null) return '';
+
+  const parsed = Number.parseInt(String(value), 10);
+  if (Number.isNaN(parsed)) return '';
+  return String(Math.max(0, parsed));
+}
+
+export function parseFollowerCount(value) {
+  const parsed = Number.parseInt(String(value ?? ''), 10);
+  if (Number.isNaN(parsed)) return 0;
+  return Math.max(0, parsed);
+}
+
 export const MONTHLY_PERIOD_LABELS = [
   'Period 1',
   'Period 2',
@@ -152,10 +183,10 @@ export function buildSavePayload(form) {
     facebook_url: form.facebook_url.trim() || null,
     instagram_url: form.instagram_url.trim() || null,
     tiktok_url: form.tiktok_url.trim() || null,
-    youtube_followers: Number(form.youtube_followers) || 0,
-    facebook_followers: Number(form.facebook_followers) || 0,
-    instagram_followers: Number(form.instagram_followers) || 0,
-    tiktok_followers: Number(form.tiktok_followers) || 0,
+    youtube_followers: parseFollowerCount(form.youtube_followers),
+    facebook_followers: parseFollowerCount(form.facebook_followers),
+    instagram_followers: parseFollowerCount(form.instagram_followers),
+    tiktok_followers: parseFollowerCount(form.tiktok_followers),
     contract_status: form.contract_status.trim() || null,
     last_contacted_at: form.last_contacted_at
       ? new Date(form.last_contacted_at).toISOString()
@@ -174,11 +205,11 @@ export function buildSavePayload(form) {
 
 export function previewAmbassadorLevel(form) {
   const total =
-    Number(form.youtube_followers || 0) +
-    Number(form.facebook_followers || 0) +
-    Number(form.instagram_followers || 0) +
-    Number(form.tiktok_followers || 0);
-  const youtube = Number(form.youtube_followers || 0);
+    parseFollowerCount(form.youtube_followers) +
+    parseFollowerCount(form.facebook_followers) +
+    parseFollowerCount(form.instagram_followers) +
+    parseFollowerCount(form.tiktok_followers);
+  const youtube = parseFollowerCount(form.youtube_followers);
 
   if (total > 500000 && youtube > 100000) return 'Level 3';
   if (total > 100000) return 'Level 2';

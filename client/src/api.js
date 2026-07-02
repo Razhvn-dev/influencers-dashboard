@@ -135,6 +135,31 @@ export async function importSponsorshipCsv(csvText) {
   return parseResponse(response);
 }
 
+export async function exportInfluencersXlsx(filters = {}) {
+  const params = buildFilterParams(filters);
+  const query = params.toString();
+  const url = query ? `${API_BASE}/export/xlsx?${query}` : `${API_BASE}/export/xlsx`;
+  const response = await authFetch(url);
+
+  if (!response.ok) {
+    const text = await response.text();
+    let message = 'Failed to export Excel file';
+
+    try {
+      const data = JSON.parse(text);
+      message = data.message || message;
+    } catch {
+      if (text.trim()) {
+        message = text.trim();
+      }
+    }
+
+    throw new Error(message);
+  }
+
+  return response.blob();
+}
+
 export async function exportSponsorshipCsv(filters = {}) {
   const params = buildFilterParams(filters);
   const query = params.toString();

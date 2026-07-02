@@ -6,6 +6,8 @@ const {
   emptyMonthlyProgress,
   cleanCell,
 } = require('../lib/sponsorshipCsv');
+const { exportInfluencersCsv } = require('../lib/influencersCsv');
+const { exportInfluencersXlsx } = require('../lib/influencersXlsx');
 const {
   mergeProfileFields,
   normalizeProfilePayload,
@@ -362,6 +364,43 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/export/xlsx', async (req, res) => {
+  try {
+    const shop = getShop(res);
+    const { conditions, values } = buildListFilters(shop, req.query);
+    const orderClause = buildOrderClause(req.query);
+
+    const result = await pool.query(
+      `
+        SELECT id
+        FROM influencers i
+        WHERE ${conditions.join(' AND ')}
+        ${orderClause}
+      `,
+      values
+    );
+
+    const records = await Promise.all(
+      result.rows.map((row) => fetchInfluencerRecord(row.id, shop))
+    );
+
+    const buffer = await exportInfluencersXlsx(records);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    );
+    res.setHeader('Content-Disposition', 'attachment; filename="influencers.xlsx"');
+    res.send(Buffer.from(buffer));
+  } catch (err) {
+    console.error('Failed to export influencers XLSX:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export influencers Excel file',
+    });
+  }
+});
+
 router.get('/export/csv', async (req, res) => {
   try {
     const shop = getShop(res);
@@ -382,12 +421,15 @@ router.get('/export/csv', async (req, res) => {
       result.rows.map((row) => fetchInfluencerRecord(row.id, shop))
     );
 
-    const csv = exportSponsorshipCsv(records);
+    const useSpreadsheetFormat = req.query.format === 'spreadsheet';
+    const csv = useSpreadsheetFormat
+      ? exportSponsorshipCsv(records)
+      : exportInfluencersCsv(records);
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader(
       'Content-Disposition',
-      'attachment; filename="sponsorship-progress-tracking.csv"'
+      `attachment; filename="${useSpreadsheetFormat ? 'sponsorship-progress-tracking' : 'influencers'}.csv"`
     );
     res.send(csv);
   } catch (err) {
