@@ -11,7 +11,10 @@ echo "[prebuild] Installing dependencies..."
 npm install --omit=dev
 npm install --prefix client --include=dev
 
-echo "[prebuild] Building frontend..."
+echo "[prebuild] Building frontend (production — LOCAL_DEV disabled)..."
+unset LOCAL_DEV
+export LOCAL_DEV=
+rm -rf client/dist
 npm run build
 
 echo "[prebuild] Done. client/dist is ready."

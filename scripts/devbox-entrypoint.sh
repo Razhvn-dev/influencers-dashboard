@@ -16,20 +16,17 @@ cd "$APP_DIR"
 echo "[entrypoint] Installing backend dependencies..."
 npm install --omit=dev
 
-if [ -f client/dist/index.html ]; then
-  echo "[entrypoint] Using pre-built frontend from client/dist"
-else
-  echo "[entrypoint] Installing frontend dependencies (with dev tools for Vite build)..."
-  npm install --prefix client --include=dev
+echo "[entrypoint] Installing frontend dependencies (with dev tools for Vite build)..."
+npm install --prefix client --include=dev
 
-  echo "[entrypoint] Building React frontend..."
-  if [ -z "$SHOPIFY_API_KEY" ]; then
-    echo "[entrypoint] WARNING: SHOPIFY_API_KEY is not set — embed App Bridge meta tag will be empty"
-  fi
-  unset LOCAL_DEV
-  export LOCAL_DEV=
-  npm run build
+echo "[entrypoint] Building React frontend..."
+if [ -z "$SHOPIFY_API_KEY" ]; then
+  echo "[entrypoint] WARNING: SHOPIFY_API_KEY is not set — App Bridge meta tag will be empty"
 fi
+unset LOCAL_DEV
+export LOCAL_DEV=
+rm -rf client/dist
+npm run build
 
 echo "[entrypoint] Starting Influencer Dashboard on port 3000..."
 exec npm start
