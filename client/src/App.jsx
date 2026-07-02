@@ -19,6 +19,30 @@ import { fetchInfluencers } from './api';
 import AddCreatorModal from './components/AddCreatorModal';
 import CreatorDetailModal from './components/CreatorDetailModal';
 
+function MissingConfigPage({ missingConfig }) {
+  const title =
+    missingConfig === 'apiKey'
+      ? 'Shopify API key is missing'
+      : 'Open this app from Shopify Admin';
+
+  const message =
+    missingConfig === 'apiKey'
+      ? 'Set SHOPIFY_API_KEY in your deployment environment and rebuild the frontend.'
+      : 'Install the app on your Shopify store, then open it from Apps in the Shopify admin.';
+
+  return (
+    <Page title="Influencer Dashboard">
+      <Layout>
+        <Layout.Section>
+          <Banner tone="warning" title={title}>
+            <p>{message}</p>
+          </Banner>
+        </Layout.Section>
+      </Layout>
+    </Page>
+  );
+}
+
 const STATUS_OPTIONS = [
   { label: 'All statuses', value: '' },
   { label: 'Contacted', value: 'Contacted' },
@@ -49,7 +73,7 @@ function formatNumber(value) {
   return Number(value || 0).toLocaleString('en-US');
 }
 
-export default function App() {
+export default function App({ embedded = true, missingConfig = null }) {
   const [influencers, setInfluencers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -110,6 +134,10 @@ export default function App() {
     );
     setSelectedInfluencer(updated);
   };
+
+  if (missingConfig) {
+    return <MissingConfigPage missingConfig={missingConfig} />;
+  }
 
   const rowMarkup = influencers.map((influencer, index) => (
     <IndexTable.Row

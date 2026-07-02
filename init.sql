@@ -1,6 +1,7 @@
 -- Influencer Dashboard: core CRM table for managing creator partnerships
 CREATE TABLE influencers (
     id                      BIGSERIAL       PRIMARY KEY,                          -- Unique auto-increment identifier
+    shop                    VARCHAR(255)    NOT NULL,                             -- Shopify shop domain (e.g. mystore.myshopify.com)
     name                    VARCHAR(255)    NOT NULL,                             -- Influencer full name
     company_name            VARCHAR(255),                                        -- Company or channel name
     email                   VARCHAR(255),                                        -- Primary contact email
@@ -23,7 +24,11 @@ CREATE TABLE influencers (
     next_followup_at        TIMESTAMPTZ                                          -- Scheduled timestamp for the next follow-up
 );
 
+CREATE INDEX idx_influencers_shop ON influencers (shop);
+
 COMMENT ON TABLE influencers IS 'CRM records for Shopify influencer / creator partnerships';
+
+COMMENT ON COLUMN influencers.shop IS 'Shopify shop domain that owns this record';
 
 COMMENT ON COLUMN influencers.id IS 'Unique auto-increment identifier';
 COMMENT ON COLUMN influencers.name IS 'Influencer full name';

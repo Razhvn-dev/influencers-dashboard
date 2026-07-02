@@ -7,6 +7,10 @@ COPY client/package.json client/package-lock.json ./
 RUN npm ci
 
 COPY client/ ./
+
+ARG SHOPIFY_API_KEY
+ENV SHOPIFY_API_KEY=$SHOPIFY_API_KEY
+
 RUN npm run build
 
 # Stage 2: Production runtime (Express API + static frontend)
@@ -19,7 +23,8 @@ ENV NODE_ENV=production
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 
-COPY server.js db.js ./
+COPY server.js db.js shopify.js ./
+COPY routes ./routes
 COPY --from=client-builder /app/client/dist ./client/dist
 
 EXPOSE 3000

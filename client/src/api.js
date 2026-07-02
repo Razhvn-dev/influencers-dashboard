@@ -1,5 +1,32 @@
 const API_BASE = '/api/influencers';
 
+let sessionTokenFetcher = null;
+
+export function setSessionTokenFetcher(fetcher) {
+  sessionTokenFetcher = fetcher;
+}
+
+async function authFetch(url, options = {}) {
+  const headers = new Headers(options.headers || {});
+
+  if (!headers.has('Content-Type') && options.body) {
+    headers.set('Content-Type', 'application/json');
+  }
+
+  if (sessionTokenFetcher) {
+    const token = await sessionTokenFetcher();
+
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+  });
+}
+
 async function parseResponse(response) {
   const data = await response.json();
 
@@ -20,23 +47,22 @@ export async function fetchInfluencers(filters = {}) {
 
   const query = params.toString();
   const url = query ? `${API_BASE}?${query}` : API_BASE;
-  const response = await fetch(url);
+  const response = await authFetch(url);
   const data = await parseResponse(response);
 
   return data.data;
 }
 
 export async function fetchInfluencer(id) {
-  const response = await fetch(`${API_BASE}/${id}`);
+  const response = await authFetch(`${API_BASE}/${id}`);
   const data = await parseResponse(response);
 
   return data.data;
 }
 
 export async function createInfluencer(payload) {
-  const response = await fetch(API_BASE, {
+  const response = await authFetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   const data = await parseResponse(response);
@@ -45,9 +71,8 @@ export async function createInfluencer(payload) {
 }
 
 export async function updateInfluencer(id, payload) {
-  const response = await fetch(`${API_BASE}/${id}`, {
+  const response = await authFetch(`${API_BASE}/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   const data = await parseResponse(response);
