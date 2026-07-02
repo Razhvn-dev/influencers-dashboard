@@ -10,6 +10,14 @@ function getHostName() {
   return raw.replace(/^https?:\/\//, '').replace(/\/$/, '');
 }
 
+function getHostScheme() {
+  const raw = process.env.HOST || process.env.SHOPIFY_APP_URL || '';
+  if (raw.startsWith('http://')) {
+    return 'http';
+  }
+  return 'https';
+}
+
 function getDatabaseUrl() {
   const user = encodeURIComponent(process.env.DB_USER);
   const password = encodeURIComponent(process.env.DB_PASSWORD);
@@ -24,11 +32,12 @@ const shopify = shopifyApp({
   api: {
     apiKey: process.env.SHOPIFY_API_KEY,
     apiSecretKey: process.env.SHOPIFY_API_SECRET,
-    scopes: (process.env.SHOPIFY_SCOPES || 'read_products,read_orders,read_customers')
+    scopes: (process.env.SHOPIFY_SCOPES || process.env.SCOPES || 'read_products,read_orders,read_customers')
       .split(',')
       .map((scope) => scope.trim())
       .filter(Boolean),
     hostName: getHostName(),
+    hostScheme: getHostScheme(),
     apiVersion: ApiVersion.October24,
     isEmbeddedApp: true,
   },

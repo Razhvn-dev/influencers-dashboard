@@ -5,6 +5,7 @@ const fs = require('fs');
 const { testConnection } = require('./db');
 const shopify = require('./shopify');
 const influencerRoutes = require('./routes/influencers');
+const { renderExitIframePage } = require('./lib/exitiframe');
 
 const app = express();
 const PORT = 3000;
@@ -23,6 +24,13 @@ app.get(shopify.config.auth.callbackPath, authCallback, redirectAfterAuth);
 
 app.get('/auth', authBegin);
 app.get('/auth/callback', authCallback, redirectAfterAuth);
+
+app.get(shopify.config.exitIframePath, (req, res) => {
+  res
+    .status(200)
+    .set('Content-Type', 'text/html')
+    .send(renderExitIframePage(process.env.SHOPIFY_API_KEY || ''));
+});
 
 app.post(
   shopify.config.webhooks.path,
