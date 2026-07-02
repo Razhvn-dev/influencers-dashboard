@@ -55,9 +55,11 @@ app.use(
 );
 
 if (fs.existsSync(clientDist)) {
-  app.use(express.static(clientDist));
+  // Do not serve index.html from static middleware — ensureInstalledOnShop must
+  // run first so the install/OAuth flow is not skipped on the first request to /.
+  app.use(express.static(clientDist, { index: false }));
 
-  app.get(/^(?!\/api).*/, shopify.ensureInstalledOnShop(), (_req, res) => {
+  app.use('/*', shopify.ensureInstalledOnShop(), (_req, res) => {
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 } else {

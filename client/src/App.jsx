@@ -106,8 +106,12 @@ export default function App({ embedded = true, missingConfig = null }) {
   }, [appliedFilters]);
 
   useEffect(() => {
+    if (missingConfig) {
+      return;
+    }
+
     loadInfluencers();
-  }, [loadInfluencers]);
+  }, [loadInfluencers, missingConfig]);
 
   const applyFilters = () => {
     setAppliedFilters({
