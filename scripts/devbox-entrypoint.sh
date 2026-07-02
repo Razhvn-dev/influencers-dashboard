@@ -16,8 +16,8 @@ cd "$APP_DIR"
 echo "[entrypoint] Installing backend dependencies..."
 npm install --omit=dev
 
-echo "[entrypoint] Installing frontend dependencies..."
-npm install --prefix client
+echo "[entrypoint] Installing frontend dependencies (with dev tools for Vite build)..."
+npm install --prefix client --include=dev
 
 echo "[entrypoint] Building React frontend..."
 npm run build
