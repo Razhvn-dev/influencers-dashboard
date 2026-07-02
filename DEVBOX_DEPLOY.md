@@ -10,10 +10,22 @@ Production URL (App Launchpad): `https://nsorqcnhzezd.sealoshzh.site`
 
 ### 1. Pull latest code in DevBox terminal
 
+Your DevBox layout:
+
+```text
+~/project/
+  entrypoint.sh              ← DevBox release startup (keep at this level)
+  Influencers_Dashboard/     ← GitHub repo (run git commands here)
+```
+
 ```bash
-cd ~/project
+cd ~/project/Influencers_Dashboard
 git pull origin main
 chmod +x entrypoint.sh
+
+# Update DevBox root entrypoint (only needed once, or after script changes)
+cp scripts/devbox-entrypoint.sh ../entrypoint.sh
+chmod +x ../entrypoint.sh
 ```
 
 ### 2. Test in DevBox (optional)
