@@ -40,7 +40,7 @@ Open your app in [Shopify Partners](https://partners.shopify.com) and set:
 | Setting | Value |
 |---------|-------|
 | App URL | `https://nsorqcnhzezd.sealoshzh.site` |
-| Allowed redirection URL(s) | `https://nsorqcnhzezd.sealoshzh.site/auth/callback` |
+| Allowed redirection URL(s) | `https://nsorqcnhzezd.sealoshzh.site/api/auth/callback` |
 | Embedded app | **Enabled** |
 | App type | Custom app (internal use) |
 
@@ -80,7 +80,7 @@ After testing:
 Replace placeholders and open in a browser while logged into the target store admin:
 
 ```
-https://YOUR-STORE.myshopify.com/admin/oauth/authorize?client_id=YOUR_SHOPIFY_API_KEY&scope=read_products,read_orders,read_customers&redirect_uri=https://nsorqcnhzezd.sealoshzh.site/auth/callback
+https://YOUR-STORE.myshopify.com/admin/oauth/authorize?client_id=YOUR_SHOPIFY_API_KEY&scope=read_products,read_orders,read_customers&redirect_uri=https://nsorqcnhzezd.sealoshzh.site/api/auth/callback
 ```
 
 ## Notes

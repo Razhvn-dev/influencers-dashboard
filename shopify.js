@@ -33,8 +33,8 @@ const shopify = shopifyApp({
     isEmbeddedApp: true,
   },
   auth: {
-    path: '/auth',
-    callbackPath: '/auth/callback',
+    path: '/api/auth',
+    callbackPath: '/api/auth/callback',
   },
   webhooks: {
     path: '/webhooks',
