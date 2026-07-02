@@ -9,6 +9,11 @@ CREATE TABLE influencers (
     status                  VARCHAR(50)     NOT NULL DEFAULT 'Contacted',         -- Partnership status (e.g. Contacted, Approved, Partnered)
     notes                   TEXT,                                                -- Internal notes and communication history
 
+    youtube_url             VARCHAR(500),                                        -- YouTube channel or profile URL
+    facebook_url            VARCHAR(500),                                        -- Facebook page or profile URL
+    instagram_url           VARCHAR(500),                                        -- Instagram profile URL
+    tiktok_url              VARCHAR(500),                                        -- TikTok profile URL
+
     youtube_followers       INTEGER         NOT NULL DEFAULT 0,                   -- YouTube subscriber count
     facebook_followers      INTEGER         NOT NULL DEFAULT 0,                   -- Facebook follower count
     instagram_followers     INTEGER         NOT NULL DEFAULT 0,                   -- Instagram follower count
@@ -37,6 +42,10 @@ COMMENT ON COLUMN influencers.email IS 'Primary contact email';
 COMMENT ON COLUMN influencers.region IS 'Country or geographic region';
 COMMENT ON COLUMN influencers.status IS 'Partnership status (e.g. Contacted, Approved, Partnered)';
 COMMENT ON COLUMN influencers.notes IS 'Internal notes and communication history';
+COMMENT ON COLUMN influencers.youtube_url IS 'YouTube channel or profile URL';
+COMMENT ON COLUMN influencers.facebook_url IS 'Facebook page or profile URL';
+COMMENT ON COLUMN influencers.instagram_url IS 'Instagram profile URL';
+COMMENT ON COLUMN influencers.tiktok_url IS 'TikTok profile URL';
 COMMENT ON COLUMN influencers.youtube_followers IS 'YouTube subscriber count';
 COMMENT ON COLUMN influencers.facebook_followers IS 'Facebook follower count';
 COMMENT ON COLUMN influencers.instagram_followers IS 'Instagram follower count';

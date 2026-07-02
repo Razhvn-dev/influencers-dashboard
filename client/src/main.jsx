@@ -38,9 +38,26 @@ function AuthenticatedApp({ children }) {
   );
 }
 
+function LocalDevApp() {
+  useEffect(() => {
+    setSessionTokenFetcher(async () => null);
+  }, []);
+
+  return <App embedded={false} localPreview />;
+}
+
 function ShopifyAppRoot() {
   const host = useMemo(() => getHostFromUrl(), []);
   const apiKey = import.meta.env.VITE_SHOPIFY_API_KEY;
+  const isLocalDev = import.meta.env.VITE_LOCAL_DEV === 'true';
+
+  if (isLocalDev) {
+    return (
+      <PolarisAppProvider i18n={enTranslations}>
+        <LocalDevApp />
+      </PolarisAppProvider>
+    );
+  }
 
   if (!apiKey) {
     return (

@@ -9,6 +9,8 @@ export default defineConfig(({ mode }) => {
     rootEnv.SHOPIFY_API_KEY ||
     process.env.SHOPIFY_API_KEY ||
     '';
+  const localDev =
+    env.LOCAL_DEV || rootEnv.LOCAL_DEV || process.env.LOCAL_DEV || '';
 
   return {
     plugins: [
@@ -22,6 +24,7 @@ export default defineConfig(({ mode }) => {
     ],
     define: {
       'import.meta.env.VITE_SHOPIFY_API_KEY': JSON.stringify(shopifyApiKey),
+      'import.meta.env.VITE_LOCAL_DEV': JSON.stringify(localDev),
     },
     server: {
       port: 5173,

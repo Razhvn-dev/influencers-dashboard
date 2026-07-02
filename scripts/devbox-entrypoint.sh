@@ -23,6 +23,11 @@ else
   npm install --prefix client --include=dev
 
   echo "[entrypoint] Building React frontend..."
+  if [ -z "$SHOPIFY_API_KEY" ]; then
+    echo "[entrypoint] WARNING: SHOPIFY_API_KEY is not set — embed App Bridge meta tag will be empty"
+  fi
+  unset LOCAL_DEV
+  export LOCAL_DEV=
   npm run build
 fi
 

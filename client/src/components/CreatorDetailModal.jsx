@@ -1,77 +1,46 @@
 import { useEffect, useState } from 'react';
 import {
-  Badge,
   Banner,
   BlockStack,
   Divider,
   FormLayout,
-  InlineStack,
   Modal,
   Select,
   Text,
   TextField,
 } from '@shopify/polaris';
-import { updateInfluencer } from '../api';
+import { updateSponsorshipRecord } from '../api';
+import {
+  buildFormStateFromRecord,
+  buildSavePayload,
+  COMMISSION_OPTIONS,
+  previewAmbassadorLevel,
+} from '../constants';
+import CreatorProfileEditor from './CreatorProfileEditor';
+import MonthlyProgressEditor from './MonthlyProgressEditor';
 
-const STATUS_OPTIONS = [
-  { label: 'Contacted', value: 'Contacted' },
-  { label: 'Approved', value: 'Approved' },
-  { label: 'Partnered', value: 'Partnered' },
-];
-
-function toInputDate(value) {
-  if (!value) return '';
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-
-  return date.toISOString().slice(0, 16);
-}
-
-function fromInputDate(value) {
-  if (!value) return null;
-  return new Date(value).toISOString();
-}
-
-function buildFormState(influencer) {
-  return {
-    name: influencer.name || '',
-    company_name: influencer.company_name || '',
-    email: influencer.email || '',
-    region: influencer.region || '',
-    status: influencer.status || 'Contacted',
-    notes: influencer.notes || '',
-    youtube_followers: String(influencer.youtube_followers ?? 0),
-    facebook_followers: String(influencer.facebook_followers ?? 0),
-    instagram_followers: String(influencer.instagram_followers ?? 0),
-    tiktok_followers: String(influencer.tiktok_followers ?? 0),
-    contract_status: influencer.contract_status || '',
-    products_requested: influencer.products_requested || '',
-    deliverables: influencer.deliverables || '',
-    last_contacted_at: toInputDate(influencer.last_contacted_at),
-    next_followup_at: toInputDate(influencer.next_followup_at),
-  };
-}
-
-function formatNumber(value) {
-  return Number(value || 0).toLocaleString('en-US');
-}
-
-export default function CreatorDetailModal({ open, influencer, onClose, onUpdated }) {
+export default function CreatorDetailModal({
+  open,
+  influencer: record,
+  onClose,
+  onUpdated,
+  onDeleted,
+}) {
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    if (influencer) {
-      setForm(buildFormState(influencer));
+    if (record) {
+      setForm(buildFormStateFromRecord(record));
       setError('');
       setSuccess('');
     }
-  }, [influencer]);
+  }, [record]);
 
-  if (!influencer || !form) {
+  if (!record || !form) {
     return null;
   }
 
@@ -85,31 +54,34 @@ export default function CreatorDetailModal({ open, influencer, onClose, onUpdate
     setSuccess('');
 
     try {
-      const updated = await updateInfluencer(influencer.id, {
-        name: form.name.trim(),
-        company_name: form.company_name.trim() || null,
-        email: form.email.trim() || null,
-        region: form.region.trim() || null,
-        status: form.status,
-        notes: form.notes.trim() || null,
-        youtube_followers: Number(form.youtube_followers) || 0,
-        facebook_followers: Number(form.facebook_followers) || 0,
-        instagram_followers: Number(form.instagram_followers) || 0,
-        tiktok_followers: Number(form.tiktok_followers) || 0,
-        contract_status: form.contract_status.trim() || null,
-        products_requested: form.products_requested.trim() || null,
-        deliverables: form.deliverables.trim() || null,
-        last_contacted_at: fromInputDate(form.last_contacted_at),
-        next_followup_at: fromInputDate(form.next_followup_at),
-      });
-
+      const updated = await updateSponsorshipRecord(record.id, buildSavePayload(form));
       onUpdated(updated);
-      setForm(buildFormState(updated));
-      setSuccess('Creator profile updated successfully.');
+      setForm(buildFormStateFromRecord(updated));
+      setSuccess('Creator record updated successfully.');
     } catch (err) {
-      setError(err.message || 'Failed to update creator');
+      setError(err.message || 'Failed to update record');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      `Delete ${record.name}? This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleting(true);
+    setError('');
+
+    try {
+      await onDeleted(record.id);
+    } catch (err) {
+      setError(err.message || 'Failed to delete record');
+      setDeleting(false);
     }
   };
 
@@ -117,14 +89,23 @@ export default function CreatorDetailModal({ open, influencer, onClose, onUpdate
     <Modal
       open={open}
       onClose={onClose}
-      title={influencer.name}
+      title={record.name}
       size="large"
       primaryAction={{
         content: 'Save Changes',
         onAction: handleSave,
         loading: saving,
+        disabled: deleting,
       }}
-      secondaryActions={[{ content: 'Close', onAction: onClose }]}
+      secondaryActions={[
+        { content: 'Close', onAction: onClose, disabled: deleting },
+        {
+          content: 'Delete Creator',
+          onAction: handleDelete,
+          loading: deleting,
+          destructive: true,
+        },
+      ]}
     >
       <Modal.Section>
         <BlockStack gap="500">
@@ -140,158 +121,75 @@ export default function CreatorDetailModal({ open, influencer, onClose, onUpdate
             </Banner>
           ) : null}
 
-          <InlineStack gap="200">
-            <Badge tone="info">{influencer.ambassador_level || 'Level 1'}</Badge>
-            <Badge>{form.status}</Badge>
-            <Text as="span" tone="subdued">
-              Total followers:{' '}
-              {formatNumber(
-                Number(form.youtube_followers || 0) +
-                  Number(form.facebook_followers || 0) +
-                  Number(form.instagram_followers || 0) +
-                  Number(form.tiktok_followers || 0)
-              )}
-            </Text>
-          </InlineStack>
+          <Text as="h3" variant="headingMd">
+            Sponsorship Details
+          </Text>
 
           <FormLayout>
+            <TextField
+              label="Name"
+              value={form.name}
+              onChange={updateField('name')}
+              autoComplete="name"
+              requiredIndicator
+            />
+            <TextField
+              label="Channel"
+              value={form.channel}
+              onChange={updateField('channel')}
+              autoComplete="off"
+            />
+            <TextField
+              label="Sponsored Product(s)"
+              value={form.sponsored_products}
+              onChange={updateField('sponsored_products')}
+              multiline={3}
+              autoComplete="off"
+            />
             <FormLayout.Group>
               <TextField
-                label="Name"
-                value={form.name}
-                onChange={updateField('name')}
-                autoComplete="name"
-                requiredIndicator
-              />
-              <TextField
-                label="Company / Channel"
-                value={form.company_name}
-                onChange={updateField('company_name')}
-                autoComplete="organization"
-              />
-            </FormLayout.Group>
-
-            <FormLayout.Group>
-              <TextField
-                label="Email"
-                type="email"
-                value={form.email}
-                onChange={updateField('email')}
-                autoComplete="email"
-              />
-              <TextField
-                label="Region"
-                value={form.region}
-                onChange={updateField('region')}
+                label="Affiliate Code"
+                value={form.affiliate_code}
+                onChange={updateField('affiliate_code')}
                 autoComplete="off"
               />
+              <Select
+                label="Commission"
+                options={COMMISSION_OPTIONS}
+                value={form.commission}
+                onChange={updateField('commission')}
+              />
             </FormLayout.Group>
-
-            <Select
-              label="Status"
-              options={STATUS_OPTIONS}
-              value={form.status}
-              onChange={updateField('status')}
+            <TextField
+              label="Order #'s"
+              value={form.order_numbers}
+              onChange={updateField('order_numbers')}
+              multiline={2}
+              autoComplete="off"
+            />
+            <TextField
+              label="Required Deliverables per contract"
+              value={form.required_deliverables}
+              onChange={updateField('required_deliverables')}
+              multiline={3}
+              autoComplete="off"
             />
           </FormLayout>
 
           <Divider />
 
-          <Text as="h3" variant="headingMd">
-            Platform Followers
-          </Text>
-
-          <FormLayout>
-            <FormLayout.Group>
-              <TextField
-                label="YouTube"
-                type="number"
-                value={form.youtube_followers}
-                onChange={updateField('youtube_followers')}
-                autoComplete="off"
-              />
-              <TextField
-                label="Facebook"
-                type="number"
-                value={form.facebook_followers}
-                onChange={updateField('facebook_followers')}
-                autoComplete="off"
-              />
-            </FormLayout.Group>
-            <FormLayout.Group>
-              <TextField
-                label="Instagram"
-                type="number"
-                value={form.instagram_followers}
-                onChange={updateField('instagram_followers')}
-                autoComplete="off"
-              />
-              <TextField
-                label="TikTok"
-                type="number"
-                value={form.tiktok_followers}
-                onChange={updateField('tiktok_followers')}
-                autoComplete="off"
-              />
-            </FormLayout.Group>
-          </FormLayout>
+          <CreatorProfileEditor
+            form={form}
+            onChange={setForm}
+            ambassadorLevel={previewAmbassadorLevel(form)}
+          />
 
           <Divider />
 
-          <Text as="h3" variant="headingMd">
-            CRM Follow-up
-          </Text>
-
-          <FormLayout>
-            <TextField
-              label="Notes"
-              value={form.notes}
-              onChange={updateField('notes')}
-              multiline={4}
-              autoComplete="off"
-              helpText="Communication history and internal notes"
-            />
-
-            <FormLayout.Group>
-              <TextField
-                label="Last Contacted"
-                type="datetime-local"
-                value={form.last_contacted_at}
-                onChange={updateField('last_contacted_at')}
-                autoComplete="off"
-              />
-              <TextField
-                label="Next Follow-up"
-                type="datetime-local"
-                value={form.next_followup_at}
-                onChange={updateField('next_followup_at')}
-                autoComplete="off"
-              />
-            </FormLayout.Group>
-
-            <TextField
-              label="Contract Status"
-              value={form.contract_status}
-              onChange={updateField('contract_status')}
-              autoComplete="off"
-            />
-
-            <TextField
-              label="Products Requested"
-              value={form.products_requested}
-              onChange={updateField('products_requested')}
-              multiline={3}
-              autoComplete="off"
-            />
-
-            <TextField
-              label="Deliverables"
-              value={form.deliverables}
-              onChange={updateField('deliverables')}
-              multiline={3}
-              autoComplete="off"
-            />
-          </FormLayout>
+          <MonthlyProgressEditor
+            periods={form.monthly_progress}
+            onChange={(monthly_progress) => setForm((current) => ({ ...current, monthly_progress }))}
+          />
         </BlockStack>
       </Modal.Section>
     </Modal>

@@ -10,6 +10,16 @@ const { renderExitIframePage } = require('./lib/exitiframe');
 const app = express();
 const PORT = 3000;
 const clientDist = path.join(__dirname, 'client', 'dist');
+const isLocalDev = process.env.LOCAL_DEV === 'true';
+
+function injectLocalDevSession(_req, res, next) {
+  res.locals.shopify = {
+    session: {
+      shop: process.env.LOCAL_DEV_SHOP || 'acesefi.myshopify.com',
+    },
+  };
+  next();
+}
 
 const authBegin = shopify.auth.begin();
 const authCallback = shopify.auth.callback();
@@ -48,11 +58,15 @@ app.get('/api/config', (_req, res) => {
   });
 });
 
-app.use(
-  '/api/influencers',
-  shopify.validateAuthenticatedSession(),
-  influencerRoutes
-);
+if (isLocalDev) {
+  app.use('/api/influencers', injectLocalDevSession, influencerRoutes);
+} else {
+  app.use(
+    '/api/influencers',
+    shopify.validateAuthenticatedSession(),
+    influencerRoutes
+  );
+}
 
 if (fs.existsSync(clientDist)) {
   // Do not serve index.html from static middleware — ensureInstalledOnShop must
@@ -77,6 +91,13 @@ async function startServer() {
       console.log(
         `Shopify auth callback: https://${shopify.api.config.hostName}${shopify.config.auth.callbackPath}`
       );
+
+      if (isLocalDev) {
+        console.log(
+          `LOCAL_DEV enabled — API uses shop: ${process.env.LOCAL_DEV_SHOP || 'acesefi.myshopify.com'}`
+        );
+        console.log('Open http://localhost:5173 in your browser to preview the app.');
+      }
     });
   } catch (err) {
     console.error('Failed to start server:', err.message);

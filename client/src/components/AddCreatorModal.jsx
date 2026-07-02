@@ -2,33 +2,25 @@ import { useState } from 'react';
 import {
   Banner,
   BlockStack,
+  Divider,
   FormLayout,
   Modal,
   Select,
+  Text,
   TextField,
 } from '@shopify/polaris';
-import { createInfluencer } from '../api';
-
-const STATUS_OPTIONS = [
-  { label: 'Contacted', value: 'Contacted' },
-  { label: 'Approved', value: 'Approved' },
-  { label: 'Partnered', value: 'Partnered' },
-];
-
-const INITIAL_FORM = {
-  name: '',
-  company_name: '',
-  email: '',
-  region: '',
-  status: 'Contacted',
-  youtube_followers: '0',
-  facebook_followers: '0',
-  instagram_followers: '0',
-  tiktok_followers: '0',
-};
+import { createSponsorshipRecord } from '../api';
+import {
+  buildEmptyCreatorForm,
+  buildSavePayload,
+  COMMISSION_OPTIONS,
+  previewAmbassadorLevel,
+} from '../constants';
+import CreatorProfileEditor from './CreatorProfileEditor';
+import MonthlyProgressEditor from './MonthlyProgressEditor';
 
 export default function AddCreatorModal({ open, onClose, onCreated }) {
-  const [form, setForm] = useState(INITIAL_FORM);
+  const [form, setForm] = useState(buildEmptyCreatorForm());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,7 +29,7 @@ export default function AddCreatorModal({ open, onClose, onCreated }) {
   };
 
   const handleClose = () => {
-    setForm(INITIAL_FORM);
+    setForm(buildEmptyCreatorForm());
     setError('');
     onClose();
   };
@@ -47,22 +39,11 @@ export default function AddCreatorModal({ open, onClose, onCreated }) {
     setError('');
 
     try {
-      await createInfluencer({
-        name: form.name.trim(),
-        company_name: form.company_name.trim() || null,
-        email: form.email.trim() || null,
-        region: form.region.trim() || null,
-        status: form.status,
-        youtube_followers: Number(form.youtube_followers) || 0,
-        facebook_followers: Number(form.facebook_followers) || 0,
-        instagram_followers: Number(form.instagram_followers) || 0,
-        tiktok_followers: Number(form.tiktok_followers) || 0,
-      });
-
-      setForm(INITIAL_FORM);
+      await createSponsorshipRecord(buildSavePayload(form));
+      setForm(buildEmptyCreatorForm());
       onCreated();
     } catch (err) {
-      setError(err.message || 'Failed to create creator');
+      setError(err.message || 'Failed to create record');
     } finally {
       setSaving(false);
     }
@@ -72,97 +53,92 @@ export default function AddCreatorModal({ open, onClose, onCreated }) {
     <Modal
       open={open}
       onClose={handleClose}
-      title="Add New Creator"
+      title="Add Creator"
+      size="large"
       primaryAction={{
-        content: 'Save Creator',
+        content: 'Save',
         onAction: handleSave,
         loading: saving,
       }}
       secondaryActions={[{ content: 'Cancel', onAction: handleClose }]}
     >
       <Modal.Section>
-        <BlockStack gap="400">
+        <BlockStack gap="500">
           {error ? (
-            <Banner tone="critical" title="Unable to save creator">
+            <Banner tone="critical" title="Unable to save record">
               <p>{error}</p>
             </Banner>
           ) : null}
 
+          <Text as="h3" variant="headingMd">
+            Sponsorship Details
+          </Text>
+
           <FormLayout>
-            <FormLayout.Group>
-              <TextField
-                label="Name"
-                value={form.name}
-                onChange={updateField('name')}
-                autoComplete="name"
-                requiredIndicator
-              />
-              <TextField
-                label="Company / Channel"
-                value={form.company_name}
-                onChange={updateField('company_name')}
-                autoComplete="organization"
-              />
-            </FormLayout.Group>
-
-            <FormLayout.Group>
-              <TextField
-                label="Email"
-                type="email"
-                value={form.email}
-                onChange={updateField('email')}
-                autoComplete="email"
-              />
-              <TextField
-                label="Region"
-                value={form.region}
-                onChange={updateField('region')}
-                placeholder="e.g. US"
-                autoComplete="off"
-              />
-            </FormLayout.Group>
-
-            <Select
-              label="Status"
-              options={STATUS_OPTIONS}
-              value={form.status}
-              onChange={updateField('status')}
+            <TextField
+              label="Name"
+              value={form.name}
+              onChange={updateField('name')}
+              autoComplete="name"
+              requiredIndicator
             />
-
+            <TextField
+              label="Channel"
+              value={form.channel}
+              onChange={updateField('channel')}
+              autoComplete="off"
+            />
+            <TextField
+              label="Sponsored Product(s)"
+              value={form.sponsored_products}
+              onChange={updateField('sponsored_products')}
+              multiline={3}
+              autoComplete="off"
+            />
             <FormLayout.Group>
               <TextField
-                label="YouTube Followers"
-                type="number"
-                value={form.youtube_followers}
-                onChange={updateField('youtube_followers')}
+                label="Affiliate Code"
+                value={form.affiliate_code}
+                onChange={updateField('affiliate_code')}
                 autoComplete="off"
               />
-              <TextField
-                label="Facebook Followers"
-                type="number"
-                value={form.facebook_followers}
-                onChange={updateField('facebook_followers')}
-                autoComplete="off"
+              <Select
+                label="Commission"
+                options={COMMISSION_OPTIONS}
+                value={form.commission}
+                onChange={updateField('commission')}
               />
             </FormLayout.Group>
-
-            <FormLayout.Group>
-              <TextField
-                label="Instagram Followers"
-                type="number"
-                value={form.instagram_followers}
-                onChange={updateField('instagram_followers')}
-                autoComplete="off"
-              />
-              <TextField
-                label="TikTok Followers"
-                type="number"
-                value={form.tiktok_followers}
-                onChange={updateField('tiktok_followers')}
-                autoComplete="off"
-              />
-            </FormLayout.Group>
+            <TextField
+              label="Order #'s"
+              value={form.order_numbers}
+              onChange={updateField('order_numbers')}
+              multiline={2}
+              autoComplete="off"
+            />
+            <TextField
+              label="Required Deliverables per contract"
+              value={form.required_deliverables}
+              onChange={updateField('required_deliverables')}
+              multiline={3}
+              autoComplete="off"
+            />
           </FormLayout>
+
+          <Divider />
+
+          <CreatorProfileEditor
+            form={form}
+            onChange={setForm}
+            ambassadorLevel={previewAmbassadorLevel(form)}
+          />
+
+          <Divider />
+
+          <MonthlyProgressEditor
+            periods={form.monthly_progress}
+            onChange={(monthly_progress) => setForm((current) => ({ ...current, monthly_progress }))}
+          />
         </BlockStack>
       </Modal.Section>
     </Modal>

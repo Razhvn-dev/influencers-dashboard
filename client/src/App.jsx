@@ -15,9 +15,24 @@ import {
   Text,
   TextField,
 } from '@shopify/polaris';
-import { fetchInfluencers } from './api';
+import {
+  deleteSponsorshipRecord,
+  exportSponsorshipCsv,
+  fetchSponsorshipRecords,
+  fetchSponsorshipStats,
+} from './api';
+import {
+  COMMISSION_FILTER_OPTIONS,
+  displayAmbassadorLevel,
+  LEVEL_OPTIONS,
+  levelTone,
+  STATUS_FILTER_OPTIONS,
+  statusTone,
+} from './constants';
 import AddCreatorModal from './components/AddCreatorModal';
 import CreatorDetailModal from './components/CreatorDetailModal';
+import ImportCsvModal from './components/ImportCsvModal';
+import StatsCards from './components/StatsCards';
 
 function MissingConfigPage({ missingConfig }) {
   const title =
@@ -43,165 +58,318 @@ function MissingConfigPage({ missingConfig }) {
   );
 }
 
-const STATUS_OPTIONS = [
-  { label: 'All statuses', value: '' },
-  { label: 'Contacted', value: 'Contacted' },
-  { label: 'Approved', value: 'Approved' },
-  { label: 'Partnered', value: 'Partnered' },
+const SORTABLE_COLUMNS = [
+  'name',
+  'status',
+  'ambassador_level',
+  'channel',
+  'affiliate_code',
+  'commission',
+  'total_followers',
 ];
 
-const LEVEL_OPTIONS = [
-  { label: 'All levels', value: '' },
-  { label: 'Level 1', value: 'Level 1' },
-  { label: 'Level 2', value: 'Level 2' },
-  { label: 'Level 3', value: 'Level 3' },
-];
-
-function statusTone(status) {
-  if (status === 'Partnered') return 'success';
-  if (status === 'Approved') return 'info';
-  return 'attention';
+function truncate(value, max = 48) {
+  const text = String(value || '').trim();
+  if (!text) return '—';
+  return text.length > max ? `${text.slice(0, max)}…` : text;
 }
 
-function levelTone(level) {
-  if (level === 'Level 3') return 'success';
-  if (level === 'Level 2') return 'info';
-  return undefined;
+function latestContent(record) {
+  const periods = [...(record.monthly_progress || [])].reverse();
+  const match = periods.find((period) => period.content_delivered);
+  return match?.content_delivered || '—';
 }
 
-function formatNumber(value) {
-  return Number(value || 0).toLocaleString('en-US');
+function latestLink(record) {
+  const periods = [...(record.monthly_progress || [])].reverse();
+  const match = periods.find((period) => period.link);
+  return match?.link || '—';
 }
 
-export default function App({ embedded = true, missingConfig = null }) {
-  const [influencers, setInfluencers] = useState([]);
+function isFollowupDue(record) {
+  if (!record.next_followup_at) return false;
+  const due = new Date(record.next_followup_at);
+  if (Number.isNaN(due.getTime())) return false;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() + 7);
+  return due <= cutoff;
+}
+
+export default function App({ missingConfig = null, localPreview = false }) {
+  const [records, setRecords] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [levelFilter, setLevelFilter] = useState('');
-  const [regionFilter, setRegionFilter] = useState('');
+  const [commissionFilter, setCommissionFilter] = useState('');
+  const [dueFollowupOnly, setDueFollowupOnly] = useState(false);
+  const [sortColumnIndex, setSortColumnIndex] = useState(null);
+  const [sortDirection, setSortDirection] = useState('descending');
   const [appliedFilters, setAppliedFilters] = useState({
+    search: '',
     status: '',
     ambassador_level: '',
-    region: '',
-    search: '',
+    commission: '',
+    due_followup: false,
+    sort_by: 'id',
+    sort_dir: 'desc',
   });
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [selectedInfluencer, setSelectedInfluencer] = useState(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  const loadInfluencers = useCallback(async () => {
+  const loadStats = useCallback(async () => {
+    setStatsLoading(true);
+
+    try {
+      const data = await fetchSponsorshipStats();
+      setStats(data);
+    } catch {
+      setStats(null);
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
+  const loadRecords = useCallback(async () => {
     setLoading(true);
     setError('');
 
     try {
-      const data = await fetchInfluencers(appliedFilters);
-      setInfluencers(data);
+      const data = await fetchSponsorshipRecords(appliedFilters);
+      setRecords(data);
     } catch (err) {
-      setError(err.message || 'Failed to load influencers');
+      setError(err.message || 'Failed to load creator records');
     } finally {
       setLoading(false);
     }
   }, [appliedFilters]);
 
   useEffect(() => {
-    if (missingConfig) {
-      return;
+    if (missingConfig) return;
+    loadStats();
+  }, [loadStats, missingConfig]);
+
+  useEffect(() => {
+    if (missingConfig) return;
+    loadRecords();
+  }, [loadRecords, missingConfig]);
+
+  useEffect(() => {
+    if (missingConfig) return;
+
+    const timer = window.setTimeout(() => {
+      setAppliedFilters((current) => ({
+        ...current,
+        search: search.trim(),
+        status: statusFilter,
+        ambassador_level: levelFilter,
+        commission: commissionFilter,
+        due_followup: dueFollowupOnly,
+      }));
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [search, statusFilter, levelFilter, commissionFilter, dueFollowupOnly, missingConfig]);
+
+  const handleSort = (headingIndex, direction) => {
+    setSortColumnIndex(headingIndex);
+    setSortDirection(direction);
+    setAppliedFilters((current) => ({
+      ...current,
+      sort_by: SORTABLE_COLUMNS[headingIndex],
+      sort_dir: direction === 'ascending' ? 'asc' : 'desc',
+    }));
+  };
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter('');
+    setLevelFilter('');
+    setCommissionFilter('');
+    setDueFollowupOnly(false);
+  };
+
+  const hasActiveFilters =
+    search.trim() ||
+    statusFilter ||
+    levelFilter ||
+    commissionFilter ||
+    dueFollowupOnly;
+
+  const refreshDashboard = () => {
+    loadRecords();
+    loadStats();
+  };
+
+  const handleExport = async () => {
+    try {
+      const csv = await exportSponsorshipCsv(appliedFilters);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'Sponsorship Progress Tracking - Sheet1.csv';
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err.message || 'Failed to export CSV');
     }
-
-    loadInfluencers();
-  }, [loadInfluencers, missingConfig]);
-
-  const applyFilters = () => {
-    setAppliedFilters({
-      status: statusFilter,
-      ambassador_level: levelFilter,
-      region: regionFilter.trim(),
-      search: search.trim(),
-    });
   };
 
-  const handleRowClick = (influencer) => {
-    setSelectedInfluencer(influencer);
-    setDetailOpen(true);
+  const handleImported = (result) => {
+    setSuccess(result.message || 'CSV imported successfully');
+    refreshDashboard();
   };
 
-  const handleCreatorAdded = () => {
+  const handleRecordAdded = () => {
     setAddModalOpen(false);
-    loadInfluencers();
+    setSuccess('Creator record created successfully.');
+    refreshDashboard();
   };
 
-  const handleCreatorUpdated = (updated) => {
-    setInfluencers((current) =>
-      current.map((item) => (item.id === updated.id ? updated : item))
-    );
-    setSelectedInfluencer(updated);
+  const handleRecordUpdated = (updated) => {
+    setRecords((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+    setSelectedRecord(updated);
+    loadStats();
+  };
+
+  const handleRecordDeleted = async (id) => {
+    await deleteSponsorshipRecord(id);
+    setDetailOpen(false);
+    setSelectedRecord(null);
+    setSuccess('Creator record deleted successfully.');
+    refreshDashboard();
   };
 
   if (missingConfig) {
     return <MissingConfigPage missingConfig={missingConfig} />;
   }
 
-  const rowMarkup = influencers.map((influencer, index) => (
+  const rowMarkup = records.map((record, index) => (
     <IndexTable.Row
-      id={String(influencer.id)}
-      key={influencer.id}
+      id={String(record.id)}
+      key={record.id}
       position={index}
-      onClick={() => handleRowClick(influencer)}
+      onClick={() => {
+        setSelectedRecord(record);
+        setDetailOpen(true);
+      }}
     >
       <IndexTable.Cell>
-        <Text as="span" variant="bodyMd" fontWeight="semibold">
-          {influencer.name}
-        </Text>
+        <InlineStack gap="200" blockAlign="center">
+          <Text as="span" variant="bodyMd" fontWeight="semibold">
+            {record.name}
+          </Text>
+          {isFollowupDue(record) ? <Badge tone="warning">Due</Badge> : null}
+        </InlineStack>
       </IndexTable.Cell>
-      <IndexTable.Cell>{influencer.company_name || '—'}</IndexTable.Cell>
-      <IndexTable.Cell>{influencer.region || '—'}</IndexTable.Cell>
-      <IndexTable.Cell>{formatNumber(influencer.total_followers)}</IndexTable.Cell>
       <IndexTable.Cell>
-        <Badge tone={levelTone(influencer.ambassador_level)}>
-          {influencer.ambassador_level || 'Level 1'}
+        {record.status ? (
+          <Badge tone={statusTone(record.status)}>{record.status}</Badge>
+        ) : (
+          '—'
+        )}
+      </IndexTable.Cell>
+      <IndexTable.Cell>
+        <Badge tone={levelTone(record.ambassador_level)}>
+          {displayAmbassadorLevel(record.ambassador_level)}
         </Badge>
       </IndexTable.Cell>
+      <IndexTable.Cell>{truncate(record.channel, 32)}</IndexTable.Cell>
+      <IndexTable.Cell>{record.affiliate_code || '—'}</IndexTable.Cell>
+      <IndexTable.Cell>{record.commission || '—'}</IndexTable.Cell>
       <IndexTable.Cell>
-        <Badge tone={statusTone(influencer.status)}>{influencer.status}</Badge>
+        {Number(record.total_followers || 0).toLocaleString('en-US')}
       </IndexTable.Cell>
+      <IndexTable.Cell>{truncate(latestContent(record), 24)}</IndexTable.Cell>
+      <IndexTable.Cell>{truncate(latestLink(record), 24)}</IndexTable.Cell>
     </IndexTable.Row>
   ));
 
   return (
     <Page
       title="Influencer Dashboard"
-      subtitle="Manage creator partnerships, outreach, and ambassador tiers"
+      subtitle="CRM outreach, ambassador levels, sponsorship tracking, and monthly progress"
       primaryAction={{
         content: 'Add Creator',
         onAction: () => setAddModalOpen(true),
       }}
+      secondaryActions={[
+        {
+          content: 'Import CSV',
+          onAction: () => setImportModalOpen(true),
+        },
+        {
+          content: 'Export CSV',
+          onAction: handleExport,
+          disabled: records.length === 0,
+        },
+      ]}
     >
       <Layout>
         <Layout.Section>
           <BlockStack gap="400">
+            {localPreview ? (
+              <Banner tone="info" title="Local preview mode">
+                <p>
+                  Previewing outside Shopify Admin. Data comes from LOCAL_DEV_SHOP.
+                </p>
+              </Banner>
+            ) : null}
+
+            {success ? (
+              <Banner tone="success" onDismiss={() => setSuccess('')}>
+                <p>{success}</p>
+              </Banner>
+            ) : null}
+
             {error ? (
-              <Banner tone="critical" title="Unable to load influencers">
+              <Banner tone="critical" title="Something went wrong">
                 <p>{error}</p>
               </Banner>
             ) : null}
 
+            <StatsCards stats={stats} loading={statsLoading} />
+
             <Card>
               <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">
-                  Filters
-                </Text>
+                <InlineStack align="space-between" blockAlign="center" wrap>
+                  <Text as="h2" variant="headingMd">
+                    Search & filters
+                  </Text>
+                  {hasActiveFilters ? (
+                    <Button variant="plain" onClick={clearFilters}>
+                      Clear filters
+                    </Button>
+                  ) : null}
+                </InlineStack>
                 <InlineStack gap="300" wrap>
-                  <Box minWidth="220px">
+                  <Box minWidth="280px">
+                    <TextField
+                      label="Search"
+                      value={search}
+                      onChange={setSearch}
+                      placeholder="Name, channel, product, affiliate code, email"
+                      autoComplete="off"
+                      clearButton
+                      onClearButtonClick={() => setSearch('')}
+                    />
+                  </Box>
+                  <Box minWidth="200px">
                     <Select
                       label="Status"
-                      options={STATUS_OPTIONS}
+                      options={STATUS_FILTER_OPTIONS}
                       value={statusFilter}
                       onChange={setStatusFilter}
                     />
                   </Box>
-                  <Box minWidth="220px">
+                  <Box minWidth="200px">
                     <Select
                       label="Ambassador Level"
                       options={LEVEL_OPTIONS}
@@ -209,62 +377,70 @@ export default function App({ embedded = true, missingConfig = null }) {
                       onChange={setLevelFilter}
                     />
                   </Box>
-                  <Box minWidth="220px">
-                    <TextField
-                      label="Region"
-                      value={regionFilter}
-                      onChange={setRegionFilter}
-                      placeholder="e.g. US"
-                      autoComplete="off"
-                    />
-                  </Box>
-                  <Box minWidth="280px">
-                    <TextField
-                      label="Search"
-                      value={search}
-                      onChange={setSearch}
-                      placeholder="Search by name or company"
-                      autoComplete="off"
-                      clearButton
-                      onClearButtonClick={() => setSearch('')}
+                  <Box minWidth="180px">
+                    <Select
+                      label="Commission"
+                      options={COMMISSION_FILTER_OPTIONS}
+                      value={commissionFilter}
+                      onChange={setCommissionFilter}
                     />
                   </Box>
                   <Box paddingBlockStart="600">
-                    <Button onClick={applyFilters}>Apply Filters</Button>
+                    <Button
+                      pressed={dueFollowupOnly}
+                      onClick={() => setDueFollowupOnly((current) => !current)}
+                    >
+                      Due for follow-up
+                    </Button>
                   </Box>
                 </InlineStack>
               </BlockStack>
             </Card>
 
             <Card padding="0">
-              <IndexTable
-                resourceName={{ singular: 'creator', plural: 'creators' }}
-                itemCount={influencers.length}
-                headings={[
-                  { title: 'Name' },
-                  { title: 'Company/Channel' },
-                  { title: 'Region' },
-                  { title: 'Total Followers' },
-                  { title: 'Ambassador Level' },
-                  { title: 'Status' },
-                ]}
-                loading={loading}
-                selectable={false}
-                emptyState={
-                  <EmptyState
-                    heading="No creators found"
-                    image=""
-                    action={{
-                      content: 'Add Creator',
-                      onAction: () => setAddModalOpen(true),
-                    }}
-                  >
-                    <p>Try adjusting your filters or add a new creator to get started.</p>
-                  </EmptyState>
-                }
-              >
-                {rowMarkup}
-              </IndexTable>
+              <Box overflowX="scroll">
+                <IndexTable
+                  resourceName={{ singular: 'creator', plural: 'creators' }}
+                  itemCount={records.length}
+                  headings={[
+                    { title: 'Name' },
+                    { title: 'Status' },
+                    { title: 'Ambassador Level' },
+                    { title: 'Channel' },
+                    { title: 'Affiliate Code' },
+                    { title: 'Commission' },
+                    { title: 'Total Followers' },
+                    { title: 'Latest Content Delivered' },
+                    { title: 'Latest Link' },
+                  ]}
+                  sortable={[true, true, true, true, true, true, true, false, false]}
+                  sortDirection={sortDirection}
+                  sortColumnIndex={sortColumnIndex}
+                  onSort={handleSort}
+                  loading={loading}
+                  selectable={false}
+                  emptyState={
+                    <EmptyState
+                      heading="No creators yet"
+                      image=""
+                      action={{
+                        content: 'Import CSV',
+                        onAction: () => setImportModalOpen(true),
+                      }}
+                      secondaryAction={{
+                        content: 'Add Creator',
+                        onAction: () => setAddModalOpen(true),
+                      }}
+                    >
+                      <p>
+                        Import the team spreadsheet or add the first creator manually.
+                      </p>
+                    </EmptyState>
+                  }
+                >
+                  {rowMarkup}
+                </IndexTable>
+              </Box>
             </Card>
           </BlockStack>
         </Layout.Section>
@@ -273,17 +449,24 @@ export default function App({ embedded = true, missingConfig = null }) {
       <AddCreatorModal
         open={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        onCreated={handleCreatorAdded}
+        onCreated={handleRecordAdded}
+      />
+
+      <ImportCsvModal
+        open={importModalOpen}
+        onClose={() => setImportModalOpen(false)}
+        onImported={handleImported}
       />
 
       <CreatorDetailModal
         open={detailOpen}
-        influencer={selectedInfluencer}
+        influencer={selectedRecord}
         onClose={() => {
           setDetailOpen(false);
-          setSelectedInfluencer(null);
+          setSelectedRecord(null);
         }}
-        onUpdated={handleCreatorUpdated}
+        onUpdated={handleRecordUpdated}
+        onDeleted={handleRecordDeleted}
       />
     </Page>
   );
