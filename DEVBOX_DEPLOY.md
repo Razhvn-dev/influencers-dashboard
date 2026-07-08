@@ -21,12 +21,41 @@ Your DevBox layout:
 ```bash
 cd ~/project/Influencers_Dashboard
 git pull origin main
+git log -1 --oneline
+
+# Must show the latest commit, e.g.:
+# 1e6e3dc Replace Add Creator modal with a full-page form and refine CRM dashboard UI.
+
 chmod +x entrypoint.sh
 
-# Update DevBox root entrypoint (only needed once, or after script changes)
+# Update DevBox root entrypoint (required after entrypoint script changes)
 cp scripts/devbox-entrypoint.sh ../entrypoint.sh
 chmod +x ../entrypoint.sh
 ```
+
+**Important:** Sealos **Publish Version** snapshots the DevBox filesystem at click time.
+You must `git pull` **before** publishing, then **上线** the **new** version number.
+Publishing without pulling, or deploying an old version, leaves production on the old UI.
+
+### 1b. Verify before publish
+
+```bash
+cd ~/project/Influencers_Dashboard
+test -f client/src/pages/AddCreatorPage.jsx && echo "OK: Add Creator page exists"
+npm run build
+ls client/dist/assets/index-*.js
+```
+
+After deploy, verify production:
+
+```bash
+curl -s https://nsorqcnhzezd.sealoshzh.site/api/version
+```
+
+Expect `commit` matching your latest git SHA and a new `frontend.js` filename.
+If still old, App Launchpad is running an old version — redeploy the newest DevBox release.
+
+Hard-refresh Shopify Admin (Ctrl+Shift+R) or open the app in a private window — embedded apps cache aggressively.
 
 ### 2. Test in DevBox (optional)
 

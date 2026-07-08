@@ -12,6 +12,24 @@ const PORT = 3000;
 const clientDist = path.join(__dirname, 'client', 'dist');
 const isLocalDev = process.env.LOCAL_DEV === 'true';
 
+function readFrontendBuildInfo() {
+  try {
+    const indexPath = path.join(clientDist, 'index.html');
+    if (!fs.existsSync(indexPath)) return null;
+
+    const html = fs.readFileSync(indexPath, 'utf8');
+    const jsMatch = html.match(/assets\/(index-[^"]+\.js)/);
+    const cssMatch = html.match(/assets\/(index-[^"]+\.css)/);
+
+    return {
+      js: jsMatch?.[1] || null,
+      css: cssMatch?.[1] || null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 function injectLocalDevSession(_req, res, next) {
   res.locals.shopify = {
     session: {
@@ -51,6 +69,16 @@ app.get('/health', (_req, res) => {
   res.json({ ok: true, service: 'influencer-dashboard' });
 });
 
+app.get('/api/version', (_req, res) => {
+  res.json({
+    ok: true,
+    service: 'influencer-dashboard',
+    commit: process.env.BUILD_GIT_SHA || null,
+    builtAt: process.env.BUILD_TIME || null,
+    frontend: readFrontendBuildInfo(),
+  });
+});
+
 app.get('/api/config', (_req, res) => {
   res.json({
     success: true,
@@ -71,9 +99,19 @@ if (isLocalDev) {
 if (fs.existsSync(clientDist)) {
   // Do not serve index.html from static middleware — ensureInstalledOnShop must
   // run first so the install/OAuth flow is not skipped on the first request to /.
-  app.use(express.static(clientDist, { index: false }));
+  app.use(
+    express.static(clientDist, {
+      index: false,
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+      },
+    })
+  );
 
   app.use('/*', shopify.ensureInstalledOnShop(), (_req, res) => {
+    res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     res.sendFile(path.join(clientDist, 'index.html'));
   });
 } else {
