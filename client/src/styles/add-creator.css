@@ -1,0 +1,632 @@
+/*
+ * Add Creator — full-page form layout
+ */
+
+.crm-add-creator .Polaris-Page__Content {
+  padding: 24px;
+  background: #f3f4f6;
+}
+
+.crm-add-creator__shell {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+.crm-add-creator__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.crm-add-creator__header-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.crm-add-creator__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #4b5563;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.crm-add-creator__back:hover {
+  color: #111827;
+}
+
+.crm-add-creator__back .Polaris-Icon {
+  width: 16px;
+  height: 16px;
+}
+
+.crm-add-creator__title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: #111827;
+}
+
+.crm-add-creator__subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b7280;
+  max-width: 640px;
+}
+
+.crm-add-creator__header-actions {
+  flex-shrink: 0;
+  padding-top: 28px;
+}
+
+.crm-add-creator__btn-primary.Polaris-Button--primary {
+  min-height: 36px;
+  border-radius: 8px;
+  background: #111827;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.crm-add-creator__btn-primary.Polaris-Button--primary:hover {
+  background: #1f2937;
+}
+
+.crm-add-creator__btn-secondary.Polaris-Button {
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  box-shadow: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.crm-add-creator__btn-secondary.Polaris-Button:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+/* Information banner */
+.crm-add-creator .crm-add-creator__info-banner.Polaris-Banner {
+  padding-block: 16px;
+  background: #f1f8ff;
+  border: 1px solid #d6eaff;
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.crm-add-creator .crm-add-creator__info-banner .Polaris-Banner__Ribbon {
+  background: transparent;
+}
+
+.crm-add-creator .crm-add-creator__info-banner .Polaris-Icon {
+  width: 20px;
+  height: 20px;
+}
+
+.crm-add-creator .crm-add-creator__info-banner .Polaris-Banner__Content p {
+  font-size: 13px;
+  color: #1e3a5f;
+}
+
+.crm-add-creator__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(280px, 3fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: 20px;
+}
+
+.crm-add-creator__form-column {
+  min-width: 0;
+}
+
+.crm-add-creator__form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.crm-add-creator__preview-column {
+  position: sticky;
+  top: 24px;
+  align-self: start;
+  height: fit-content;
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+}
+
+.crm-add-creator__preview-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.crm-add-creator__card,
+.crm-add-creator__preview-card {
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+  background: #fff;
+  padding: 24px;
+}
+
+.crm-add-creator__card-title,
+.crm-add-creator__preview-title {
+  margin: 0 0 20px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  color: #111827;
+}
+
+.crm-add-creator__card-body .Polaris-FormLayout {
+  margin: 0;
+}
+
+.crm-add-creator__row-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.crm-add-creator__card-body .Polaris-FormLayout__Item {
+  margin-bottom: 16px;
+}
+
+.crm-add-creator__card-body .Polaris-FormLayout__Item:last-child {
+  margin-bottom: 0;
+}
+
+.crm-add-creator__card-body .Polaris-FormLayout__Item .Polaris-Labelled__LabelWrapper,
+.crm-add-creator__card-body .Polaris-Labelled__LabelWrapper {
+  margin-bottom: 6px;
+}
+
+.crm-add-creator__card-body .Polaris-Label__Text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.crm-add-creator__card-body .Polaris-Label__RequiredIndicator {
+  color: #dc2626;
+}
+
+.crm-add-creator__card-body .Polaris-TextField__Input,
+.crm-add-creator__card-body .Polaris-Select__Input,
+.crm-add-creator__card-body .Polaris-Select__Content {
+  min-height: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.crm-add-creator__card-body .Polaris-TextField__Input {
+  border-color: #d1d5db;
+}
+
+.crm-add-creator__card-body .Polaris-TextField__Input:hover:not(:disabled):not([aria-invalid='true']) {
+  border-color: #9ca3af;
+}
+
+.crm-add-creator__card-body .Polaris-TextField__Input:focus,
+.crm-add-creator__card-body .Polaris-TextField--focus .Polaris-TextField__Input {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 15%);
+  outline: none;
+}
+
+.crm-add-creator__card-body .Polaris-Select__Content {
+  border-color: #d1d5db;
+}
+
+.crm-add-creator__card-body .Polaris-Select:hover .Polaris-Select__Content {
+  border-color: #9ca3af;
+}
+
+.crm-add-creator__card-body .Polaris-Select--focus .Polaris-Select__Content,
+.crm-add-creator__card-body .Polaris-Select__Content:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 15%);
+  outline: none;
+}
+
+.crm-add-creator__card-body .Polaris-TextField__Input::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+
+.crm-add-creator__card-body textarea.Polaris-TextField__Input {
+  min-height: 80px;
+  height: auto;
+}
+
+.crm-add-creator__card-body .Polaris-Select__SelectedOption {
+  font-size: 13px;
+}
+
+.crm-add-creator__card-body .crm-progress-edit-table .Polaris-Select {
+  min-width: 120px;
+}
+
+.crm-add-creator__card-body .crm-progress-edit-table .Polaris-Select__Content {
+  min-height: 36px;
+  height: 36px;
+}
+
+/* Compact URL open icon */
+.crm-add-creator .crm-url-field--icon .Polaris-TextField__ConnectedRight {
+  margin-left: 0;
+}
+
+.crm-add-creator .crm-url-field__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin: 2px 4px 2px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.crm-add-creator .crm-url-field__icon-btn:not(:disabled):hover {
+  background: #f3f4f6;
+}
+
+.crm-add-creator .crm-url-field__icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.crm-add-creator .crm-url-field__icon-btn .Polaris-Icon {
+  width: 16px;
+  height: 16px;
+}
+
+.crm-add-creator__reminder-time-label {
+  display: block;
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.crm-add-creator__reminder-time .Polaris-FormLayout__Item {
+  margin-bottom: 0;
+}
+
+.crm-add-creator__reminder-time .Polaris-Select__Content {
+  min-height: 36px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.crm-add-creator__platform-table-wrap {
+  overflow-x: auto;
+}
+
+.crm-add-creator__platform-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.crm-add-creator__platform-table th {
+  padding: 0 12px 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  text-align: left;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.crm-add-creator__platform-table th:nth-child(3) {
+  width: 44px;
+  padding-right: 0;
+}
+
+.crm-add-creator__platform-table th:last-child {
+  width: 120px;
+}
+
+.crm-add-creator__platform-cell--open {
+  width: 44px;
+  padding-right: 0 !important;
+  text-align: center;
+}
+
+.crm-add-creator__platform-open-btn {
+  margin: 0 auto;
+}
+
+.crm-add-creator__platform-row td {
+  padding: 10px 12px 10px 0;
+  vertical-align: middle;
+  border-bottom: 1px solid #f9fafb;
+}
+
+.crm-add-creator__platform-row:last-child td {
+  border-bottom: 0;
+}
+
+.crm-add-creator__platform-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.crm-add-creator__platform-footnote {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+.crm-add-creator__card-body .crm-progress-edit-table .Polaris-DataTable {
+  font-size: 13px;
+}
+
+.crm-add-creator__card-body .crm-progress-edit-table .Polaris-DataTable__Cell {
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+
+.crm-add-creator__card-body .Polaris-Text--bodySm {
+  margin-bottom: 16px;
+}
+
+/* Preview panel */
+.crm-add-creator-preview__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.crm-add-creator-preview__avatar.crm-v2-creator-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.crm-add-creator-preview__avatar.crm-v2-creator-avatar--initials {
+  font-size: 17px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.crm-add-creator-preview__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.3;
+}
+
+.crm-add-creator-preview__handle {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.crm-add-creator-preview__badge-row {
+  margin-bottom: 12px;
+}
+
+.crm-add-creator-preview__badge-row .crm-status-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9999px;
+}
+
+.crm-add-creator-preview__divider {
+  margin: 0 0 12px;
+  border: 0;
+  border-top: 1px solid #f3f4f6;
+}
+
+.crm-add-creator-preview__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.crm-add-creator-preview__meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.crm-add-creator-preview__meta-label {
+  font-size: 12px;
+  line-height: 1.3;
+  color: #6b7280;
+}
+
+.crm-add-creator-preview__meta-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #111827;
+}
+
+.crm-add-creator-preview__summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.crm-add-creator-preview__summary-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.crm-add-creator-preview__summary-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.crm-add-creator-preview__platform-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.crm-add-creator-preview__platform-item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.crm-add-creator-preview__platform-item-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #374151;
+  flex-shrink: 0;
+}
+
+.crm-add-creator-preview__platform-item-label .crm-platform-icon {
+  flex-shrink: 0;
+}
+
+.crm-add-creator-preview__platform-item-leader {
+  flex: 1;
+  min-width: 12px;
+  border-bottom: 1px dotted #e5e7eb;
+  margin: 0 6px;
+  transform: translateY(-2px);
+}
+
+.crm-add-creator-preview__platform-item-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.crm-add-creator-preview__platform-item-count:empty {
+  color: #6b7280;
+}
+
+.crm-add-creator__preview-card--tip {
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  box-shadow: none;
+  padding: 12px 14px;
+}
+
+.crm-add-creator-preview__tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-add-creator-preview__tip-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: #3b82f6;
+}
+
+.crm-add-creator-preview__tip-text {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #1e40af;
+}
+
+/* Footer actions */
+.crm-add-creator__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 24px;
+  padding: 14px 24px;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 4%);
+}
+
+.crm-add-creator__footer-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.crm-add-creator__footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .crm-add-creator__row-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-add-creator__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-add-creator__preview-column {
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+  }
+
+  .crm-add-creator__header {
+    flex-direction: column;
+  }
+
+  .crm-add-creator__header-actions {
+    padding-top: 0;
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

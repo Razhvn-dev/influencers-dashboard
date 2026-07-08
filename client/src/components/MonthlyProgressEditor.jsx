@@ -4,13 +4,36 @@ import {
   Button,
   DataTable,
   InlineStack,
+  Select,
   Text,
   TextField,
 } from '@shopify/polaris';
 import { MONTHLY_PERIOD_LABELS } from '../constants';
 import UrlFieldWithOpen from './UrlFieldWithOpen';
 
-export default function MonthlyProgressEditor({ periods, onChange, disabled = false, embedded = false }) {
+const MONTHLY_CHECKIN_OPTIONS = [
+  { label: '—', value: '' },
+  { label: 'Yes', value: 'YES' },
+  { label: 'No', value: 'NO' },
+  { label: 'Pending', value: 'Pending' },
+];
+
+const MONTHLY_CHECKIN_YES_NO_OPTIONS = [
+  { label: '—', value: '' },
+  { label: 'YES', value: 'YES' },
+  { label: 'NO', value: 'NO' },
+];
+
+export default function MonthlyProgressEditor({
+  periods,
+  onChange,
+  disabled = false,
+  embedded = false,
+  checkInOptions = 'default',
+  urlVariant = 'button',
+}) {
+  const checkInSelectOptions =
+    checkInOptions === 'yesNo' ? MONTHLY_CHECKIN_YES_NO_OPTIONS : MONTHLY_CHECKIN_OPTIONS;
   const updatePeriod = (periodIndex, field) => (value) => {
     onChange(
       periods.map((period) =>
@@ -38,13 +61,12 @@ export default function MonthlyProgressEditor({ periods, onChange, disabled = fa
 
   const rows = periods.map((period) => [
     MONTHLY_PERIOD_LABELS[period.period_index - 1] || `Period ${period.period_index}`,
-    <TextField
+    <Select
       label={`Monthly Check-In (${period.period_index})`}
       labelHidden
+      options={checkInSelectOptions}
       value={period.monthly_check_in}
       onChange={updatePeriod(period.period_index, 'monthly_check_in')}
-      placeholder="YES / NO"
-      autoComplete="off"
       disabled={disabled}
     />,
     <TextField
@@ -63,6 +85,7 @@ export default function MonthlyProgressEditor({ periods, onChange, disabled = fa
       onChange={updatePeriod(period.period_index, 'link')}
       placeholder="https://..."
       disabled={disabled}
+      variant={urlVariant}
     />,
     <InlineStack align="end">
       <Button
@@ -100,6 +123,7 @@ export default function MonthlyProgressEditor({ periods, onChange, disabled = fa
             'Actions',
           ]}
           rows={rows}
+          hideScrollIndicator={embedded}
         />
       </Box>
     </BlockStack>

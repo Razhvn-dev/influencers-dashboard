@@ -1,28 +1,20 @@
-import { BlockStack, Box, Button, InlineStack, Text, TextField } from '@shopify/polaris';
-import { ExportIcon, PlusIcon } from '@shopify/polaris-icons';
+import { Box, Button, Icon, InlineStack, TextField } from '@shopify/polaris';
+import { ExportIcon, PlusIcon, SearchIcon } from '@shopify/polaris-icons';
 
 export default function DashboardPageHeader({
   search,
   onSearchChange,
   onExport,
   exportDisabled,
-  onImport,
   onAddCreator,
 }) {
   return (
-    <Box className="crm-page-header">
-      <InlineStack align="space-between" blockAlign="start" wrap={false} gap="600">
-        <BlockStack gap="150">
-          <Text as="h1" variant="headingLg">
-            Influencer Dashboard
-          </Text>
-          <Text as="p" variant="bodyMd" tone="subdued">
-            Manage your influencer and ambassador relationships
-          </Text>
-        </BlockStack>
+    <Box className="crm-v2-header">
+      <InlineStack align="space-between" blockAlign="center" wrap={false}>
+        <h1 className="crm-v2-header__title">Influencer Dashboard</h1>
 
-        <InlineStack gap="300" wrap blockAlign="center">
-          <Box minWidth="280px" width="100%" maxWidth="360px">
+        <InlineStack gap="300" wrap={false} blockAlign="center" className="crm-v2-header__actions">
+          <Box className="crm-v2-header__search">
             <TextField
               label="Search creators"
               labelHidden
@@ -30,19 +22,27 @@ export default function DashboardPageHeader({
               onChange={onSearchChange}
               placeholder="Search creators..."
               autoComplete="off"
+              prefix={<Icon source={SearchIcon} tone="subdued" />}
               clearButton
               onClearButtonClick={() => onSearchChange('')}
             />
           </Box>
-          <InlineStack gap="200" wrap={false}>
-            <Button onClick={onImport}>Import CSV</Button>
-            <Button icon={ExportIcon} onClick={onExport} disabled={exportDisabled}>
-              Export Excel
-            </Button>
-            <Button icon={PlusIcon} variant="primary" onClick={onAddCreator}>
-              Add Creator
-            </Button>
-          </InlineStack>
+          <Button
+            icon={ExportIcon}
+            onClick={onExport}
+            disabled={exportDisabled}
+            className="crm-v2-header__export-btn"
+          >
+            Export Excel
+          </Button>
+          <Button
+            icon={PlusIcon}
+            variant="primary"
+            onClick={onAddCreator}
+            className="crm-v2-header__add-btn"
+          >
+            Add Creator
+          </Button>
         </InlineStack>
       </InlineStack>
     </Box>

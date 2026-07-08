@@ -1,17 +1,20 @@
-import { Box, Icon, Tooltip } from '@shopify/polaris';
+import { Box, Tooltip } from '@shopify/polaris';
 import { getPlatformMeta } from '../constants';
-import {
-  FacebookIcon,
-  InstagramIcon,
-  TiktokIcon,
-  YoutubeIcon,
-} from '../icons/platformIconSources';
 
-const ICON_SOURCES = {
-  youtube_url: YoutubeIcon,
-  instagram_url: InstagramIcon,
-  facebook_url: FacebookIcon,
-  tiktok_url: TiktokIcon,
+const ICON_IMAGES = {
+  youtube_url: '/icons/youtube.png',
+  instagram_url: '/icons/instagram.png',
+  facebook_url: '/icons/facebook.png',
+  tiktok_url: '/icons/tiktok.png',
+};
+
+const SIZE_CONFIG = {
+  small: { wrapper: '24px', image: '14px' },
+  summary: { wrapper: '22px', image: '16px' },
+  table: { wrapper: '40px', image: '22px' },
+  medium: { wrapper: '24px', image: '14px' },
+  large: { wrapper: '32px', image: '16px' },
+  xlarge: { wrapper: '34px', image: '18px' },
 };
 
 export default function PlatformIcon({
@@ -20,28 +23,32 @@ export default function PlatformIcon({
   withTooltip = true,
 }) {
   const platform = getPlatformMeta(platformKey);
-  const source = ICON_SOURCES[platformKey];
+  const imageSrc = ICON_IMAGES[platformKey];
+  const dimensions = SIZE_CONFIG[size] || SIZE_CONFIG.medium;
 
-  if (!platform || !source) {
+  if (!platform || !imageSrc) {
     return null;
   }
-
-  const dimension =
-    size === 'small' ? '24px' : size === 'large' ? '32px' : '28px';
-  const iconSize = size === 'large' ? '16px' : '14px';
 
   const icon = (
     <Box
       className="crm-platform-icon"
       style={{
-        width: dimension,
-        height: dimension,
+        width: dimensions.wrapper,
+        height: dimensions.wrapper,
         background: platform.iconBackground,
-        color: platform.iconColor,
-        '--crm-platform-icon-size': iconSize,
       }}
     >
-      <Icon source={source} accessibilityLabel={platform.label} />
+      <img
+        src={imageSrc}
+        alt=""
+        className="crm-platform-icon__image"
+        style={{
+          width: dimensions.image,
+          height: dimensions.image,
+        }}
+        aria-hidden="true"
+      />
     </Box>
   );
 

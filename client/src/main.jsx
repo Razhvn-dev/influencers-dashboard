@@ -5,6 +5,8 @@ import { NavMenu, useAppBridge } from '@shopify/app-bridge-react';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import '@shopify/polaris/build/esm/styles.css';
 import './styles/crm-ui.css';
+import './styles/crm-dashboard.css';
+import './styles/add-creator.css';
 import App from './App.jsx';
 import { setSessionTokenFetcher } from './api.js';
 

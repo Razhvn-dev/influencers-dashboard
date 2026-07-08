@@ -1,11 +1,5 @@
 import { useCallback, useState } from 'react';
-import {
-  Box,
-  Button,
-  InlineStack,
-  Popover,
-  Select,
-} from '@shopify/polaris';
+import { Box, Icon, InlineStack, Popover, Select } from '@shopify/polaris';
 import { FilterIcon } from '@shopify/polaris-icons';
 import {
   COMMISSION_FILTER_OPTIONS,
@@ -39,60 +33,58 @@ export default function DashboardFilterBar({
   const moreFiltersActive = Boolean(commissionFilter);
 
   return (
-    <Box className="crm-filter-toolbar">
-      <InlineStack align="space-between" blockAlign="end" wrap={false} gap="400">
-        <InlineStack gap="400" wrap blockAlign="end">
-          <Box minWidth="160px" width="100%" maxWidth="180px">
-            <Select
-              label="Status"
-              options={STATUS_FILTER_OPTIONS}
-              value={statusFilter}
-              onChange={onStatusFilterChange}
-            />
-          </Box>
-          <Box minWidth="160px" width="100%" maxWidth="190px">
-            <Select
-              label="Ambassador Level"
-              options={LEVEL_OPTIONS}
-              value={levelFilter}
-              onChange={onLevelFilterChange}
-            />
-          </Box>
-          <Box minWidth="160px" width="100%" maxWidth="180px">
-            <Select
-              label="Platform"
-              options={PLATFORM_FILTER_OPTIONS}
-              value={platformFilter}
-              onChange={onPlatformFilterChange}
-            />
-          </Box>
-          <Box minWidth="160px" width="100%" maxWidth="190px">
-            <Select
-              label="Due follow-up"
-              options={DUE_FOLLOWUP_FILTER_OPTIONS}
-              value={dueFollowupFilter}
-              onChange={onDueFollowupFilterChange}
-            />
-          </Box>
-        </InlineStack>
+    <Box className="crm-v2-toolbar">
+      <InlineStack gap="400" blockAlign="end" wrap={false}>
+        <Box className="crm-v2-toolbar__field">
+          <Select
+            label="Status"
+            options={STATUS_FILTER_OPTIONS}
+            value={statusFilter}
+            onChange={onStatusFilterChange}
+          />
+        </Box>
+        <Box className="crm-v2-toolbar__field">
+          <Select
+            label="Ambassador Level"
+            options={LEVEL_OPTIONS}
+            value={levelFilter}
+            onChange={onLevelFilterChange}
+          />
+        </Box>
+        <Box className="crm-v2-toolbar__field">
+          <Select
+            label="Platform"
+            options={PLATFORM_FILTER_OPTIONS}
+            value={platformFilter}
+            onChange={onPlatformFilterChange}
+          />
+        </Box>
+        <Box className="crm-v2-toolbar__field">
+          <Select
+            label="Next Follow-up"
+            options={DUE_FOLLOWUP_FILTER_OPTIONS}
+            value={dueFollowupFilter}
+            onChange={onDueFollowupFilterChange}
+          />
+        </Box>
 
-        <InlineStack gap="300" blockAlign="center" wrap={false}>
+        <Box className="crm-v2-toolbar__actions">
           <Popover
             active={moreFiltersOpen}
             activator={
-              <Button
-                icon={FilterIcon}
+              <button
+                type="button"
+                className={`crm-v2-toolbar-link${moreFiltersActive ? ' crm-v2-toolbar-link--active' : ''}`}
                 onClick={toggleMoreFilters}
-                disclosure={moreFiltersOpen ? 'up' : 'down'}
-                pressed={moreFiltersActive}
               >
-                More filters
-              </Button>
+                <Icon source={FilterIcon} tone="subdued" />
+                <span>More filters</span>
+              </button>
             }
             onClose={toggleMoreFilters}
             preferredAlignment="right"
           >
-            <Box padding="400" minWidth="240px">
+            <Box padding="400" minWidth="240px" className="crm-v2-toolbar__popover">
               <Select
                 label="Commission"
                 options={COMMISSION_FILTER_OPTIONS}
@@ -101,10 +93,16 @@ export default function DashboardFilterBar({
               />
             </Box>
           </Popover>
-          <Button variant="plain" onClick={onClearFilters} disabled={!hasActiveFilters}>
+
+          <button
+            type="button"
+            className="crm-v2-toolbar-link crm-v2-toolbar-link--muted"
+            onClick={onClearFilters}
+            disabled={!hasActiveFilters}
+          >
             Clear filters
-          </Button>
-        </InlineStack>
+          </button>
+        </Box>
       </InlineStack>
     </Box>
   );

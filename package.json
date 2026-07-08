@@ -12,7 +12,8 @@
     "dev:server": "node server.js",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "preview": "npm run build && npm start",
-    "seed:demo": "node scripts/seed-demo-data.js --clear"
+    "seed:demo": "node scripts/seed-demo-data.js --clear",
+    "seed:demo:append": "node scripts/seed-demo-data.js"
   },
   "dependencies": {
     "@shopify/shopify-api": "^11.12.0",

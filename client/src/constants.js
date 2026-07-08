@@ -34,6 +34,30 @@ export const COMMISSION_FILTER_OPTIONS = [
   { label: 'NO', value: 'NO' },
 ];
 
+export const PRIMARY_CHANNEL_OPTIONS = [
+  { label: 'Select a platform', value: '' },
+  { label: 'YouTube', value: 'YouTube' },
+  { label: 'Instagram', value: 'Instagram' },
+  { label: 'Facebook', value: 'Facebook' },
+  { label: 'TikTok', value: 'TikTok' },
+];
+
+export const MANAGER_OWNER_OPTIONS = [
+  { label: '—', value: '' },
+  { label: 'Current User', value: 'Current User' },
+];
+
+export const PRIMARY_CHANNEL_PLATFORM_KEYS = {
+  YouTube: 'youtube_url',
+  Instagram: 'instagram_url',
+  Facebook: 'facebook_url',
+  TikTok: 'tiktok_url',
+};
+
+export function getPrimaryChannelPlatformKey(channelLabel) {
+  return PRIMARY_CHANNEL_PLATFORM_KEYS[channelLabel] || null;
+}
+
 export const FOLLOWUP_FILTER_HELP =
   'Shows creators with Next Follow-up set within the next 7 days, including overdue dates.';
 
@@ -72,7 +96,11 @@ export function formatRelativeTime(value) {
 export function formatFollowupDate(value) {
   if (!value) return '—';
 
-  const date = new Date(value);
+  const [datePart] = String(value).split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  if (!year || !month || !day) return '—';
+
+  const date = new Date(year, month - 1, day);
   if (Number.isNaN(date.getTime())) return '—';
 
   return date.toLocaleDateString('en-US', {
@@ -80,6 +108,35 @@ export function formatFollowupDate(value) {
     day: 'numeric',
     year: 'numeric',
   });
+}
+
+export function formatFollowupDateTime(value) {
+  if (!value) return null;
+
+  const [datePart, timePart] = String(value).split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  if (!year || !month || !day) return null;
+
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const dateLabel = date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  if (!timePart) return dateLabel;
+
+  const [hour24, minuteRaw] = timePart.split(':');
+  const hour = Number.parseInt(hour24, 10);
+  const minute = Number.parseInt(minuteRaw, 10);
+  if (Number.isNaN(hour) || Number.isNaN(minute)) return dateLabel;
+
+  const period = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+
+  return `${dateLabel}, ${hour12}:${String(minute).padStart(2, '0')} ${period}`;
 }
 
 export function getFollowupStatus(nextFollowupAt) {
@@ -132,7 +189,7 @@ export const PLATFORM_META = [
     shortLabel: 'TT',
     label: 'TikTok',
     followerField: 'tiktok_followers',
-    iconBackground: '#E5E7EB',
+    iconBackground: '#F3F4F6',
     iconColor: '#111827',
   },
 ];
@@ -331,6 +388,63 @@ export function parseFollowerCount(value) {
   return Math.max(0, parsed);
 }
 
+export function deriveAddCreatorPlatformPreview(form) {
+  const platformFields = {
+    youtube_followers: form?.youtube_followers ?? '',
+    instagram_followers: form?.instagram_followers ?? '',
+    facebook_followers: form?.facebook_followers ?? '',
+    tiktok_followers: form?.tiktok_followers ?? '',
+    youtube_url: form?.youtube_url ?? '',
+    instagram_url: form?.instagram_url ?? '',
+    facebook_url: form?.facebook_url ?? '',
+    tiktok_url: form?.tiktok_url ?? '',
+  };
+
+  const platforms = PLATFORM_META.map((platform) => {
+    const followers = parseFollowerCount(platformFields[platform.followerField]);
+    const url = String(platformFields[platform.key] ?? '').trim();
+
+    return {
+      key: platform.key,
+      label: platform.label,
+      followerField: platform.followerField,
+      followers,
+      url,
+      followerDisplay: formatCompactNumber(followers),
+      isConnected: url.length > 0 || followers > 0,
+    };
+  });
+
+  const connectedPlatformsCount = platforms.filter((platform) => platform.isConnected).length;
+
+  let primaryChannel = 'Not selected';
+  const selectedPrimaryChannel = String(form?.primary_channel ?? '').trim();
+
+  if (selectedPrimaryChannel) {
+    primaryChannel = selectedPrimaryChannel;
+  } else {
+    let highestFollowers = 0;
+
+    for (const platform of platforms) {
+      if (platform.followers > highestFollowers) {
+        highestFollowers = platform.followers;
+        primaryChannel = platform.label;
+      }
+    }
+
+    if (highestFollowers === 0) {
+      primaryChannel = 'Not selected';
+    }
+  }
+
+  return {
+    platformFields,
+    platforms,
+    connectedPlatformsCount,
+    primaryChannel,
+  };
+}
+
 export const MONTHLY_PERIOD_LABELS = [
   'Period 1',
   'Period 2',
@@ -347,10 +461,19 @@ export function displayAmbassadorLevel(level) {
 }
 
 export function statusTone(status) {
-  if (status === 'Active Ambassador' || status === 'Partnered') return 'success';
-  if (status === 'Approved') return 'info';
+  if (
+    status === 'Active Ambassador' ||
+    status === 'Partnered' ||
+    status === 'Approved' ||
+    status === 'Contract Signed'
+  ) {
+    return 'success';
+  }
+  if (status === 'Contacted' || status === 'Negotiating') return 'info';
   if (status === 'Rejected') return 'critical';
   if (status === 'Call Scheduled' || status === 'Under Review') return 'warning';
+  if (status === 'Applied') return 'attention';
+  if (status === 'Past Partner') return 'attention';
   return 'attention';
 }
 
@@ -397,6 +520,11 @@ export function buildFormStateFromRecord(record) {
   return {
     name: record.name || '',
     channel: record.channel || '',
+    primary_channel: record.primary_channel || '',
+    niche_category: record.niche_category || '',
+    bio: record.bio || '',
+    manager_owner: record.manager_owner || '',
+    tags: record.tags || '',
     sponsored_products: record.sponsored_products || '',
     affiliate_code: record.affiliate_code || '',
     commission: record.commission || '',
@@ -426,10 +554,11 @@ export function buildFormStateFromRecord(record) {
 export function buildEmptyCreatorForm() {
   return buildFormStateFromRecord({
     status: 'Applied',
-    youtube_followers: 0,
-    facebook_followers: 0,
-    instagram_followers: 0,
-    tiktok_followers: 0,
+    manager_owner: 'Current User',
+    youtube_followers: '',
+    facebook_followers: '',
+    instagram_followers: '',
+    tiktok_followers: '',
     monthly_progress: emptyMonthlyProgress(),
   });
 }

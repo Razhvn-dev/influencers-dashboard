@@ -1,0 +1,95 @@
+import { Icon, TextField } from '@shopify/polaris';
+import { ExternalIcon } from '@shopify/polaris-icons';
+import { normalizeExternalUrl, openExternalUrl, PLATFORM_META } from '../../constants';
+import PlatformIcon from '../PlatformIcon';
+
+function PlatformOpenButton({ url, label }) {
+  const canOpen = Boolean(normalizeExternalUrl(url));
+
+  return (
+    <button
+      type="button"
+      className="crm-url-field__icon-btn crm-add-creator__platform-open-btn"
+      disabled={!canOpen}
+      onClick={() => openExternalUrl(url)}
+      aria-label={`Open ${label}`}
+    >
+      <Icon source={ExternalIcon} tone={canOpen ? 'base' : 'subdued'} />
+    </button>
+  );
+}
+
+function PlatformRow({ platform, form, onFieldChange, onFollowerFieldChange }) {
+  const urlValue = form[platform.key] ?? '';
+
+  return (
+    <tr className="crm-add-creator__platform-row">
+      <td className="crm-add-creator__platform-cell crm-add-creator__platform-cell--name">
+        <div className="crm-add-creator__platform-label">
+          <PlatformIcon platformKey={platform.key} size="small" withTooltip={false} />
+          <span>{platform.label}</span>
+        </div>
+      </td>
+      <td className="crm-add-creator__platform-cell">
+        <TextField
+          label={`${platform.label} URL`}
+          labelHidden
+          value={urlValue}
+          onChange={onFieldChange(platform.key)}
+          placeholder={`${platform.label.toLowerCase()}.com/...`}
+          autoComplete="off"
+        />
+      </td>
+      <td className="crm-add-creator__platform-cell crm-add-creator__platform-cell--open">
+        <PlatformOpenButton url={urlValue} label={platform.label} />
+      </td>
+      <td className="crm-add-creator__platform-cell crm-add-creator__platform-cell--followers">
+        <TextField
+          label={`${platform.label} followers`}
+          labelHidden
+          placeholder="Followers"
+          inputMode="numeric"
+          value={form[platform.followerField] ?? ''}
+          autoComplete="off"
+          onChange={onFollowerFieldChange(platform.followerField)}
+        />
+      </td>
+    </tr>
+  );
+}
+
+export default function AddCreatorPlatformTable({
+  form,
+  onFieldChange,
+  onFollowerFieldChange,
+}) {
+  return (
+    <div className="crm-add-creator__platform-table-wrap">
+      <table className="crm-add-creator__platform-table">
+        <thead>
+          <tr>
+            <th>Platform</th>
+            <th>Profile Link</th>
+            <th aria-label="Open profile" />
+            <th>Followers</th>
+          </tr>
+        </thead>
+        <tbody>
+          {PLATFORM_META.map((platform) => (
+            <PlatformRow
+              key={platform.key}
+              platform={platform}
+              form={form}
+              onFieldChange={onFieldChange}
+              onFollowerFieldChange={onFollowerFieldChange}
+            />
+          ))}
+        </tbody>
+      </table>
+      <p className="crm-add-creator__platform-footnote">
+        Counts are not synced from platform APIs. Last verified updates when follower counts
+        are saved.
+      </p>
+    </div>
+  );
+}
