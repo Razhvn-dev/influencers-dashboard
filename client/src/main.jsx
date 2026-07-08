@@ -4,6 +4,7 @@ import { AppProvider as PolarisAppProvider } from '@shopify/polaris';
 import { NavMenu, useAppBridge } from '@shopify/app-bridge-react';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import '@shopify/polaris/build/esm/styles.css';
+import './styles/crm-ui.css';
 import App from './App.jsx';
 import { setSessionTokenFetcher } from './api.js';
 

@@ -37,6 +37,241 @@ export const COMMISSION_FILTER_OPTIONS = [
 export const FOLLOWUP_FILTER_HELP =
   'Shows creators with Next Follow-up set within the next 7 days, including overdue dates.';
 
+export const DUE_FOLLOWUP_FILTER_OPTIONS = [
+  { label: 'All follow-ups', value: '' },
+  { label: 'Due within 7 days', value: 'due' },
+];
+
+function startOfDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+export function formatRelativeTime(value) {
+  if (!value) return '';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 1) return 'Just now';
+  if (diffMinutes < 60) return `${diffMinutes} min ago`;
+  if (diffHours < 24) return `${diffHours} hr ago`;
+  if (diffDays === 1) return '1 day ago';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} wk ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} mo ago`;
+
+  return `${Math.floor(diffDays / 365)} yr ago`;
+}
+
+export function formatFollowupDate(value) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+export function getFollowupStatus(nextFollowupAt) {
+  if (!nextFollowupAt) return null;
+
+  const due = new Date(nextFollowupAt);
+  if (Number.isNaN(due.getTime())) return null;
+
+  const now = new Date();
+  if (due.getTime() < now.getTime()) {
+    return { tone: 'critical', label: 'Overdue' };
+  }
+
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() + 7);
+  if (due <= cutoff) {
+    return { tone: 'warning', label: 'Due' };
+  }
+
+  return null;
+}
+
+export const PLATFORM_META = [
+  {
+    key: 'youtube_url',
+    shortLabel: 'YT',
+    label: 'YouTube',
+    followerField: 'youtube_followers',
+    iconBackground: '#FEE2E2',
+    iconColor: '#DC2626',
+  },
+  {
+    key: 'instagram_url',
+    shortLabel: 'IG',
+    label: 'Instagram',
+    followerField: 'instagram_followers',
+    iconBackground: '#FCE7F3',
+    iconColor: '#DB2777',
+  },
+  {
+    key: 'facebook_url',
+    shortLabel: 'FB',
+    label: 'Facebook',
+    followerField: 'facebook_followers',
+    iconBackground: '#DBEAFE',
+    iconColor: '#2563EB',
+  },
+  {
+    key: 'tiktok_url',
+    shortLabel: 'TT',
+    label: 'TikTok',
+    followerField: 'tiktok_followers',
+    iconBackground: '#E5E7EB',
+    iconColor: '#111827',
+  },
+];
+
+export const PLATFORM_FILTER_OPTIONS = [
+  { label: 'All platforms', value: '' },
+  ...PLATFORM_META.map((platform) => ({
+    label: platform.label,
+    value: platform.key,
+  })),
+];
+
+export function getPlatformMeta(platformKey) {
+  return PLATFORM_META.find((platform) => platform.key === platformKey) || null;
+}
+
+export function formatCompactNumber(value) {
+  const num = Number(value || 0);
+
+  if (Number.isNaN(num)) {
+    return '0';
+  }
+
+  if (num >= 1_000_000) {
+    const millions = num / 1_000_000;
+    const formatted = millions.toFixed(2);
+    return `${formatted.replace(/\.?0+$/, '')}M`;
+  }
+
+  if (num >= 1_000) {
+    const thousands = num / 1_000;
+    const formatted = thousands.toFixed(1);
+    return `${formatted.replace(/\.0$/, '')}K`;
+  }
+
+  return num.toLocaleString('en-US');
+}
+
+export function getCreatorInitials(name) {
+  const parts = String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return '?';
+  }
+
+  if (parts.length === 1) {
+    return parts[0].slice(0, 2).toUpperCase();
+  }
+
+  return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase();
+}
+
+export function creatorHandle(record) {
+  const channel = String(record?.channel || '').trim();
+
+  if (channel) {
+    if (channel.startsWith('@')) return channel;
+    if (!channel.includes(' ') && !channel.includes('://')) return `@${channel}`;
+    return channel;
+  }
+
+  for (const platform of PLATFORM_META) {
+    const url = normalizeExternalUrl(record?.[platform.key]);
+    if (!url) continue;
+
+    try {
+      const parsed = new URL(url);
+      const parts = parsed.pathname.split('/').filter(Boolean);
+      if (parts.length === 0) continue;
+
+      const handle = parts[parts.length - 1].replace(/^@/, '');
+      if (handle) return `@${handle}`;
+    } catch {
+      // Ignore invalid URLs.
+    }
+  }
+
+  return '—';
+}
+
+export function creatorTagline(record, max = 42) {
+  const products = String(record?.sponsored_products || '').trim();
+  if (products) {
+    return products.length > max ? `${products.slice(0, max)}…` : products;
+  }
+
+  const region = String(record?.region || '').trim();
+  return region || '—';
+}
+
+export function formatLastContactLabel(value) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  const today = startOfDay(new Date());
+  const contactDay = startOfDay(date);
+  const diffDays = Math.round((today.getTime() - contactDay.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return formatRelativeTime(value);
+
+  return formatFollowupDate(value);
+}
+
+export function getFollowupEmphasis(nextFollowupAt) {
+  if (!nextFollowupAt) return null;
+
+  const due = new Date(nextFollowupAt);
+  if (Number.isNaN(due.getTime())) return null;
+
+  const today = startOfDay(new Date());
+  const dueDay = startOfDay(due);
+  const diffDays = Math.round((dueDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return { label: 'Overdue', tone: 'critical' };
+  }
+
+  if (diffDays === 0) {
+    return { label: 'Today', tone: 'warning' };
+  }
+
+  if (diffDays === 1) {
+    return { label: 'Tomorrow', tone: 'success' };
+  }
+
+  if (diffDays <= 14) {
+    return { label: `In ${diffDays} days`, tone: 'warning' };
+  }
+
+  return { label: formatFollowupDate(nextFollowupAt), tone: undefined };
+}
+
 export function formatVerifiedTimestamp(value) {
   if (!value) return '';
 
@@ -64,6 +299,22 @@ export function openExternalUrl(value) {
   if (!url) return false;
   window.open(url, '_blank', 'noopener,noreferrer');
   return true;
+}
+
+export function platformHandleFromUrl(url) {
+  const normalized = normalizeExternalUrl(url);
+  if (!normalized) return '—';
+
+  try {
+    const parsed = new URL(normalized);
+    const parts = parsed.pathname.split('/').filter(Boolean);
+    if (parts.length === 0) return normalized;
+
+    const handle = parts[parts.length - 1].replace(/^@/, '');
+    return handle ? `@${handle}` : normalized;
+  } catch {
+    return url;
+  }
 }
 
 export function sanitizeFollowerInput(value) {

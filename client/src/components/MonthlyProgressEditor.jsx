@@ -10,7 +10,7 @@ import {
 import { MONTHLY_PERIOD_LABELS } from '../constants';
 import UrlFieldWithOpen from './UrlFieldWithOpen';
 
-export default function MonthlyProgressEditor({ periods, onChange, disabled = false }) {
+export default function MonthlyProgressEditor({ periods, onChange, disabled = false, embedded = false }) {
   const updatePeriod = (periodIndex, field) => (value) => {
     onChange(
       periods.map((period) =>
@@ -78,16 +78,18 @@ export default function MonthlyProgressEditor({ periods, onChange, disabled = fa
 
   return (
     <BlockStack gap="300">
-      <BlockStack gap="100">
-        <Text as="h3" variant="headingMd">
-          Monthly Progress
-        </Text>
-        <Text as="p" tone="subdued" variant="bodySm">
-          Fixed 5 contract periods (matches the sponsorship spreadsheet). Edit each row
-          directly — there is no add/delete row. Use Clear to reset a period, then save.
-        </Text>
-      </BlockStack>
-      <Box overflowX="auto">
+      {embedded ? null : (
+        <BlockStack gap="100">
+          <Text as="h3" variant="headingMd">
+            Monthly Progress
+          </Text>
+          <Text as="p" tone="subdued" variant="bodySm">
+            Fixed 5 contract periods (matches the sponsorship spreadsheet). Edit each row
+            directly — there is no add/delete row. Use Clear to reset a period, then save.
+          </Text>
+        </BlockStack>
+      )}
+      <Box overflowX="auto" className={embedded ? 'crm-progress-edit-table' : undefined}>
         <DataTable
           columnContentTypes={['text', 'text', 'text', 'text', 'text']}
           headings={[

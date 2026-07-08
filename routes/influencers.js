@@ -54,6 +54,9 @@ const SORT_COLUMNS = {
   status: 'i.status',
   ambassador_level: 'i.ambassador_level',
   total_followers: 'i.total_followers',
+  last_contacted_at: 'i.last_contacted_at',
+  next_followup_at: 'i.next_followup_at',
+  followers_last_verified_at: 'i.followers_last_verified_at',
   id: 'i.id',
 };
 
@@ -294,6 +297,12 @@ router.get('/stats/summary', async (req, res) => {
             WHERE status IN ('Active Ambassador', 'Partnered')
           )::INT AS partnered,
           COUNT(*) FILTER (
+            WHERE status IN ('Applied', 'Contacted', 'Call Scheduled', 'Under Review')
+          )::INT AS in_discussion,
+          COUNT(*) FILTER (
+            WHERE status IN ('Active Ambassador', 'Partnered', 'Approved')
+          )::INT AS contract_signed,
+          COUNT(*) FILTER (
             WHERE ambassador_level IN ('Level 2', 'Level 3')
           )::INT AS elevated_levels,
           COUNT(*) FILTER (
@@ -315,7 +324,8 @@ router.get('/stats/summary', async (req, res) => {
                   OR mp.link IS NOT NULL
                 )
             )
-          )::INT AS with_content_logged
+          )::INT AS with_content_logged,
+          COALESCE(SUM(total_followers), 0)::BIGINT AS total_followers_sum
         FROM influencers
         WHERE shop = $1
       `,

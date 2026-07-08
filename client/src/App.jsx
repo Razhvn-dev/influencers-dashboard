@@ -1,22 +1,24 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Badge,
   Banner,
   BlockStack,
   Box,
-  Button,
   Card,
   EmptyState,
+  Icon,
   IndexTable,
   InlineStack,
   Layout,
   Modal,
   Page,
+  Pagination,
   Select,
   Text,
-  TextField,
+  Avatar,
   useIndexResourceState,
 } from '@shopify/polaris';
+import { PersonIcon } from '@shopify/polaris-icons';
 import {
   deleteSponsorshipRecord,
   deleteSponsorshipRecords,
@@ -25,22 +27,42 @@ import {
   fetchSponsorshipStats,
 } from './api';
 import {
-  COMMISSION_FILTER_OPTIONS,
+  creatorHandle,
+  creatorTagline,
   displayAmbassadorLevel,
-  FOLLOWUP_FILTER_HELP,
-  LEVEL_OPTIONS,
-  levelTone,
-  STATUS_FILTER_OPTIONS,
+  formatCompactNumber,
+  formatFollowupDate,
+  formatLastContactLabel,
+  formatRelativeTime,
+  getCreatorInitials,
+  getFollowupEmphasis,
+  normalizeExternalUrl,
   statusTone,
 } from './constants';
 import AddCreatorModal from './components/AddCreatorModal';
 import CreatorDetailModal from './components/CreatorDetailModal';
+import DashboardFilterBar from './components/DashboardFilterBar';
+import DashboardPageHeader from './components/DashboardPageHeader';
 import ImportCsvModal from './components/ImportCsvModal';
+import PlatformIndicators from './components/PlatformIndicators';
 import StatsCards from './components/StatsCards';
 import { useAutoDismiss } from './hooks/useAutoDismiss';
 
 const SUCCESS_DISMISS_MS = 4000;
 const resourceName = { singular: 'creator', plural: 'creators' };
+const PAGE_SIZE_OPTIONS = [
+  { label: '10 per page', value: '10' },
+  { label: '20 per page', value: '20' },
+  { label: '50 per page', value: '50' },
+];
+
+function followupEmphasisClassName(emphasis) {
+  if (!emphasis?.tone) return undefined;
+  if (emphasis.tone === 'critical') return 'crm-followup-overdue';
+  if (emphasis.tone === 'success') return 'crm-followup-positive';
+  if (emphasis.tone === 'warning') return 'crm-followup-soon';
+  return undefined;
+}
 
 function MissingConfigPage({ missingConfig }) {
   const title =
@@ -54,7 +76,7 @@ function MissingConfigPage({ missingConfig }) {
       : 'Install the app on your Shopify store, then open it from Apps in the Shopify admin.';
 
   return (
-    <Page title="Influencer Dashboard">
+    <Page title="Influencer Dashboard" fullWidth className="crm-page">
       <Layout>
         <Layout.Section>
           <Banner tone="warning" title={title}>
@@ -70,26 +92,12 @@ const SORTABLE_COLUMNS = [
   'name',
   'status',
   'ambassador_level',
-  'channel',
-  'affiliate_code',
-  'commission',
+  null,
   'total_followers',
+  'followers_last_verified_at',
+  'last_contacted_at',
+  'next_followup_at',
 ];
-
-function truncate(value, max = 48) {
-  const text = String(value || '').trim();
-  if (!text) return '—';
-  return text.length > max ? `${text.slice(0, max)}…` : text;
-}
-
-function isFollowupDue(record) {
-  if (!record.next_followup_at) return false;
-  const due = new Date(record.next_followup_at);
-  if (Number.isNaN(due.getTime())) return false;
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() + 7);
-  return due <= cutoff;
-}
 
 export default function App({ missingConfig = null, localPreview = false }) {
   const [records, setRecords] = useState([]);
@@ -102,7 +110,10 @@ export default function App({ missingConfig = null, localPreview = false }) {
   const [statusFilter, setStatusFilter] = useState('');
   const [levelFilter, setLevelFilter] = useState('');
   const [commissionFilter, setCommissionFilter] = useState('');
-  const [dueFollowupOnly, setDueFollowupOnly] = useState(false);
+  const [platformFilter, setPlatformFilter] = useState('');
+  const [dueFollowupFilter, setDueFollowupFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [sortColumnIndex, setSortColumnIndex] = useState(null);
   const [sortDirection, setSortDirection] = useState('descending');
   const [appliedFilters, setAppliedFilters] = useState({
@@ -129,6 +140,24 @@ export default function App({ missingConfig = null, localPreview = false }) {
   } = useIndexResourceState(records, {
     resourceIDResolver: (record) => String(record.id),
   });
+
+  const displayRecords = useMemo(() => {
+    if (!platformFilter) return records;
+
+    return records.filter((record) => normalizeExternalUrl(record?.[platformFilter]));
+  }, [records, platformFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(displayRecords.length / pageSize));
+
+  const paginatedRecords = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return displayRecords.slice(start, start + pageSize);
+  }, [displayRecords, page, pageSize]);
+
+  const paginationLabel =
+    displayRecords.length === 0
+      ? 'Showing 0 creators'
+      : `Showing ${(page - 1) * pageSize + 1} to ${Math.min(page * pageSize, displayRecords.length)} of ${displayRecords.length} creators`;
 
   const selectedItemsCount = allResourcesSelected ? 'All' : selectedResources.length;
 
@@ -182,19 +211,41 @@ export default function App({ missingConfig = null, localPreview = false }) {
         status: statusFilter,
         ambassador_level: levelFilter,
         commission: commissionFilter,
-        due_followup: dueFollowupOnly,
+        due_followup: dueFollowupFilter === 'due',
       }));
     }, 350);
 
     return () => window.clearTimeout(timer);
-  }, [search, statusFilter, levelFilter, commissionFilter, dueFollowupOnly, missingConfig]);
+  }, [search, statusFilter, levelFilter, commissionFilter, dueFollowupFilter, missingConfig]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [
+    search,
+    statusFilter,
+    levelFilter,
+    commissionFilter,
+    platformFilter,
+    dueFollowupFilter,
+    appliedFilters.sort_by,
+    appliedFilters.sort_dir,
+  ]);
+
+  useEffect(() => {
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
 
   const handleSort = (headingIndex, direction) => {
+    const sortKey = SORTABLE_COLUMNS[headingIndex];
+    if (!sortKey) return;
+
     setSortColumnIndex(headingIndex);
     setSortDirection(direction);
     setAppliedFilters((current) => ({
       ...current,
-      sort_by: SORTABLE_COLUMNS[headingIndex],
+      sort_by: sortKey,
       sort_dir: direction === 'ascending' ? 'asc' : 'desc',
     }));
   };
@@ -204,7 +255,8 @@ export default function App({ missingConfig = null, localPreview = false }) {
     setStatusFilter('');
     setLevelFilter('');
     setCommissionFilter('');
-    setDueFollowupOnly(false);
+    setPlatformFilter('');
+    setDueFollowupFilter('');
   };
 
   const hasActiveFilters =
@@ -212,7 +264,8 @@ export default function App({ missingConfig = null, localPreview = false }) {
     statusFilter ||
     levelFilter ||
     commissionFilter ||
-    dueFollowupOnly;
+    platformFilter ||
+    dueFollowupFilter;
 
   const refreshDashboard = () => {
     loadRecords();
@@ -295,68 +348,129 @@ export default function App({ missingConfig = null, localPreview = false }) {
     return <MissingConfigPage missingConfig={missingConfig} />;
   }
 
-  const rowMarkup = records.map((record, index) => (
-    <IndexTable.Row
-      id={String(record.id)}
-      key={record.id}
-      position={index}
-      selected={selectedResources.includes(String(record.id))}
-      onClick={() => {
-        setSelectedRecord(record);
-        setDetailOpen(true);
-      }}
-    >
-      <IndexTable.Cell>
-        <InlineStack gap="200" blockAlign="center">
-          <Text as="span" variant="bodyMd" fontWeight="semibold">
-            {record.name}
+  const rowMarkup = paginatedRecords.map((record, index) => {
+    const followupEmphasis = getFollowupEmphasis(record.next_followup_at);
+
+    return (
+      <IndexTable.Row
+        id={String(record.id)}
+        key={record.id}
+        position={index}
+        selected={selectedResources.includes(String(record.id))}
+        onClick={() => {
+          setSelectedRecord(record);
+          setDetailOpen(true);
+        }}
+      >
+        <IndexTable.Cell className="crm-creator-table__creator-cell">
+          <InlineStack gap="400" blockAlign="center" wrap={false}>
+            <Avatar
+              customer
+              size="lg"
+              name={record.name}
+              initials={getCreatorInitials(record.name)}
+            />
+            <BlockStack gap="050">
+              <Text as="span" variant="bodyMd" fontWeight="semibold">
+                {record.name}
+              </Text>
+              <Text as="span" variant="bodySm" tone="subdued">
+                {creatorHandle(record)}
+              </Text>
+              <Text as="span" variant="bodySm" tone="subdued">
+                {creatorTagline(record)}
+              </Text>
+            </BlockStack>
+          </InlineStack>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          {record.status ? (
+            <Badge tone={statusTone(record.status)}>{record.status}</Badge>
+          ) : (
+            '—'
+          )}
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text as="span" variant="bodySm" className="crm-level-text">
+            {displayAmbassadorLevel(record.ambassador_level)}
           </Text>
-          {isFollowupDue(record) ? <Badge tone="warning">Due</Badge> : null}
-        </InlineStack>
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        {record.status ? (
-          <Badge tone={statusTone(record.status)}>{record.status}</Badge>
-        ) : (
-          '—'
-        )}
-      </IndexTable.Cell>
-      <IndexTable.Cell>
-        <Badge tone={levelTone(record.ambassador_level)}>
-          {displayAmbassadorLevel(record.ambassador_level)}
-        </Badge>
-      </IndexTable.Cell>
-      <IndexTable.Cell>{truncate(record.channel, 32)}</IndexTable.Cell>
-      <IndexTable.Cell>{record.affiliate_code || '—'}</IndexTable.Cell>
-      <IndexTable.Cell>{record.commission || '—'}</IndexTable.Cell>
-      <IndexTable.Cell>
-        {Number(record.total_followers || 0).toLocaleString('en-US')}
-      </IndexTable.Cell>
-    </IndexTable.Row>
-  ));
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <PlatformIndicators record={record} showEmpty size="large" />
+        </IndexTable.Cell>
+        <IndexTable.Cell className="crm-creator-table__followers-cell">
+          <Text as="span" variant="bodyMd" fontWeight="semibold">
+            {formatCompactNumber(record.total_followers)}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          {record.followers_last_verified_at ? (
+            <BlockStack gap="050">
+              <Text as="span" variant="bodySm" fontWeight="semibold">
+                {formatRelativeTime(record.followers_last_verified_at)}
+              </Text>
+              {record.followers_verified_by ? (
+                <Text as="span" variant="bodySm" tone="subdued">
+                  by {record.followers_verified_by}
+                </Text>
+              ) : null}
+            </BlockStack>
+          ) : (
+            <Text as="span" tone="subdued" variant="bodySm">
+              —
+            </Text>
+          )}
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          <Text as="span" variant="bodySm">
+            {formatLastContactLabel(record.last_contacted_at)}
+          </Text>
+        </IndexTable.Cell>
+        <IndexTable.Cell>
+          {record.next_followup_at && followupEmphasis ? (
+            followupEmphasis.tone ? (
+              <BlockStack gap="050">
+                <Text
+                  as="span"
+                  variant="bodySm"
+                  fontWeight="semibold"
+                  className={followupEmphasisClassName(followupEmphasis)}
+                >
+                  {followupEmphasis.label}
+                </Text>
+                <Text as="span" variant="bodySm" tone="subdued">
+                  {formatFollowupDate(record.next_followup_at)}
+                </Text>
+              </BlockStack>
+            ) : (
+              <Text as="span" variant="bodySm">
+                {followupEmphasis.label}
+              </Text>
+            )
+          ) : (
+            <Text as="span" tone="subdued" variant="bodySm">
+              —
+            </Text>
+          )}
+        </IndexTable.Cell>
+      </IndexTable.Row>
+    );
+  });
 
   return (
-    <Page
-      title="Influencer Dashboard"
-      primaryAction={{
-        content: 'Add Creator',
-        onAction: () => setAddModalOpen(true),
-      }}
-      secondaryActions={[
-        {
-          content: 'Import CSV',
-          onAction: () => setImportModalOpen(true),
-        },
-        {
-          content: 'Export Excel',
-          onAction: handleExport,
-          disabled: records.length === 0,
-        },
-      ]}
-    >
+    <Page fullWidth className="crm-page">
       <Layout>
         <Layout.Section>
-          <BlockStack gap="400">
+          <BlockStack gap="800">
+            <DashboardPageHeader
+              search={search}
+              onSearchChange={setSearch}
+              onExport={handleExport}
+              exportDisabled={records.length === 0}
+              onImport={() => setImportModalOpen(true)}
+              onAddCreator={() => setAddModalOpen(true)}
+            />
+
             {localPreview ? (
               <Banner tone="info" title="Local preview mode">
                 <p>
@@ -379,85 +493,44 @@ export default function App({ missingConfig = null, localPreview = false }) {
 
             <StatsCards stats={stats} loading={statsLoading} />
 
-            <Card>
-              <BlockStack gap="400">
-                <InlineStack align="space-between" blockAlign="center" wrap>
-                  <Text as="h2" variant="headingMd">
-                    Search & filters
-                  </Text>
-                  {hasActiveFilters ? (
-                    <Button variant="plain" onClick={clearFilters}>
-                      Clear filters
-                    </Button>
-                  ) : null}
-                </InlineStack>
-                <InlineStack gap="300" wrap>
-                  <Box minWidth="280px">
-                    <TextField
-                      label="Search"
-                      value={search}
-                      onChange={setSearch}
-                      placeholder="Name, channel, product, affiliate code, email"
-                      autoComplete="off"
-                      clearButton
-                      onClearButtonClick={() => setSearch('')}
-                    />
-                  </Box>
-                  <Box minWidth="200px">
-                    <Select
-                      label="Status"
-                      options={STATUS_FILTER_OPTIONS}
-                      value={statusFilter}
-                      onChange={setStatusFilter}
-                    />
-                  </Box>
-                  <Box minWidth="200px">
-                    <Select
-                      label="Ambassador Level"
-                      options={LEVEL_OPTIONS}
-                      value={levelFilter}
-                      onChange={setLevelFilter}
-                    />
-                  </Box>
-                  <Box minWidth="180px">
-                    <Select
-                      label="Commission"
-                      options={COMMISSION_FILTER_OPTIONS}
-                      value={commissionFilter}
-                      onChange={setCommissionFilter}
-                    />
-                  </Box>
-                  <Box paddingBlockStart="600">
-                    <BlockStack gap="100">
-                      <Button
-                        pressed={dueFollowupOnly}
-                        onClick={() => setDueFollowupOnly((current) => !current)}
-                      >
-                        Due for follow-up
-                      </Button>
-                      <Text as="p" tone="subdued" variant="bodySm">
-                        {FOLLOWUP_FILTER_HELP}
-                      </Text>
-                    </BlockStack>
-                  </Box>
-                </InlineStack>
-              </BlockStack>
-            </Card>
+            <DashboardFilterBar
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              levelFilter={levelFilter}
+              onLevelFilterChange={setLevelFilter}
+              platformFilter={platformFilter}
+              onPlatformFilterChange={setPlatformFilter}
+              dueFollowupFilter={dueFollowupFilter}
+              onDueFollowupFilterChange={setDueFollowupFilter}
+              commissionFilter={commissionFilter}
+              onCommissionFilterChange={setCommissionFilter}
+              hasActiveFilters={hasActiveFilters}
+              onClearFilters={clearFilters}
+            />
 
-            <Card padding="0">
+            <Card padding="0" className="crm-creator-table">
+              <Box className="crm-creator-table__section-header">
+                <InlineStack gap="200" blockAlign="center">
+                  <Icon source={PersonIcon} tone="base" />
+                  <Text as="h2" variant="headingMd" fontWeight="semibold">
+                    Creator Table
+                  </Text>
+                </InlineStack>
+              </Box>
               <IndexTable
                 resourceName={resourceName}
-                itemCount={records.length}
+                itemCount={displayRecords.length}
                 headings={[
-                  { title: 'Name' },
+                  { title: 'Creator' },
                   { title: 'Status' },
                   { title: 'Ambassador Level' },
-                  { title: 'Channel' },
-                  { title: 'Affiliate Code' },
-                  { title: 'Commission' },
-                  { title: 'Total Followers' },
+                  { title: 'Platforms' },
+                  { title: 'Followers' },
+                  { title: 'Last Verified' },
+                  { title: 'Last Contact' },
+                  { title: 'Next Follow-up' },
                 ]}
-                sortable={[true, true, true, true, true, true, true]}
+                sortable={[true, true, true, false, true, true, true, true]}
                 sortDirection={sortDirection}
                 sortColumnIndex={sortColumnIndex}
                 onSort={handleSort}
@@ -493,6 +566,33 @@ export default function App({ missingConfig = null, localPreview = false }) {
               >
                 {rowMarkup}
               </IndexTable>
+              {displayRecords.length > 0 ? (
+                <Box className="crm-creator-table__footer">
+                  <InlineStack align="space-between" blockAlign="center" wrap gap="400">
+                    <Text as="p" tone="subdued" variant="bodySm">
+                      {paginationLabel}
+                    </Text>
+                    <Pagination
+                      hasPrevious={page > 1}
+                      onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+                      hasNext={page < totalPages}
+                      onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+                    />
+                    <Box minWidth="140px">
+                      <Select
+                        label="Per page"
+                        labelHidden
+                        options={PAGE_SIZE_OPTIONS}
+                        value={String(pageSize)}
+                        onChange={(value) => {
+                          setPageSize(Number(value));
+                          setPage(1);
+                        }}
+                      />
+                    </Box>
+                  </InlineStack>
+                </Box>
+              ) : null}
             </Card>
           </BlockStack>
         </Layout.Section>

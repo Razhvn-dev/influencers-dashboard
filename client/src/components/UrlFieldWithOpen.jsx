@@ -28,7 +28,7 @@ export default function UrlFieldWithOpen({
           external
           accessibilityLabel={`Open ${label}`}
         >
-          Open
+          Open ↗
         </Button>
       }
     />

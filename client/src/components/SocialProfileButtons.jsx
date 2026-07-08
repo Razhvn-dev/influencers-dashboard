@@ -25,6 +25,7 @@ export default function SocialProfileButtons({ form }) {
             }
           >
             {label}
+            {' ↗'}
           </Button>
         );
       })}
