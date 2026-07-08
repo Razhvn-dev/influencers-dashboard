@@ -26,7 +26,9 @@ CREATE TABLE influencers (
     products_requested      TEXT,                                                -- Products the influencer has requested
     deliverables            TEXT,                                                -- Expected or completed deliverables
     last_contacted_at       TIMESTAMPTZ,                                         -- Timestamp of the most recent outreach
-    next_followup_at        TIMESTAMPTZ                                          -- Scheduled timestamp for the next follow-up
+    next_followup_at        TIMESTAMPTZ,                                         -- Scheduled timestamp for the next follow-up
+    followers_last_verified_at TIMESTAMPTZ,                                      -- When follower counts were last manually verified
+    followers_verified_by   VARCHAR(255)                                         -- Shopify staff label for last verification
 );
 
 CREATE INDEX idx_influencers_shop ON influencers (shop);
@@ -57,3 +59,5 @@ COMMENT ON COLUMN influencers.products_requested IS 'Products the influencer has
 COMMENT ON COLUMN influencers.deliverables IS 'Expected or completed deliverables';
 COMMENT ON COLUMN influencers.last_contacted_at IS 'Timestamp of the most recent outreach';
 COMMENT ON COLUMN influencers.next_followup_at IS 'Scheduled timestamp for the next follow-up';
+COMMENT ON COLUMN influencers.followers_last_verified_at IS 'Timestamp when follower/subscriber counts were last manually updated and saved';
+COMMENT ON COLUMN influencers.followers_verified_by IS 'Shopify staff label recorded when follower counts were last verified';

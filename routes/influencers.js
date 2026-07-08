@@ -12,6 +12,7 @@ const {
   mergeProfileFields,
   normalizeProfilePayload,
 } = require('../lib/creatorProfile');
+const { applyFollowerVerification } = require('../lib/followerVerification');
 
 const router = express.Router();
 
@@ -40,7 +41,9 @@ const INFLUENCER_ROW_SELECT = `
   i.ambassador_level,
   i.contract_status,
   i.last_contacted_at,
-  i.next_followup_at
+  i.next_followup_at,
+  i.followers_last_verified_at,
+  i.followers_verified_by
 `;
 
 const SORT_COLUMNS = {
@@ -137,6 +140,8 @@ function influencerRowValues(payload) {
     payload.contract_status,
     payload.last_contacted_at,
     payload.next_followup_at,
+    payload.followers_last_verified_at,
+    payload.followers_verified_by,
   ];
 }
 
@@ -499,9 +504,11 @@ router.post('/import-csv', async (req, res) => {
             ambassador_level,
             contract_status,
             last_contacted_at,
-            next_followup_at
+            next_followup_at,
+            followers_last_verified_at,
+            followers_verified_by
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
           RETURNING id
         `,
         [shop, ...rowValues]
@@ -612,7 +619,7 @@ router.post('/', async (req, res) => {
 
   try {
     const shop = getShop(res);
-    const payload = buildRecordPayload(req.body);
+    const payload = applyFollowerVerification(null, buildRecordPayload(req.body), res);
     const rowValues = influencerRowValues(payload);
 
     await client.query('BEGIN');
@@ -644,9 +651,11 @@ router.post('/', async (req, res) => {
           ambassador_level,
           contract_status,
           last_contacted_at,
-          next_followup_at
+          next_followup_at,
+          followers_last_verified_at,
+          followers_verified_by
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
         RETURNING id
       `,
       [shop, ...rowValues]
@@ -701,7 +710,11 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    const payload = buildRecordPayload({ ...existing, ...req.body });
+    const payload = applyFollowerVerification(
+      existing,
+      buildRecordPayload({ ...existing, ...req.body }),
+      res
+    );
     const rowValues = influencerRowValues(payload);
 
     await client.query('BEGIN');
@@ -733,8 +746,10 @@ router.put('/:id', async (req, res) => {
           ambassador_level = $21,
           contract_status = $22,
           last_contacted_at = $23,
-          next_followup_at = $24
-        WHERE id = $25 AND shop = $26
+          next_followup_at = $24,
+          followers_last_verified_at = $25,
+          followers_verified_by = $26
+        WHERE id = $27 AND shop = $28
       `,
       [...rowValues, id, shop]
     );

@@ -37,6 +37,21 @@ export const COMMISSION_FILTER_OPTIONS = [
 export const FOLLOWUP_FILTER_HELP =
   'Shows creators with Next Follow-up set within the next 7 days, including overdue dates.';
 
+export function formatVerifiedTimestamp(value) {
+  if (!value) return '';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
 export function normalizeExternalUrl(value) {
   const trimmed = String(value || '').trim();
   if (!trimmed) return null;
@@ -151,6 +166,8 @@ export function buildFormStateFromRecord(record) {
     contract_status: record.contract_status || '',
     last_contacted_at: toInputDate(record.last_contacted_at),
     next_followup_at: toInputDate(record.next_followup_at),
+    followers_last_verified_at: formatVerifiedTimestamp(record.followers_last_verified_at),
+    followers_verified_by: record.followers_verified_by || '',
     monthly_progress: normalizeMonthlyProgressForForm(record.monthly_progress),
   };
 }

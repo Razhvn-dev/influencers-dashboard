@@ -13,6 +13,9 @@ import {
   STATUS_OPTIONS,
 } from '../constants';
 import DateTimeField from './DateTimeField';
+import SocialProfileButtons, {
+  FollowerVerificationSummary,
+} from './SocialProfileButtons';
 import UrlFieldWithOpen from './UrlFieldWithOpen';
 
 function followerFieldProps(field, form, onChange) {
@@ -105,8 +108,10 @@ export default function CreatorProfileEditor({ form, onChange, ambassadorLevel }
         Platform Links
       </Text>
       <Text as="p" tone="subdued" variant="bodySm">
-        Paste a profile URL and click Open to visit the page in a new tab.
+        Open public profile pages in a new tab. Paste URLs below to enable each button.
       </Text>
+
+      <SocialProfileButtons form={form} />
 
       <FormLayout>
         <FormLayout.Group>
@@ -144,6 +149,13 @@ export default function CreatorProfileEditor({ form, onChange, ambassadorLevel }
       <Text as="h3" variant="headingMd">
         Platform Followers
       </Text>
+
+      <Text as="p" tone="subdued" variant="bodySm">
+        Enter counts manually after checking each public profile. Counts are not synced from
+        platform APIs.
+      </Text>
+
+      <FollowerVerificationSummary form={form} />
 
       <Text as="p" tone="subdued">
         Ambassador level:{' '}
