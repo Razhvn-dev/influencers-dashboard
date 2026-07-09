@@ -1,28 +1,16 @@
-import { BlockStack, Box, Button, Card, InlineStack, Text } from '@shopify/polaris';
-import { EditIcon } from '@shopify/polaris-icons';
+import { BlockStack, Box, Card, InlineStack, Text } from '@shopify/polaris';
 
-function SectionHeader({ title, editing, onEdit, onDone, headerExtra = null }) {
+function SectionHeader({ title, headerExtra = null }) {
   return (
     <InlineStack align="space-between" blockAlign="center" wrap gap="300">
       <Text as="h3" variant="headingMd" fontWeight="semibold" className="crm-section-card__title">
         {title}
       </Text>
-      <InlineStack gap="300" blockAlign="center" wrap={false}>
-        {headerExtra}
-        {onEdit || onDone ? (
-          <Box className="crm-section-card__edit">
-            {editing ? (
-              <Button variant="plain" onClick={onDone}>
-                Done
-              </Button>
-            ) : (
-              <Button variant="plain" icon={EditIcon} onClick={onEdit}>
-                Edit
-              </Button>
-            )}
-          </Box>
-        ) : null}
-      </InlineStack>
+      {headerExtra ? (
+        <InlineStack gap="300" blockAlign="center" wrap={false}>
+          {headerExtra}
+        </InlineStack>
+      ) : null}
     </InlineStack>
   );
 }
@@ -30,11 +18,10 @@ function SectionHeader({ title, editing, onEdit, onDone, headerExtra = null }) {
 export default function CreatorSectionCard({
   title,
   editing = false,
-  onEdit,
-  onDone,
   readContent,
   editContent,
   padding = '500',
+  headerExtra = null,
 }) {
   const isFlush = padding === '0';
 
@@ -47,12 +34,7 @@ export default function CreatorSectionCard({
             paddingBlockEnd={isFlush ? '400' : undefined}
             className={isFlush ? 'crm-section-card__header' : undefined}
           >
-            <SectionHeader
-              title={title}
-              editing={editing}
-              onEdit={onEdit}
-              onDone={onDone}
-            />
+            <SectionHeader title={title} headerExtra={headerExtra} />
           </Box>
 
           <Box
@@ -71,8 +53,6 @@ export default function CreatorSectionCard({
 export function CreatorSectionCardShell({
   title,
   editing = false,
-  onEdit,
-  onDone,
   headerExtra = null,
   readContent,
   editContent,
@@ -81,13 +61,7 @@ export function CreatorSectionCardShell({
     <Box className="crm-section-card">
       <Card padding="0">
         <Box padding="500" paddingBlockEnd="400" className="crm-section-card__header">
-          <SectionHeader
-            title={title}
-            editing={editing}
-            onEdit={onEdit}
-            onDone={onDone}
-            headerExtra={headerExtra}
-          />
+          <SectionHeader title={title} headerExtra={headerExtra} />
         </Box>
 
         <Box className="crm-section-card__body">{editing ? editContent : readContent}</Box>

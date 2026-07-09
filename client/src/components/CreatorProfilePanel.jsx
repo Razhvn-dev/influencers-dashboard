@@ -1,96 +1,201 @@
-import { FormLayout, Icon, Select, TextField } from '@shopify/polaris';
+import { useMemo } from 'react';
+import { FormLayout, Select, TextField } from '@shopify/polaris';
 import {
-  CalendarIcon,
-  DiscountIcon,
   EmailIcon,
   HashtagIcon,
   LinkIcon,
   LocationIcon,
-  NoteIcon,
   PersonIcon,
-  ShieldCheckMarkIcon,
 } from '@shopify/polaris-icons';
 import {
   creatorHandle,
+  derivePrimaryChannel,
   formatFollowupDate,
-  formatLastContactLabel,
-  STATUS_OPTIONS,
+  getPrimaryChannelPlatformKey,
+  MANAGER_OWNER_OPTIONS,
 } from '../constants';
 import CreatorSectionCard from './CreatorSectionCard';
-import DateTimeField from './DateTimeField';
+import FieldRow from './FieldRow';
 
 function cleanValue(value, fallback = 'Not set') {
   const text = String(value ?? '').trim();
   return text || fallback;
 }
 
+function hasDisplayValue(value) {
+  const text = String(value ?? '').trim();
+  return Boolean(text) && text !== 'Not set' && text !== 'Not selected' && text !== '—';
+}
+
+function shouldShowChannelBrand(form, channelLabel, primaryChannel) {
+  if (!hasDisplayValue(channelLabel)) return false;
+  if (channelLabel === primaryChannel) return false;
+
+  const handle = creatorHandle(form);
+  if (handle && handle !== '—') {
+    const norm = (s) => String(s).toLowerCase().replace(/^@/, '');
+    if (norm(channelLabel) === norm(handle)) return false;
+  }
+
+  return true;
+}
 function channelBrandLabel(form) {
   const channel = String(form.channel ?? '').trim();
   const handle = creatorHandle(form);
-  if (channel && handle && handle !== '—') return `${channel} / ${handle}`;
-  if (channel) return channel;
-  if (handle && handle !== '—') return handle;
-  return 'Not set';
-}
+  const normalizedHandle = handle && handle !== '—' ? handle : '';
 
-function ProfileRow({ icon, label, value, tone = '' }) {
-  return (
-    <div className="crm-detail-profile-row">
-      <span className="crm-detail-profile-row__icon" aria-hidden="true">
-        <Icon source={icon} />
-      </span>
-      <span className="crm-detail-profile-row__label">{label}</span>
-      <span className={`crm-detail-profile-row__value ${tone}`.trim()}>{value}</span>
-    </div>
-  );
+  if (channel && normalizedHandle) {
+    const same =
+      channel.toLowerCase() === normalizedHandle.toLowerCase() ||
+      channel.toLowerCase() === normalizedHandle.replace(/^@/, '').toLowerCase();
+    return same ? channel : `${channel} / ${normalizedHandle}`;
+  }
+
+  if (channel) return channel;
+  if (normalizedHandle) return normalizedHandle;
+  return 'Not set';
 }
 
 export default function CreatorProfilePanel({
   form,
+  record,
   onChange,
   editing = false,
-  onEdit,
-  onDone,
 }) {
   const updateField = (field) => (value) => {
     onChange({ ...form, [field]: value });
   };
 
-  const readContent = (
-    <div className="crm-detail-profile-list">
-      <ProfileRow icon={EmailIcon} label="Email" value={cleanValue(form.email)} />
-      <ProfileRow icon={LocationIcon} label="Location" value={cleanValue(form.region)} />
-      <ProfileRow icon={HashtagIcon} label="Channel / Brand" value={channelBrandLabel(form)} />
-      <ProfileRow icon={LinkIcon} label="Affiliate Code" value={cleanValue(form.affiliate_code)} />
-      <ProfileRow
-        icon={PersonIcon}
-        label="Owner"
-        value={cleanValue(form.manager_owner || 'Current User')}
-      />
-      <ProfileRow
-        icon={ShieldCheckMarkIcon}
-        label="Partnership Status"
-        value={cleanValue(form.status)}
-        tone="crm-detail-profile-row__value--success"
-      />
-      <ProfileRow
-        icon={CalendarIcon}
-        label="Last Contact"
-        value={
-          form.last_contacted_at
-            ? formatLastContactLabel(new Date(form.last_contacted_at).toISOString())
-            : 'Not contacted'
-        }
-      />
-      <ProfileRow
-        icon={CalendarIcon}
-        label="Next Follow-up"
-        value={form.next_followup_at ? formatFollowupDate(form.next_followup_at) : 'Not scheduled'}
-      />
-      <ProfileRow icon={CalendarIcon} label="Joined Date" value="Not set" />
-      <ProfileRow icon={NoteIcon} label="Notes" value={cleanValue(form.notes)} />
-    </div>
-  );
+  const primaryChannel = derivePrimaryChannel(form);
+  const primaryChannelIconKey =
+    primaryChannel === 'Not selected' ? null : getPrimaryChannelPlatformKey(primaryChannel);
+
+  const joinedDate = record?.created_at
+    ? formatFollowupDate(record.created_at)
+    : 'Not set';
+
+  const readRows = useMemo(() => {
+    const channelLabel = channelBrandLabel(form);
+    const rows = [
+      hasDisplayValue(form.email)
+        ? {
+            key: 'email',
+            node: (
+              <FieldRow
+                icon={EmailIcon}
+                label="Email"
+                value={cleanValue(form.email)}
+              />
+            ),
+          }
+        : null,
+      hasDisplayValue(form.region)
+        ? {
+            key: 'region',
+            node: (
+              <FieldRow icon={LocationIcon} label="Location" value={cleanValue(form.region)} />
+            ),
+          }
+        : null,
+      hasDisplayValue(primaryChannel) && primaryChannel !== 'Not selected'
+        ? {
+            key: 'primary',
+            node: (
+              <FieldRow
+                icon={LinkIcon}
+                label="Primary Channel"
+                value={primaryChannel}
+                platformIconKey={primaryChannelIconKey}
+              />
+            ),
+          }
+        : null,
+      shouldShowChannelBrand(form, channelLabel, primaryChannel)
+        ? {
+            key: 'channel',
+            node: (
+              <FieldRow
+                icon={HashtagIcon}
+                label="Channel / Brand"
+                value={channelLabel}
+                multiline
+              />
+            ),
+          }
+        : null,
+      hasDisplayValue(form.niche_category)
+        ? {
+            key: 'niche',
+            node: (
+              <FieldRow
+                icon={HashtagIcon}
+                label="Niche / Category"
+                value={cleanValue(form.niche_category)}
+              />
+            ),
+          }
+        : null,
+      hasDisplayValue(form.manager_owner)
+        ? {
+            key: 'manager',
+            node: (
+              <FieldRow
+                icon={PersonIcon}
+                label="Manager / Owner"
+                value={cleanValue(form.manager_owner)}
+              />
+            ),
+          }
+        : null,
+      hasDisplayValue(form.tags)
+        ? {
+            key: 'tags',
+            node: (
+              <FieldRow icon={HashtagIcon} label="Tags" value={cleanValue(form.tags)} multiline />
+            ),
+          }
+        : null,
+      hasDisplayValue(form.affiliate_code)
+        ? {
+            key: 'affiliate',
+            node: (
+              <FieldRow
+                icon={LinkIcon}
+                label="Affiliate Code"
+                value={cleanValue(form.affiliate_code)}
+              />
+            ),
+          }
+        : null,
+      record?.created_at
+        ? {
+            key: 'joined',
+            node: <FieldRow icon={LinkIcon} label="Joined Date" value={joinedDate} />,
+          }
+        : null,
+      hasDisplayValue(form.bio)
+        ? {
+            key: 'bio',
+            node: (
+              <FieldRow icon={PersonIcon} label="Bio" value={cleanValue(form.bio)} multiline />
+            ),
+          }
+        : null,
+    ].filter(Boolean);
+
+    return rows;
+  }, [form, joinedDate, primaryChannel, primaryChannelIconKey, record?.created_at]);
+
+  const readContent =
+    readRows.length > 0 ? (
+      <div className="crm-field-row-list">
+        {readRows.map((row) => (
+          <div key={row.key}>{row.node}</div>
+        ))}
+      </div>
+    ) : (
+      <p className="crm-detail-empty-state">No profile details yet. Edit creator to add information.</p>
+    );
 
   const editContent = (
     <FormLayout>
@@ -122,26 +227,36 @@ export default function CreatorProfilePanel({
         autoComplete="off"
       />
       <TextField
+        label="Niche / Category"
+        value={form.niche_category}
+        onChange={updateField('niche_category')}
+        autoComplete="off"
+      />
+      <TextField
+        label="Bio"
+        value={form.bio}
+        onChange={updateField('bio')}
+        multiline={3}
+        autoComplete="off"
+      />
+      <Select
+        label="Manager / Owner"
+        options={MANAGER_OWNER_OPTIONS}
+        value={form.manager_owner}
+        onChange={updateField('manager_owner')}
+      />
+      <TextField
+        label="Tags"
+        value={form.tags}
+        onChange={updateField('tags')}
+        placeholder="e.g. VIP, Micro-influencer"
+        autoComplete="off"
+      />
+      <TextField
         label="Affiliate Code"
         value={form.affiliate_code}
         onChange={updateField('affiliate_code')}
         autoComplete="off"
-      />
-      <Select
-        label="Partnership Status"
-        options={STATUS_OPTIONS}
-        value={form.status}
-        onChange={updateField('status')}
-      />
-      <DateTimeField
-        label="Last Contact"
-        value={form.last_contacted_at}
-        onChange={updateField('last_contacted_at')}
-      />
-      <DateTimeField
-        label="Next Follow-up"
-        value={form.next_followup_at}
-        onChange={updateField('next_followup_at')}
       />
     </FormLayout>
   );
@@ -150,8 +265,6 @@ export default function CreatorProfilePanel({
     <CreatorSectionCard
       title="Creator Profile"
       editing={editing}
-      onEdit={onEdit}
-      onDone={onDone}
       readContent={readContent}
       editContent={editContent}
     />

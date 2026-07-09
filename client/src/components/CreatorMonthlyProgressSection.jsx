@@ -1,58 +1,67 @@
+import { useEffect, useState } from 'react';
 import { Box, Icon } from '@shopify/polaris';
-import {
-  ChartLineIcon,
-  CheckCircleIcon,
-  CursorIcon,
-  DiscountIcon,
-  TeamIcon,
-} from '@shopify/polaris-icons';
+import { CheckCircleIcon } from '@shopify/polaris-icons';
 import CreatorSectionCard from './CreatorSectionCard';
 import MonthlyProgressEditor from './MonthlyProgressEditor';
-import MonthlyProgressReadView from './MonthlyProgressReadView';
-
-function countFilled(periods, field) {
-  return periods.filter((period) => String(period[field] || '').trim()).length;
-}
-
-function ProgressMetric({ icon, label, value, tone }) {
-  return (
-    <div className="crm-detail-progress-metric">
-      <span className={`crm-detail-progress-metric__icon crm-detail-progress-metric__icon--${tone}`}>
-        <Icon source={icon} />
-      </span>
-      <span>
-        <small>{label}</small>
-        <strong>{value}</strong>
-      </span>
-    </div>
-  );
-}
+import MonthlyProgressReadView, { countCompletedPeriods } from './MonthlyProgressReadView';
 
 export default function CreatorMonthlyProgressSection({
   periods,
   onChange,
   editing = false,
-  onEdit,
-  onDone,
 }) {
-  const delivered = countFilled(periods, 'content_delivered');
-  const links = countFilled(periods, 'link');
+  const [expanded, setExpanded] = useState(editing);
+
+  useEffect(() => {
+    if (editing) {
+      setExpanded(true);
+    }
+  }, [editing]);
+
+  const completed = countCompletedPeriods(periods);
+  const total = periods.length || 1;
+  const progressPercent = Math.round((completed / total) * 100);
+  const summary = `${completed} of ${periods.length} periods complete`;
 
   const readContent = (
     <div className="crm-detail-progress">
-      <div className="crm-detail-progress-metrics">
-        <ProgressMetric icon={TeamIcon} label="Brands" value="4 / 10" tone="blue" />
-        <ProgressMetric icon={DiscountIcon} label="Monthly Deals" value="3" tone="green" />
-        <ProgressMetric
-          icon={CheckCircleIcon}
-          label="Content Delivered"
-          value={`${delivered} / ${periods.length}`}
-          tone="mint"
-        />
-        <ProgressMetric icon={CursorIcon} label="Link Clicks" value={links || '0'} tone="indigo" />
-        <ProgressMetric icon={ChartLineIcon} label="Conversion" value="Not set" tone="orange" />
+      <div className="crm-detail-progress-summary">
+        <div className="crm-detail-progress-summary__main">
+          <div className="crm-detail-progress-summary__stats">
+            <span className="crm-detail-progress-summary__icon" aria-hidden="true">
+              <Icon source={CheckCircleIcon} />
+            </span>
+            <span className="crm-detail-progress-summary__text">{summary}</span>
+          </div>
+          <div className="crm-detail-progress-bar-wrap">
+            <div
+              className={`crm-detail-progress-bar${completed === 0 ? ' crm-detail-progress-bar--empty' : ''}`}
+              role="progressbar"
+              aria-valuenow={completed}
+              aria-valuemin={0}
+              aria-valuemax={periods.length}
+              aria-label={summary}
+            >
+              <div
+                className="crm-detail-progress-bar__fill"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            {completed === 0 ? (
+              <p className="crm-detail-progress-bar__hint">No periods completed yet</p>
+            ) : null}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="crm-detail-progress-summary__toggle"
+          onClick={() => setExpanded((current) => !current)}
+          aria-expanded={expanded}
+        >
+          {expanded ? 'Hide details' : 'Show details'}
+        </button>
       </div>
-      <MonthlyProgressReadView periods={periods} />
+      {expanded ? <MonthlyProgressReadView periods={periods} /> : null}
     </div>
   );
 
@@ -60,8 +69,6 @@ export default function CreatorMonthlyProgressSection({
     <CreatorSectionCard
       title={`Monthly Progress (${periods.length} Contract Periods)`}
       editing={editing}
-      onEdit={onEdit}
-      onDone={onDone}
       padding="0"
       readContent={readContent}
       editContent={

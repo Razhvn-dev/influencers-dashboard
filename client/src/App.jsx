@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { useMemo } from 'react';
+import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
 import { Banner, Layout, Page } from '@shopify/polaris';
 import DashboardPage from './pages/DashboardPage';
 import AddCreatorPage from './pages/AddCreatorPage';
@@ -37,23 +38,31 @@ export default function App({
     return <MissingConfigPage missingConfig={missingConfig} />;
   }
 
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route
-          path="/"
-          element={<DashboardPage localPreview={localPreview} embedded={embedded} />}
-        />
-        <Route
-          path="/creators/new"
-          element={<AddCreatorPage localPreview={localPreview} embedded={embedded} />}
-        />
-        <Route
-          path="/creators/:id"
-          element={<CreatorDetailPage localPreview={localPreview} embedded={embedded} />}
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+  const router = useMemo(
+    () =>
+      createBrowserRouter([
+        {
+          path: '/',
+          element: (
+            <DashboardPage localPreview={localPreview} embedded={embedded} />
+          ),
+        },
+        {
+          path: '/creators/new',
+          element: (
+            <AddCreatorPage localPreview={localPreview} embedded={embedded} />
+          ),
+        },
+        {
+          path: '/creators/:id',
+          element: (
+            <CreatorDetailPage localPreview={localPreview} embedded={embedded} />
+          ),
+        },
+        { path: '*', element: <Navigate to="/" replace /> },
+      ]),
+    [embedded, localPreview]
   );
+
+  return <RouterProvider router={router} />;
 }

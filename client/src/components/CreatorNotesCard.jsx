@@ -1,10 +1,22 @@
 import { FormLayout, Select, TextField } from '@shopify/polaris';
-import { formatRelativeTime, STATUS_OPTIONS } from '../constants';
+import {
+  formatFollowupDate,
+  formatLastContactLabel,
+  formatRelativeTime,
+  STATUS_OPTIONS,
+} from '../constants';
 import CreatorSectionCard from './CreatorSectionCard';
+import DateTimeField from './DateTimeField';
+import FieldRow from './FieldRow';
 
 function notePreview(value) {
   const text = String(value ?? '').trim();
   return text || 'No notes yet.';
+}
+
+function formatFollowupRead(value) {
+  if (!value) return 'Not scheduled';
+  return formatFollowupDate(new Date(value).toISOString());
 }
 
 export default function CreatorNotesCard({
@@ -12,8 +24,6 @@ export default function CreatorNotesCard({
   record = null,
   onChange,
   editing = false,
-  onEdit,
-  onDone,
 }) {
   const updateField = (field) => (value) => {
     onChange({ ...form, [field]: value });
@@ -24,22 +34,20 @@ export default function CreatorNotesCard({
   const updatedBy = record?.followers_verified_by || form.manager_owner || 'Current User';
 
   const readContent = (
-    <div className="crm-detail-notes">
-      <label className="crm-detail-field-label" htmlFor="crm-detail-status-read">
-        Status
-      </label>
-      <div id="crm-detail-status-read" className="crm-detail-status-display">
-        {form.status || 'Not set'}
-      </div>
-
-      <label className="crm-detail-field-label" htmlFor="crm-detail-notes-read">
-        Notes
-      </label>
-      <div id="crm-detail-notes-read" className="crm-detail-note-preview">
-        {notePreview(form.notes)}
-      </div>
-
-      <p className="crm-detail-card-footnote">Last updated: {updatedLabel} by {updatedBy}</p>
+    <div className="crm-field-row-list">
+      <FieldRow label="Notes" value={notePreview(form.notes)} multiline />
+      <FieldRow
+        label="Last Contact"
+        value={formatLastContactLabel(
+          form.last_contacted_at ? new Date(form.last_contacted_at).toISOString() : null
+        )}
+        muted={!form.last_contacted_at}
+      />
+      <FieldRow
+        label="Next Follow-up"
+        value={formatFollowupRead(form.next_followup_at)}
+        muted={!form.next_followup_at}
+      />
     </div>
   );
 
@@ -58,16 +66,24 @@ export default function CreatorNotesCard({
         multiline={5}
         autoComplete="off"
       />
+      <DateTimeField
+        label="Last Contact"
+        value={form.last_contacted_at}
+        onChange={updateField('last_contacted_at')}
+      />
+      <DateTimeField
+        label="Next Follow-up"
+        value={form.next_followup_at}
+        onChange={updateField('next_followup_at')}
+      />
       <p className="crm-detail-card-footnote">Last updated: {updatedLabel} by {updatedBy}</p>
     </FormLayout>
   );
 
   return (
     <CreatorSectionCard
-      title="Notes & Status"
+      title={editing ? 'Notes & Status' : 'Notes'}
       editing={editing}
-      onEdit={onEdit}
-      onDone={onDone}
       readContent={readContent}
       editContent={editContent}
     />

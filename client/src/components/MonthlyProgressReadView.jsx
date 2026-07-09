@@ -1,18 +1,21 @@
-import { Badge } from '@shopify/polaris';
 import { MONTHLY_PERIOD_LABELS, openExternalUrl } from '../constants';
 
 function hasValue(value) {
   return String(value || '').trim().length > 0;
 }
 
-function statusForPeriod(period) {
+export function statusForPeriod(period) {
   const checkIn = hasValue(period.monthly_check_in);
   const content = hasValue(period.content_delivered);
   const link = hasValue(period.link);
 
-  if (checkIn && content && link) return { label: 'Completed', tone: 'success' };
-  if (checkIn || content || link) return { label: 'In progress', tone: 'info' };
-  return { label: 'Not started', tone: 'attention' };
+  if (checkIn && content && link) return { label: 'Completed', tone: 'completed' };
+  if (checkIn || content || link) return { label: 'In progress', tone: 'progress' };
+  return { label: 'Not started', tone: 'pending' };
+}
+
+export function countCompletedPeriods(periods) {
+  return periods.filter((period) => statusForPeriod(period).label === 'Completed').length;
 }
 
 function dotClass(value) {
@@ -20,6 +23,10 @@ function dotClass(value) {
   const normalized = String(value).trim().toUpperCase();
   if (normalized === 'NO' || normalized === 'PENDING') return 'crm-detail-progress-dot--pending';
   return 'crm-detail-progress-dot--done';
+}
+
+function ProgressStatusPill({ label, tone }) {
+  return <span className={`crm-detail-progress-status crm-detail-progress-status--${tone}`}>{label}</span>;
 }
 
 export default function MonthlyProgressReadView({ periods }) {
@@ -71,7 +78,7 @@ export default function MonthlyProgressReadView({ periods }) {
                   )}
                 </td>
                 <td>
-                  <Badge tone={status.tone}>{status.label}</Badge>
+                  <ProgressStatusPill label={status.label} tone={status.tone} />
                 </td>
               </tr>
             );
@@ -79,7 +86,7 @@ export default function MonthlyProgressReadView({ periods }) {
         </tbody>
       </table>
       <p className="crm-detail-progress-footnote">
-        Fixed 5 contract periods. Click Edit to update check-ins, content, and links.
+        Fixed 5 contract periods. Use Edit creator to update check-ins, content, and links.
       </p>
     </div>
   );

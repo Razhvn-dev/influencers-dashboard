@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Banner,
@@ -11,12 +11,9 @@ import {
   Modal,
   Page,
   Pagination,
-  Select,
   Text,
-  Button,
   useIndexResourceState,
 } from '@shopify/polaris';
-import { MenuHorizontalIcon } from '@shopify/polaris-icons';
 import {
   deleteSponsorshipRecords,
   exportInfluencersXlsx,
@@ -28,33 +25,25 @@ import {
   formatCompactNumber,
   formatFollowupDate,
   formatLastContactLabel,
-  formatRelativeTime,
   getFollowupEmphasis,
-  normalizeExternalUrl,
 } from '../constants';
 import ImportCsvModal from '../components/ImportCsvModal';
 import DashboardFilterBar from '../components/DashboardFilterBar';
 import DashboardPageHeader from '../components/DashboardPageHeader';
 import LevelBadge from '../components/dashboard/LevelBadge';
+import ToolbarPopoverSelect from '../components/dashboard/ToolbarPopoverSelect';
 import CreatorTableAvatar from '../components/dashboard/CreatorTableAvatar';
 import StatusBadge from '../components/dashboard/StatusBadge';
 import PlatformIndicators from '../components/PlatformIndicators';
 import StatsCards from '../components/StatsCards';
 import { useAutoDismiss } from '../hooks/useAutoDismiss';
 
-function ContactTimestampCell({ timestamp, operator }) {
+function VerifiedTimestampCell({ timestamp }) {
   if (!timestamp) {
     return <span className="crm-table-muted">—</span>;
   }
 
-  return (
-    <BlockStack gap="050">
-      <span className="crm-verified-primary">{formatRelativeTime(timestamp)}</span>
-      {operator ? (
-        <span className="crm-verified-secondary">by {operator}</span>
-      ) : null}
-    </BlockStack>
-  );
+  return <span className="crm-verified-primary">{formatLastContactLabel(timestamp)}</span>;
 }
 
 function LastContactCell({ timestamp }) {
@@ -123,7 +112,6 @@ const SORTABLE_COLUMNS = [
   'followers_last_verified_at',
   'last_contacted_at',
   'next_followup_at',
-  null,
 ];
 
 export default function DashboardPage({ localPreview = false }) {
@@ -132,7 +120,9 @@ export default function DashboardPage({ localPreview = false }) {
   const [records, setRecords] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
+  const hasLoadedRecordsRef = useRef(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
@@ -149,11 +139,13 @@ export default function DashboardPage({ localPreview = false }) {
     search: '',
     status: '',
     ambassador_level: '',
+    platform: '',
     commission: '',
-    due_followup: false,
+    due_followup: '',
     sort_by: 'id',
     sort_dir: 'desc',
   });
+  const [recordsFilters, setRecordsFilters] = useState(appliedFilters);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleting, setBulkDeleting] = useState(false);
@@ -167,11 +159,7 @@ export default function DashboardPage({ localPreview = false }) {
     resourceIDResolver: (record) => String(record.id),
   });
 
-  const displayRecords = useMemo(() => {
-    if (!platformFilter) return records;
-
-    return records.filter((record) => normalizeExternalUrl(record?.[platformFilter]));
-  }, [records, platformFilter]);
+  const displayRecords = records;
 
   const totalPages = Math.max(1, Math.ceil(displayRecords.length / pageSize));
 
@@ -184,6 +172,27 @@ export default function DashboardPage({ localPreview = false }) {
     displayRecords.length === 0
       ? 'Showing 0 creators'
       : `Showing ${(page - 1) * pageSize + 1} to ${Math.min(page * pageSize, displayRecords.length)} of ${displayRecords.length} creators`;
+  const resultSummary = `${displayRecords.length.toLocaleString('en-US')} creator${displayRecords.length === 1 ? '' : 's'} found`;
+
+  const currentFilterState = useMemo(
+    () => ({
+      search: search.trim(),
+      status: statusFilter,
+      ambassador_level: levelFilter,
+      platform: platformFilter,
+      commission: commissionFilter,
+      due_followup: dueFollowupFilter,
+    }),
+    [search, statusFilter, levelFilter, platformFilter, commissionFilter, dueFollowupFilter]
+  );
+
+  const recordsMatchFilters =
+    recordsFilters.search === currentFilterState.search &&
+    recordsFilters.status === currentFilterState.status &&
+    recordsFilters.ambassador_level === currentFilterState.ambassador_level &&
+    recordsFilters.platform === currentFilterState.platform &&
+    recordsFilters.commission === currentFilterState.commission &&
+    recordsFilters.due_followup === currentFilterState.due_followup;
 
   const selectedItemsCount = allResourcesSelected ? 'All' : selectedResources.length;
 
@@ -210,19 +219,31 @@ export default function DashboardPage({ localPreview = false }) {
     }
   }, []);
 
+  const apiFilters = appliedFilters;
+
   const loadRecords = useCallback(async () => {
-    setLoading(true);
+    const isInitialLoad = !hasLoadedRecordsRef.current;
+
+    if (isInitialLoad) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
+
     setError('');
 
     try {
-      const data = await fetchSponsorshipRecords(appliedFilters);
+      const data = await fetchSponsorshipRecords(apiFilters);
       setRecords(data);
+      setRecordsFilters(apiFilters);
+      hasLoadedRecordsRef.current = true;
     } catch (err) {
       setError(err.message || 'Failed to load creator records');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [appliedFilters]);
+  }, [apiFilters]);
 
   useEffect(() => {
     loadStats();
@@ -237,15 +258,22 @@ export default function DashboardPage({ localPreview = false }) {
       setAppliedFilters((current) => ({
         ...current,
         search: search.trim(),
-        status: statusFilter,
-        ambassador_level: levelFilter,
-        commission: commissionFilter,
-        due_followup: dueFollowupFilter === 'due',
       }));
     }, 350);
 
     return () => window.clearTimeout(timer);
-  }, [search, statusFilter, levelFilter, commissionFilter, dueFollowupFilter]);
+  }, [search]);
+
+  useEffect(() => {
+    setAppliedFilters((current) => ({
+      ...current,
+      status: statusFilter,
+      ambassador_level: levelFilter,
+      platform: platformFilter,
+      commission: commissionFilter,
+      due_followup: dueFollowupFilter,
+    }));
+  }, [statusFilter, levelFilter, platformFilter, commissionFilter, dueFollowupFilter]);
 
   useEffect(() => {
     setPage(1);
@@ -272,6 +300,16 @@ export default function DashboardPage({ localPreview = false }) {
 
     setSortColumnIndex(headingIndex);
     setSortDirection(direction);
+
+    if (sortKey === 'ambassador_level') {
+      setAppliedFilters((current) => ({
+        ...current,
+        sort_by: sortKey,
+        sort_dir: direction === 'ascending' ? 'asc' : 'desc',
+      }));
+      return;
+    }
+
     setAppliedFilters((current) => ({
       ...current,
       sort_by: sortKey,
@@ -381,27 +419,13 @@ export default function DashboardPage({ localPreview = false }) {
           </Text>
         </IndexTable.Cell>
         <IndexTable.Cell className="crm-v2-table__verified-cell">
-          <ContactTimestampCell
-            timestamp={record.followers_last_verified_at}
-            operator={record.followers_verified_by}
-          />
+          <VerifiedTimestampCell timestamp={record.followers_last_verified_at} />
         </IndexTable.Cell>
         <IndexTable.Cell className="crm-v2-table__contact-cell">
           <LastContactCell timestamp={record.last_contacted_at} />
         </IndexTable.Cell>
         <IndexTable.Cell className="crm-v2-table__followup-cell">
           <FollowupCell record={record} followupEmphasis={followupEmphasis} />
-        </IndexTable.Cell>
-        <IndexTable.Cell className="crm-v2-table__actions-cell">
-          <Button
-            variant="plain"
-            icon={MenuHorizontalIcon}
-            accessibilityLabel={`Actions for ${record.name}`}
-            onClick={(event) => {
-              event.stopPropagation();
-              navigate(`/creators/${record.id}`);
-            }}
-          />
         </IndexTable.Cell>
       </IndexTable.Row>
     );
@@ -435,6 +459,7 @@ export default function DashboardPage({ localPreview = false }) {
           <StatsCards stats={stats} loading={statsLoading} />
 
           <DashboardFilterBar
+            search={search}
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             levelFilter={levelFilter}
@@ -447,9 +472,15 @@ export default function DashboardPage({ localPreview = false }) {
             onCommissionFilterChange={setCommissionFilter}
             hasActiveFilters={hasActiveFilters}
             onClearFilters={clearFilters}
+            resultSummary={resultSummary}
+            resultsPending={loading || refreshing || !recordsMatchFilters}
+            refreshing={refreshing}
           />
 
-          <Card padding="0" className="crm-v2-table">
+          <Card
+            padding="0"
+            className={`crm-v2-table${refreshing ? ' crm-v2-table--refreshing' : ''}`}
+          >
             <IndexTable
               resourceName={resourceName}
               itemCount={displayRecords.length}
@@ -462,9 +493,8 @@ export default function DashboardPage({ localPreview = false }) {
                 { title: 'Last Verified' },
                 { title: 'Last Contact' },
                 { title: 'Next Follow-up' },
-                { title: '' },
               ]}
-              sortable={[true, true, true, false, true, true, true, true, false]}
+              sortable={[true, true, true, false, true, true, true, true]}
               sortDirection={sortDirection}
               sortColumnIndex={sortColumnIndex}
               onSort={handleSort}
@@ -480,20 +510,33 @@ export default function DashboardPage({ localPreview = false }) {
                 },
               ]}
               emptyState={
-                <EmptyState
-                  heading="No creators yet"
-                  image=""
-                  action={{
-                    content: 'Import CSV',
-                    onAction: () => setImportModalOpen(true),
-                  }}
-                  secondaryAction={{
-                    content: 'Add Creator',
-                    onAction: () => navigate('/creators/new'),
-                  }}
-                >
-                  <p>Import the team spreadsheet or add the first creator manually.</p>
-                </EmptyState>
+                hasActiveFilters && !loading ? (
+                  <EmptyState
+                    heading="No creators match your filters"
+                    image=""
+                    action={{
+                      content: 'Clear filters',
+                      onAction: clearFilters,
+                    }}
+                  >
+                    <p>Try adjusting or clearing your filters to see more creators.</p>
+                  </EmptyState>
+                ) : (
+                  <EmptyState
+                    heading="No creators yet"
+                    image=""
+                    action={{
+                      content: 'Import CSV',
+                      onAction: () => setImportModalOpen(true),
+                    }}
+                    secondaryAction={{
+                      content: 'Add Creator',
+                      onAction: () => navigate('/creators/new'),
+                    }}
+                  >
+                    <p>Import the team spreadsheet or add the first creator manually.</p>
+                  </EmptyState>
+                )
               }
             >
               {rowMarkup}
@@ -510,10 +553,11 @@ export default function DashboardPage({ localPreview = false }) {
                     hasNext={page < totalPages}
                     onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
                   />
-                  <Box minWidth="140px">
-                    <Select
+                  <Box className="crm-v2-table__page-size">
+                    <ToolbarPopoverSelect
                       label="Per page"
                       labelHidden
+                      compact
                       options={PAGE_SIZE_OPTIONS}
                       value={String(pageSize)}
                       onChange={(value) => {

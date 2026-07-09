@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Banner,
@@ -30,21 +30,9 @@ import CreatorProfileHeader from '../components/CreatorProfileHeader';
 import CreatorProfilePanel from '../components/CreatorProfilePanel';
 import CreatorRecentActivity from '../components/CreatorRecentActivity';
 import CreatorSponsorshipDetails from '../components/CreatorSponsorshipDetails';
+import { useAutoDismiss } from '../hooks/useAutoDismiss';
 
-const SECTION_KEYS = [
-  'profile',
-  'platforms',
-  'sponsorship',
-  'monthly',
-  'notes',
-];
-
-function createEditingState() {
-  return SECTION_KEYS.reduce((state, key) => {
-    state[key] = false;
-    return state;
-  }, {});
-}
+const SUCCESS_DISMISS_MS = 3000;
 
 export default function CreatorDetailPage({ localPreview = false }) {
   const { id } = useParams();
@@ -59,18 +47,12 @@ export default function CreatorDetailPage({ localPreview = false }) {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [editingSections, setEditingSections] = useState(createEditingState);
+  const [isEditing, setIsEditing] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
+  const [leaveConfirmMode, setLeaveConfirmMode] = useState('back');
 
-  const clearEditingSections = useCallback(() => {
-    setEditingSections(createEditingState());
-  }, []);
-
-  const setSectionEditing = useCallback((section, editing) => {
-    setEditingSections((current) => ({
-      ...current,
-      [section]: editing,
-    }));
-  }, []);
+  const dismissSuccess = useCallback(() => setSuccess(''), []);
+  useAutoDismiss(success, dismissSuccess, SUCCESS_DISMISS_MS);
 
   const loadRecord = useCallback(async () => {
     setLoading(true);
@@ -81,7 +63,7 @@ export default function CreatorDetailPage({ localPreview = false }) {
       setRecord(data);
       setForm(buildFormStateFromRecord(data));
       setError('');
-      clearEditingSections();
+      setIsEditing(false);
     } catch (err) {
       setRecord(null);
       setForm(null);
@@ -89,7 +71,7 @@ export default function CreatorDetailPage({ localPreview = false }) {
     } finally {
       setLoading(false);
     }
-  }, [id, clearEditingSections]);
+  }, [id]);
 
   useEffect(() => {
     loadRecord();
@@ -102,6 +84,26 @@ export default function CreatorDetailPage({ localPreview = false }) {
     }
   }, [location.pathname, location.state, navigate]);
 
+  const savedSnapshot = useMemo(
+    () => (record ? JSON.stringify(buildFormStateFromRecord(record)) : ''),
+    [record]
+  );
+  const currentSnapshot = useMemo(() => JSON.stringify(form), [form]);
+  const isDirty = Boolean(record && form && savedSnapshot !== currentSnapshot);
+  const showFooter = isEditing;
+
+  const dismissLeaveConfirm = useCallback(() => {
+    setLeaveConfirmOpen(false);
+  }, []);
+
+  const resetFormToSaved = useCallback(() => {
+    if (record) {
+      setForm(buildFormStateFromRecord(record));
+    }
+    setIsEditing(false);
+    setError('');
+  }, [record]);
+
   const handleSave = async () => {
     if (!record || !form) return;
 
@@ -113,7 +115,7 @@ export default function CreatorDetailPage({ localPreview = false }) {
       const updated = await updateSponsorshipRecord(record.id, buildSavePayload(form));
       setRecord(updated);
       setForm(buildFormStateFromRecord(updated));
-      clearEditingSections();
+      setIsEditing(false);
       setSuccess('Creator record updated successfully.');
     } catch (err) {
       setError(err.message || 'Failed to update record');
@@ -122,8 +124,37 @@ export default function CreatorDetailPage({ localPreview = false }) {
     }
   };
 
-  const handleCancel = () => {
+  const exitEditMode = useCallback(() => {
+    if (isDirty) {
+      setLeaveConfirmMode('discard');
+      setLeaveConfirmOpen(true);
+      return;
+    }
+
+    resetFormToSaved();
+  }, [isDirty, resetFormToSaved]);
+
+  const handleBack = () => {
+    if (isDirty) {
+      setLeaveConfirmMode('back');
+      setLeaveConfirmOpen(true);
+      return;
+    }
+
+    setIsEditing(false);
     navigate('/');
+  };
+
+  const handleConfirmLeave = () => {
+    setLeaveConfirmOpen(false);
+
+    if (leaveConfirmMode === 'back') {
+      resetFormToSaved();
+      navigate('/');
+      return;
+    }
+
+    resetFormToSaved();
   };
 
   const handleDeleteConfirm = async () => {
@@ -142,12 +173,6 @@ export default function CreatorDetailPage({ localPreview = false }) {
       setDeleting(false);
     }
   };
-
-  const sectionProps = (section) => ({
-    editing: editingSections[section],
-    onEdit: () => setSectionEditing(section, true),
-    onDone: () => setSectionEditing(section, false),
-  });
 
   if (loading) {
     return (
@@ -189,16 +214,30 @@ export default function CreatorDetailPage({ localPreview = false }) {
 
   const ambassadorLevel = previewAmbassadorLevel(form);
 
+  const handleFooterCancel = () => {
+    if (isDirty || isEditing) {
+      exitEditMode();
+      return;
+    }
+
+    handleBack();
+  };
+
   return (
     <>
-      <Page fullWidth className="crm-page crm-detail-page">
+      <Page
+        fullWidth
+        className={`crm-page crm-detail-page${showFooter ? ' crm-detail-page--footer-visible' : ''}${isEditing ? ' crm-detail-page--editing' : ''}`}
+      >
         <Layout>
           <Layout.Section>
-            <BlockStack gap="800" className="crm-detail-stack">
+            <BlockStack gap="500" className="crm-detail-stack">
               {success ? (
-                <Banner tone="success" onDismiss={() => setSuccess('')}>
-                  <p>{success}</p>
-                </Banner>
+                <Box className="crm-detail-success-banner">
+                  <Banner tone="success" onDismiss={dismissSuccess}>
+                    <p>{success}</p>
+                  </Banner>
+                </Box>
               ) : null}
 
               {error ? (
@@ -210,71 +249,126 @@ export default function CreatorDetailPage({ localPreview = false }) {
               <CreatorProfileHeader
                 form={form}
                 ambassadorLevel={ambassadorLevel}
-                onBack={handleCancel}
-                onEditProfile={() => setSectionEditing('profile', true)}
-                onSave={handleSave}
+                onBack={handleBack}
+                onStartEdit={() => setIsEditing(true)}
+                onDelete={() => setDeleteConfirmOpen(true)}
+                isEditing={isEditing}
                 saving={saving}
                 deleting={deleting}
+                metrics={
+                  isEditing ? null : (
+                    <CreatorDetailSummaryMetrics record={record} form={form} />
+                  )
+                }
               />
 
-              <CreatorDetailSummaryMetrics record={record} form={form} />
-
-              <Box className="crm-detail-layout">
-                <BlockStack gap="600" className="crm-detail-column crm-detail-column--left">
-                  <CreatorProfilePanel form={form} onChange={setForm} {...sectionProps('profile')} />
-                </BlockStack>
-
-                <BlockStack gap="600" className="crm-detail-column">
-                  <CreatorPlatformAccounts form={form} onChange={setForm} {...sectionProps('platforms')} />
-                  <CreatorSponsorshipDetails form={form} onChange={setForm} {...sectionProps('sponsorship')} />
+              {isEditing ? (
+                <BlockStack gap="600" className="crm-detail-edit-stack">
+                  <CreatorProfilePanel
+                    form={form}
+                    record={record}
+                    onChange={setForm}
+                    editing
+                  />
+                  <CreatorNotesCard
+                    record={record}
+                    form={form}
+                    onChange={setForm}
+                    editing
+                  />
+                  <CreatorPlatformAccounts form={form} onChange={setForm} editing />
+                  <CreatorSponsorshipDetails form={form} onChange={setForm} editing />
                   <CreatorMonthlyProgressSection
                     periods={form.monthly_progress}
                     onChange={(monthly_progress) =>
                       setForm((current) => ({ ...current, monthly_progress }))
                     }
-                    {...sectionProps('monthly')}
+                    editing
                   />
                 </BlockStack>
+              ) : (
+                <Box className="crm-detail-layout crm-detail-layout--two-col">
+                  <BlockStack gap="400" className="crm-detail-column crm-detail-column--person">
+                    <CreatorProfilePanel
+                      form={form}
+                      record={record}
+                      onChange={setForm}
+                      editing={false}
+                    />
+                    <CreatorNotesCard
+                      record={record}
+                      form={form}
+                      onChange={setForm}
+                      editing={false}
+                    />
+                    <CreatorRecentActivity record={record} form={form} />
+                  </BlockStack>
 
-                <BlockStack gap="600" className="crm-detail-column">
-                  <CreatorNotesCard
-                    record={record}
-                    form={form}
-                    onChange={setForm}
-                    {...sectionProps('notes')}
-                  />
-                  <CreatorRecentActivity record={record} form={form} />
-                </BlockStack>
-              </Box>
+                  <BlockStack gap="400" className="crm-detail-column crm-detail-column--business">
+                    <CreatorPlatformAccounts form={form} onChange={setForm} editing={false} />
+                    <CreatorSponsorshipDetails form={form} onChange={setForm} editing={false} />
+                    <CreatorMonthlyProgressSection
+                      periods={form.monthly_progress}
+                      onChange={(monthly_progress) =>
+                        setForm((current) => ({ ...current, monthly_progress }))
+                      }
+                      editing={false}
+                    />
+                  </BlockStack>
+                </Box>
+              )}
             </BlockStack>
           </Layout.Section>
         </Layout>
 
-        <Box className="crm-detail-footer" padding="500">
-          <InlineStack align="space-between" blockAlign="center" wrap gap="400">
-            <Button
-              tone="critical"
-              onClick={() => setDeleteConfirmOpen(true)}
-              disabled={deleting || saving}
-            >
-              Delete Creator
-            </Button>
-            <InlineStack gap="300" wrap={false}>
-              <Button onClick={handleCancel} disabled={deleting || saving}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSave}
-                loading={saving}
-                disabled={deleting}
-              >
-                Save Changes
-              </Button>
+        {showFooter ? (
+          <Box className="crm-detail-footer">
+            <InlineStack align="end" blockAlign="center" wrap gap="400">
+              <InlineStack gap="300" wrap={false}>
+                <Button
+                  variant="secondary"
+                  className="crm-detail-footer__cancel"
+                  onClick={handleFooterCancel}
+                  disabled={deleting || saving}
+                >
+                  {isDirty ? 'Discard changes' : 'Cancel editing'}
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleSave}
+                  loading={saving}
+                  disabled={deleting || !isDirty}
+                >
+                  Save Changes
+                </Button>
+              </InlineStack>
             </InlineStack>
-          </InlineStack>
-        </Box>
+          </Box>
+        ) : null}
       </Page>
+
+      <Modal
+        open={leaveConfirmOpen}
+        onClose={dismissLeaveConfirm}
+        title={leaveConfirmMode === 'back' ? 'Leave without saving?' : 'Discard unsaved changes?'}
+        primaryAction={{
+          content: leaveConfirmMode === 'back' ? 'Leave without saving' : 'Discard changes',
+          onAction: handleConfirmLeave,
+          destructive: true,
+        }}
+        secondaryActions={[
+          {
+            content: 'Keep editing',
+            onAction: dismissLeaveConfirm,
+          },
+        ]}
+      >
+        <Modal.Section>
+          <Text as="p" variant="bodyMd">
+            You have unsaved changes that will be lost if you leave this page.
+          </Text>
+        </Modal.Section>
+      </Modal>
 
       <Modal
         open={deleteConfirmOpen}

@@ -21,9 +21,13 @@ function PlatformOpenButton({ url, label }) {
 
 function PlatformRow({ platform, form, onFieldChange, onFollowerFieldChange }) {
   const urlValue = form[platform.key] ?? '';
+  const followerValue = form[platform.followerField] ?? '';
+  const isConnected = Boolean(normalizeExternalUrl(urlValue) || String(followerValue).trim());
 
   return (
-    <tr className="crm-add-creator__platform-row">
+    <tr
+      className={`crm-add-creator__platform-row${isConnected ? ' crm-add-creator__platform-row--connected' : ''}`}
+    >
       <td className="crm-add-creator__platform-cell crm-add-creator__platform-cell--name">
         <div className="crm-add-creator__platform-label">
           <PlatformIcon platformKey={platform.key} size="small" withTooltip={false} />
@@ -49,7 +53,7 @@ function PlatformRow({ platform, form, onFieldChange, onFollowerFieldChange }) {
           labelHidden
           placeholder="Followers"
           inputMode="numeric"
-          value={form[platform.followerField] ?? ''}
+          value={followerValue}
           autoComplete="off"
           onChange={onFollowerFieldChange(platform.followerField)}
         />

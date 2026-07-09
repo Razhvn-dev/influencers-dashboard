@@ -2,15 +2,15 @@ export function getStatusBadgeClass(status) {
   const map = {
     Applied: 'crm-status-applied',
     Contacted: 'crm-status-contacted',
-    Negotiating: 'crm-status-negotiating',
-    'Contract Signed': 'crm-status-contract',
-    Approved: 'crm-status-contract',
-    'Active Ambassador': 'crm-status-contract',
-    Partnered: 'crm-status-contract',
+    Negotiating: 'crm-status-scheduled',
+    'Contract Signed': 'crm-status-approved',
+    Approved: 'crm-status-approved',
+    'Active Ambassador': 'crm-status-active',
+    Partnered: 'crm-status-partnered',
     Rejected: 'crm-status-rejected',
-    'Call Scheduled': 'crm-status-negotiating',
-    'Under Review': 'crm-status-negotiating',
-    'Past Partner': 'crm-status-default',
+    'Call Scheduled': 'crm-status-scheduled',
+    'Under Review': 'crm-status-review',
+    'Past Partner': 'crm-status-partnered',
   };
 
   return map[status] || 'crm-status-default';

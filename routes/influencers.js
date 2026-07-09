@@ -13,6 +13,11 @@ const {
   normalizeProfilePayload,
 } = require('../lib/creatorProfile');
 const { applyFollowerVerification } = require('../lib/followerVerification');
+const {
+  buildAmbassadorLevelOrderClause,
+  enrichInfluencerRecord,
+  getAmbassadorLevelFilterCondition,
+} = require('../lib/ambassadorLevel');
 
 const router = express.Router();
 
@@ -43,7 +48,13 @@ const INFLUENCER_ROW_SELECT = `
   i.last_contacted_at,
   i.next_followup_at,
   i.followers_last_verified_at,
-  i.followers_verified_by
+  i.followers_verified_by,
+  i.niche_category,
+  i.bio,
+  i.tags,
+  i.manager_owner,
+  i.created_at,
+  i.updated_at
 `;
 
 const SORT_COLUMNS = {
@@ -60,11 +71,22 @@ const SORT_COLUMNS = {
   id: 'i.id',
 };
 
+const PLATFORM_URL_COLUMNS = {
+  youtube_url: 'i.youtube_url',
+  instagram_url: 'i.instagram_url',
+  facebook_url: 'i.facebook_url',
+  tiktok_url: 'i.tiktok_url',
+};
+
 function getShop(res) {
   return res.locals.shopify.session.shop;
 }
 
 function buildOrderClause(query) {
+  if (query.sort_by === 'ambassador_level') {
+    return buildAmbassadorLevelOrderClause(query.sort_dir);
+  }
+
   const sortKey = SORT_COLUMNS[query.sort_by] || 'i.id';
   const sortDir = query.sort_dir === 'asc' ? 'ASC' : 'DESC';
   return `ORDER BY ${sortKey} ${sortDir} NULLS LAST`;
@@ -104,14 +126,23 @@ function buildListFilters(shop, query) {
   }
 
   if (ambassador_level) {
-    values.push(ambassador_level);
-    conditions.push(`i.ambassador_level = $${values.length}`);
+    const levelCondition = getAmbassadorLevelFilterCondition(ambassador_level);
+    if (levelCondition) {
+      conditions.push(levelCondition);
+    }
   }
 
-  if (query.due_followup === 'true') {
+  if (query.platform && PLATFORM_URL_COLUMNS[query.platform]) {
+    const column = PLATFORM_URL_COLUMNS[query.platform];
+    conditions.push(`${column} IS NOT NULL AND TRIM(${column}) <> ''`);
+  }
+
+  if (query.due_followup === 'due') {
     conditions.push(
-      `i.next_followup_at IS NOT NULL AND i.next_followup_at <= NOW() + INTERVAL '7 days'`
+      `i.next_followup_at IS NOT NULL AND i.next_followup_at >= NOW() AND i.next_followup_at <= NOW() + INTERVAL '7 days'`
     );
+  } else if (query.due_followup === 'overdue') {
+    conditions.push(`i.next_followup_at IS NOT NULL AND i.next_followup_at < NOW()`);
   }
 
   return { conditions, values };
@@ -145,6 +176,10 @@ function influencerRowValues(payload) {
     payload.next_followup_at,
     payload.followers_last_verified_at,
     payload.followers_verified_by,
+    payload.niche_category,
+    payload.bio,
+    payload.tags,
+    payload.manager_owner,
   ];
 }
 
@@ -174,8 +209,6 @@ function buildRecordPayload(body, existing = {}) {
     throw error;
   }
 
-  const ambassadorLevel = cleanCell(body.ambassador_level ?? existing.ambassador_level);
-
   const profile = normalizeProfilePayload(
     mergeProfileFields(existing, {
       email: body.email,
@@ -193,7 +226,6 @@ function buildRecordPayload(body, existing = {}) {
       contract_status: body.contract_status,
       last_contacted_at: body.last_contacted_at,
       next_followup_at: body.next_followup_at,
-      ambassador_level: ambassadorLevel,
     })
   );
 
@@ -207,8 +239,12 @@ function buildRecordPayload(body, existing = {}) {
     required_deliverables: cleanCell(
       body.required_deliverables ?? existing.required_deliverables
     ),
+    niche_category: cleanCell(body.niche_category ?? existing.niche_category),
+    bio: cleanCell(body.bio ?? existing.bio),
+    tags: cleanCell(body.tags ?? existing.tags),
+    manager_owner: cleanCell(body.manager_owner ?? existing.manager_owner),
     ...profile,
-    ambassador_level: ambassadorLevel ?? profile.ambassador_level,
+    ambassador_level: profile.ambassador_level,
     monthly_progress: normalizeMonthlyProgress(
       body.monthly_progress ?? existing.monthly_progress
     ),
@@ -247,7 +283,7 @@ async function fetchInfluencerRecord(id, shop) {
     return null;
   }
 
-  const record = result.rows[0];
+  const record = enrichInfluencerRecord(result.rows[0]);
   record.monthly_progress = await fetchMonthlyProgress(id, shop);
   return record;
 }
@@ -307,10 +343,15 @@ router.get('/stats/summary', async (req, res) => {
             WHERE status IN ('Active Ambassador', 'Partnered', 'Approved')
           )::INT AS contract_signed,
           COUNT(*) FILTER (
-            WHERE ambassador_level IN ('Ambassador 5', 'Rising Ambassador')
+            WHERE total_followers >= 100000
           )::INT AS elevated_levels,
           COUNT(*) FILTER (
             WHERE next_followup_at IS NOT NULL
+              AND next_followup_at < NOW()
+          )::INT AS followups_overdue,
+          COUNT(*) FILTER (
+            WHERE next_followup_at IS NOT NULL
+              AND next_followup_at >= NOW()
               AND next_followup_at <= NOW() + INTERVAL '7 days'
           )::INT AS followups_due_7d,
           COUNT(*) FILTER (
@@ -365,7 +406,7 @@ router.get('/', async (req, res) => {
     const records = await Promise.all(
       result.rows.map(async (row) => {
         row.monthly_progress = await fetchMonthlyProgress(row.id, shop);
-        return row;
+        return enrichInfluencerRecord(row);
       })
     );
 
@@ -520,9 +561,13 @@ router.post('/import-csv', async (req, res) => {
             last_contacted_at,
             next_followup_at,
             followers_last_verified_at,
-            followers_verified_by
+            followers_verified_by,
+            niche_category,
+            bio,
+            tags,
+            manager_owner
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
           RETURNING id
         `,
         [shop, ...rowValues]
@@ -667,9 +712,13 @@ router.post('/', async (req, res) => {
           last_contacted_at,
           next_followup_at,
           followers_last_verified_at,
-          followers_verified_by
+          followers_verified_by,
+          niche_category,
+          bio,
+          tags,
+          manager_owner
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
         RETURNING id
       `,
       [shop, ...rowValues]
@@ -762,8 +811,13 @@ router.put('/:id', async (req, res) => {
           last_contacted_at = $23,
           next_followup_at = $24,
           followers_last_verified_at = $25,
-          followers_verified_by = $26
-        WHERE id = $27 AND shop = $28
+          followers_verified_by = $26,
+          niche_category = $27,
+          bio = $28,
+          tags = $29,
+          manager_owner = $30,
+          updated_at = NOW()
+        WHERE id = $31 AND shop = $32
       `,
       [...rowValues, id, shop]
     );

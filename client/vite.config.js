@@ -1,5 +1,9 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
@@ -13,6 +17,16 @@ export default defineConfig(({ mode }) => {
     env.LOCAL_DEV || rootEnv.LOCAL_DEV || process.env.LOCAL_DEV || '';
 
   return {
+    build: {
+      commonjsOptions: {
+        include: [/lib\//, /node_modules/],
+      },
+    },
+    resolve: {
+      alias: {
+        '@lib': path.resolve(__dirname, '../lib'),
+      },
+    },
     plugins: [
       react(),
       {

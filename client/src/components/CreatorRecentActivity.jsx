@@ -1,5 +1,5 @@
-import { formatFollowupDate, formatRelativeTime } from '../constants';
 import { CreatorSectionCardShell } from './CreatorSectionCard';
+import { formatFollowupDate, formatRelativeTime } from '../constants';
 
 function activityTime(value, fallback = '') {
   if (!value) return fallback;
@@ -9,6 +9,9 @@ function activityTime(value, fallback = '') {
 function buildActivities(record, form) {
   const owner = record?.followers_verified_by || form.manager_owner || 'Current User';
   const activities = [];
+  const updatedAt = record?.updated_at;
+  const hasNotes = Boolean(String(form.notes || '').trim());
+  const hasStatus = Boolean(form.status);
 
   if (record?.followers_last_verified_at) {
     activities.push({
@@ -19,22 +22,31 @@ function buildActivities(record, form) {
     });
   }
 
-  if (form.status) {
+  if (hasStatus && hasNotes && updatedAt) {
     activities.push({
-      title: `Status changed to ${form.status}`,
-      meta: record?.updated_at ? `${activityTime(record.updated_at)} by ${owner}` : `by ${owner}`,
-      tone: 'blue',
-      date: record?.updated_at || null,
-    });
-  }
-
-  if (String(form.notes || '').trim()) {
-    activities.push({
-      title: 'Notes updated',
-      meta: record?.updated_at ? `${activityTime(record.updated_at)} by ${owner}` : `by ${owner}`,
+      title: `Notes & status updated (${form.status})`,
+      meta: `${activityTime(updatedAt)} by ${owner}`,
       tone: 'purple',
-      date: record?.updated_at || null,
+      date: updatedAt,
     });
+  } else {
+    if (hasStatus) {
+      activities.push({
+        title: `Status changed to ${form.status}`,
+        meta: updatedAt ? `${activityTime(updatedAt)} by ${owner}` : `by ${owner}`,
+        tone: 'blue',
+        date: updatedAt || null,
+      });
+    }
+
+    if (hasNotes) {
+      activities.push({
+        title: 'Notes updated',
+        meta: updatedAt ? `${activityTime(updatedAt)} by ${owner}` : `by ${owner}`,
+        tone: 'purple',
+        date: updatedAt || null,
+      });
+    }
   }
 
   activities.push({
@@ -51,7 +63,7 @@ function buildActivities(record, form) {
       if (!a.date || !b.date) return 0;
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     })
-    .slice(0, 5);
+    .slice(0, 4);
 }
 
 export default function CreatorRecentActivity({ record, form }) {
@@ -77,10 +89,6 @@ export default function CreatorRecentActivity({ record, form }) {
   );
 
   return (
-    <CreatorSectionCardShell
-      title="Recent Activity"
-      readContent={readContent}
-      editContent={readContent}
-    />
+    <CreatorSectionCardShell title="Recent Activity" readContent={readContent} editContent={readContent} />
   );
 }

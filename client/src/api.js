@@ -61,8 +61,9 @@ function buildFilterParams(filters = {}) {
   if (filters.affiliate_code) params.set('affiliate_code', filters.affiliate_code);
   if (filters.commission) params.set('commission', filters.commission);
   if (filters.status) params.set('status', filters.status);
+  if (filters.platform) params.set('platform', filters.platform);
   if (filters.ambassador_level) params.set('ambassador_level', filters.ambassador_level);
-  if (filters.due_followup) params.set('due_followup', 'true');
+  if (filters.due_followup) params.set('due_followup', filters.due_followup);
   if (filters.sort_by) params.set('sort_by', filters.sort_by);
   if (filters.sort_dir) params.set('sort_dir', filters.sort_dir);
 

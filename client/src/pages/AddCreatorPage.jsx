@@ -1,12 +1,11 @@
-import { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useBlocker, useNavigate } from 'react-router-dom';
 import {
   Banner,
   BlockStack,
   Box,
   Button,
   FormLayout,
-  InlineStack,
   Page,
   Select,
   Text,
@@ -18,7 +17,6 @@ import {
   buildSavePayload,
   COMMISSION_OPTIONS,
   deriveAddCreatorPlatformPreview,
-  MANAGER_OWNER_OPTIONS,
   sanitizeFollowerInput,
   STATUS_OPTIONS,
 } from '../constants';
@@ -31,9 +29,44 @@ import MonthlyProgressEditor from '../components/MonthlyProgressEditor';
 
 export default function AddCreatorPage() {
   const navigate = useNavigate();
+  const initialFormSnapshot = useRef(JSON.stringify(buildEmptyCreatorForm()));
   const [form, setForm] = useState(buildEmptyCreatorForm());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [advancedSponsorshipOpen, setAdvancedSponsorshipOpen] = useState(false);
+  const [monthlyProgressOpen, setMonthlyProgressOpen] = useState(false);
+
+  const isDirty = useMemo(
+    () => JSON.stringify(form) !== initialFormSnapshot.current,
+    [form]
+  );
+
+  const blocker = useBlocker(isDirty && !saving);
+
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return;
+
+    const shouldLeave = window.confirm(
+      'You have unsaved changes. Leave this page without saving?'
+    );
+
+    if (shouldLeave) {
+      blocker.proceed();
+    } else {
+      blocker.reset();
+    }
+  }, [blocker]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event) => {
+      if (!isDirty || saving) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty, saving]);
 
   const updateField = (field) => (value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -53,8 +86,16 @@ export default function AddCreatorPage() {
   };
 
   const platformPreview = deriveAddCreatorPlatformPreview(form);
+  const canSave = Boolean(form.name.trim());
+  const hasPlatformSignal = platformPreview.platforms.some(
+    (platform) => platform.isConnected || platform.followers > 0
+  );
 
   const handleCancel = () => {
+    if (isDirty && !window.confirm('You have unsaved changes. Leave this page without saving?')) {
+      return;
+    }
+
     navigate('/');
   };
 
@@ -89,30 +130,19 @@ export default function AddCreatorPage() {
               className="crm-add-creator__back"
               onClick={handleCancel}
             >
-              ← Back
+              &lt; Back
             </button>
             <div className="crm-add-creator__heading">
               <h1 className="crm-add-creator__title">Add Creator</h1>
             </div>
           </div>
-
-          <InlineStack gap="300" wrap={false} blockAlign="center" className="crm-add-creator__header-actions">
-            <Button onClick={handleCancel} disabled={saving} className="crm-add-creator__btn-secondary">
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleSave}
-              loading={saving}
-              className="crm-add-creator__btn-primary"
-            >
-              Save Creator
-            </Button>
-          </InlineStack>
         </header>
 
         <Banner tone="info" className="crm-add-creator__info-banner">
-          <p>Add a new creator to your network. All fields can be updated later.</p>
+          <p>
+            Start with a name and platform counts. Level, primary channel, and total followers
+            update automatically.
+          </p>
         </Banner>
 
         {error ? (
@@ -154,49 +184,78 @@ export default function AddCreatorPage() {
                     label="Bio"
                     value={form.bio}
                     onChange={updateField('bio')}
-                    multiline={3}
+                    multiline={2}
                     placeholder="Tell us about this creator..."
                     autoComplete="off"
                   />
                 </FormLayout>
               </AddCreatorFormCard>
 
+              <AddCreatorFormCard
+                title="Platforms"
+                badge={hasPlatformSignal ? 'Connected' : 'Recommended'}
+              >
+                <AddCreatorPlatformTable
+                  form={form}
+                  onFieldChange={updateField}
+                  onFollowerFieldChange={updateFollowerField}
+                />
+              </AddCreatorFormCard>
+
               <AddCreatorFormCard title="Sponsorship Details">
                 <FormLayout>
-                  <TextField
-                    label="Sponsored Product(s)"
-                    value={form.sponsored_products}
-                    onChange={updateField('sponsored_products')}
-                    multiline={3}
-                    autoComplete="off"
-                  />
                   <FormLayout.Group>
+                    <TextField
+                      label="Sponsored Product(s)"
+                      value={form.sponsored_products}
+                      onChange={updateField('sponsored_products')}
+                      autoComplete="off"
+                    />
                     <TextField
                       label="Affiliate Code"
                       value={form.affiliate_code}
                       onChange={updateField('affiliate_code')}
                       autoComplete="off"
                     />
+                  </FormLayout.Group>
+                  <FormLayout.Group>
                     <Select
                       label="Commission"
                       options={COMMISSION_OPTIONS}
                       value={form.commission}
                       onChange={updateField('commission')}
                     />
+                    <TextField
+                      label="Order #'s"
+                      value={form.order_numbers}
+                      onChange={updateField('order_numbers')}
+                      autoComplete="off"
+                    />
                   </FormLayout.Group>
-                  <TextField
-                    label="Order #'s"
-                    value={form.order_numbers}
-                    onChange={updateField('order_numbers')}
-                    autoComplete="off"
-                  />
-                  <TextField
-                    label="Required Deliverables per contract"
-                    value={form.required_deliverables}
-                    onChange={updateField('required_deliverables')}
-                    multiline={3}
-                    autoComplete="off"
-                  />
+                  <div className="crm-add-creator__section-toggle-wrap">
+                    <button
+                      type="button"
+                      className="crm-add-creator__section-toggle"
+                      onClick={() => setAdvancedSponsorshipOpen((open) => !open)}
+                      aria-expanded={advancedSponsorshipOpen}
+                    >
+                      <span>
+                        {advancedSponsorshipOpen ? 'Hide' : 'Show'} advanced sponsorship details
+                      </span>
+                      <span className="crm-add-creator__section-toggle-icon" aria-hidden="true">
+                        {advancedSponsorshipOpen ? '-' : '+'}
+                      </span>
+                    </button>
+                  </div>
+                  {advancedSponsorshipOpen ? (
+                    <TextField
+                      label="Required Deliverables per contract"
+                      value={form.required_deliverables}
+                      onChange={updateField('required_deliverables')}
+                      multiline={2}
+                      autoComplete="off"
+                    />
+                  ) : null}
                 </FormLayout>
               </AddCreatorFormCard>
 
@@ -216,31 +275,33 @@ export default function AddCreatorPage() {
                       autoComplete="off"
                     />
                   </FormLayout.Group>
-                  <FormLayout.Group>
+                  <div className="crm-add-creator__communication-grid">
                     <TextField
                       label="Notes"
                       value={form.notes}
                       onChange={updateField('notes')}
-                      multiline={3}
+                      multiline={4}
                       placeholder="Internal communication notes..."
                       autoComplete="off"
                     />
-                    <DateOnlyField
-                      label="Last Contacted"
-                      value={form.last_contacted_at}
-                      onChange={updateField('last_contacted_at')}
-                    />
-                  </FormLayout.Group>
-                  <NextFollowupFields
-                    value={form.next_followup_at}
-                    onChange={updateNextFollowupAt}
-                  />
+                    <div className="crm-add-creator__communication-dates">
+                      <DateOnlyField
+                        label="Last Contacted"
+                        value={form.last_contacted_at}
+                        onChange={updateField('last_contacted_at')}
+                      />
+                      <NextFollowupFields
+                        value={form.next_followup_at}
+                        onChange={updateNextFollowupAt}
+                      />
+                    </div>
+                  </div>
                 </FormLayout>
               </AddCreatorFormCard>
 
               <AddCreatorFormCard title="Creator Profile">
                 <FormLayout>
-                  <div className="crm-add-creator__row-3">
+                  <FormLayout.Group>
                     <TextField
                       label="Email"
                       type="email"
@@ -255,13 +316,7 @@ export default function AddCreatorPage() {
                       placeholder="e.g. US"
                       autoComplete="off"
                     />
-                    <Select
-                      label="Manager / Owner"
-                      options={MANAGER_OWNER_OPTIONS}
-                      value={form.manager_owner}
-                      onChange={updateField('manager_owner')}
-                    />
-                  </div>
+                  </FormLayout.Group>
                   <TextField
                     label="Tags"
                     value={form.tags}
@@ -272,30 +327,45 @@ export default function AddCreatorPage() {
                 </FormLayout>
               </AddCreatorFormCard>
 
-              <AddCreatorFormCard title="Platforms">
-                <AddCreatorPlatformTable
-                  form={form}
-                  onFieldChange={updateField}
-                  onFollowerFieldChange={updateFollowerField}
-                />
-              </AddCreatorFormCard>
-
-              <AddCreatorFormCard title="Monthly Progress (Optional)">
-                <BlockStack gap="300">
-                  <Text as="p" tone="subdued" variant="bodySm">
-                    Fixed 5 contract periods (matches the sponsorship spreadsheet). Edit each row
-                    directly — there is no add/delete row. Use Clear to reset a period, then save.
-                  </Text>
-                  <MonthlyProgressEditor
-                    periods={form.monthly_progress}
-                    onChange={(monthly_progress) =>
-                      setForm((current) => ({ ...current, monthly_progress }))
-                    }
-                    embedded
-                    checkInOptions="yesNo"
-                    urlVariant="icon"
-                  />
-                </BlockStack>
+              <AddCreatorFormCard
+                title="Monthly Progress"
+                badge="Optional"
+                className="crm-add-creator__card--collapsible"
+                action={
+                  <button
+                    type="button"
+                    className="crm-add-creator__section-toggle crm-add-creator__section-toggle--compact"
+                    onClick={() => setMonthlyProgressOpen((open) => !open)}
+                    aria-expanded={monthlyProgressOpen}
+                  >
+                    <span>{monthlyProgressOpen ? 'Collapse' : 'Expand'}</span>
+                    <span className="crm-add-creator__section-toggle-icon" aria-hidden="true">
+                      {monthlyProgressOpen ? '-' : '+'}
+                    </span>
+                  </button>
+                }
+              >
+                {monthlyProgressOpen ? (
+                  <BlockStack gap="300">
+                    <Text as="p" tone="subdued" variant="bodySm">
+                      Fixed 5 contract periods matching the sponsorship spreadsheet. Edit each row
+                      directly; use Clear to reset a period.
+                    </Text>
+                    <MonthlyProgressEditor
+                      periods={form.monthly_progress}
+                      onChange={(monthly_progress) =>
+                        setForm((current) => ({ ...current, monthly_progress }))
+                      }
+                      embedded
+                      checkInOptions="yesNo"
+                      urlVariant="icon"
+                    />
+                  </BlockStack>
+                ) : (
+                  <p className="crm-add-creator__collapsed-note">
+                    Track five optional contract periods after the creator is added.
+                  </p>
+                )}
               </AddCreatorFormCard>
             </div>
           </div>
@@ -310,6 +380,11 @@ export default function AddCreatorPage() {
         </div>
 
         <footer className="crm-add-creator__footer">
+          <p className="crm-add-creator__footer-hint">
+            {canSave
+              ? 'Ready to save. Optional details can be refined later.'
+              : 'Creator name is required to save.'}
+          </p>
           <div className="crm-add-creator__footer-actions">
             <Button onClick={handleCancel} disabled={saving} className="crm-add-creator__btn-secondary">
               Cancel
@@ -318,6 +393,7 @@ export default function AddCreatorPage() {
               variant="primary"
               onClick={handleSave}
               loading={saving}
+              disabled={!canSave || saving}
               className="crm-add-creator__btn-primary"
             >
               Save Creator

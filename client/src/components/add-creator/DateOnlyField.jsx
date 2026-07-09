@@ -59,21 +59,23 @@ export default function DateOnlyField({ label, value, onChange, helpText }) {
   );
 
   return (
-    <Popover
-      active={popoverActive}
-      activator={activator}
-      onClose={() => setPopoverActive(false)}
-      preferredAlignment="left"
-    >
-      <Box padding="300" minWidth="320px">
-        <DatePicker
-          month={visibleMonth}
-          year={visibleYear}
-          onChange={handleDateSelection}
-          onMonthChange={handleMonthChange}
-          selected={pickerSelected}
-        />
-      </Box>
-    </Popover>
+    <div className="crm-add-creator__date-field">
+      <Popover
+        active={popoverActive}
+        activator={activator}
+        onClose={() => setPopoverActive(false)}
+        preferredAlignment="left"
+      >
+        <Box padding="300" minWidth="320px">
+          <DatePicker
+            month={visibleMonth}
+            year={visibleYear}
+            onChange={handleDateSelection}
+            onMonthChange={handleMonthChange}
+            selected={pickerSelected}
+          />
+        </Box>
+      </Popover>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { BlockStack, Box, Icon, InlineGrid, Text, TextField } from '@shopify/polaris';
+import { BlockStack, Box, Icon, Text, TextField } from '@shopify/polaris';
 import { ExternalSmallIcon } from '@shopify/polaris-icons';
 import {
   formatCompactNumber,
@@ -51,23 +51,10 @@ function PlatformReadRow({ platform, form }) {
         )}
       </div>
 
-      <div className="crm-detail-platform-row__action">
-        {hasUrl ? (
-          <button
-            type="button"
-            className="crm-detail-open-button"
-            onClick={() => openExternalUrl(url)}
-          >
-            Open
-          </button>
-        ) : null}
-      </div>
-
       <div className="crm-detail-platform-row__followers">
         <span className="crm-detail-platform-row__count">
-          {hasUrl || followerCount > 0 ? formatCompactNumber(followerCount) : 'Not connected'}
+          {hasUrl || followerCount > 0 ? formatCompactNumber(followerCount) : '—'}
         </span>
-        <span className="crm-detail-platform-row__verified">Manual count</span>
       </div>
     </div>
   );
@@ -79,30 +66,29 @@ function PlatformEditRow({ platform, form, onChange }) {
   };
 
   return (
-    <Box className="crm-platform-account-row" padding="400">
-      <InlineGrid columns={{ xs: 1, md: 'auto 1fr 160px' }} gap="400" alignItems="center">
-        <div className="crm-detail-platform-edit-label">
-          <PlatformIcon platformKey={platform.key} size="large" withTooltip={false} />
-          <span>{platform.label}</span>
-        </div>
+    <div className="crm-detail-platform-edit-row">
+      <div className="crm-detail-platform-row__identity">
+        <PlatformIcon platformKey={platform.key} size="large" withTooltip={false} />
+        <span className="crm-detail-platform-row__name">{platform.label}</span>
+      </div>
 
-        <UrlFieldWithOpen
-          label={`${platform.label} URL`}
-          labelHidden
-          value={form[platform.key]}
-          onChange={updateField(platform.key)}
-          placeholder={`${platform.label.toLowerCase()}.com/...`}
-        />
+      <UrlFieldWithOpen
+        label={`${platform.label} URL`}
+        labelHidden
+        value={form[platform.key]}
+        onChange={updateField(platform.key)}
+        placeholder={`${platform.label.toLowerCase()}.com/...`}
+      />
 
-        <TextField
-          label={`${platform.label} followers`}
-          type="number"
-          min={0}
-          placeholder="0"
-          {...followerFieldProps(platform.followerField, form, onChange)}
-        />
-      </InlineGrid>
-    </Box>
+      <TextField
+        label={`${platform.label} followers`}
+        labelHidden
+        type="number"
+        min={0}
+        placeholder="0"
+        {...followerFieldProps(platform.followerField, form, onChange)}
+      />
+    </div>
   );
 }
 
@@ -110,8 +96,6 @@ export default function CreatorPlatformAccounts({
   form,
   onChange,
   editing = false,
-  onEdit,
-  onDone,
 }) {
   const totalFollowers =
     parseFollowerCount(form.youtube_followers) +
@@ -121,9 +105,10 @@ export default function CreatorPlatformAccounts({
 
   const readContent = (
     <BlockStack gap="0">
-      <div className="crm-detail-platform-note">
-        Counts are not synced from platform APIs. Last verified updates when follower
-        counts are saved.
+      <div className="crm-detail-platform-columns" aria-hidden="true">
+        <span>Platform</span>
+        <span>Profile</span>
+        <span>Followers</span>
       </div>
       {PLATFORM_META.map((platform) => (
         <PlatformReadRow key={platform.key} platform={platform} form={form} />
@@ -133,6 +118,11 @@ export default function CreatorPlatformAccounts({
 
   const editContent = (
     <BlockStack gap="0">
+      <div className="crm-detail-platform-columns crm-detail-platform-columns--edit" aria-hidden="true">
+        <span>Platform</span>
+        <span>Profile URL</span>
+        <span>Followers</span>
+      </div>
       {PLATFORM_META.map((platform) => (
         <PlatformEditRow key={platform.key} platform={platform} form={form} onChange={onChange} />
       ))}
@@ -148,8 +138,6 @@ export default function CreatorPlatformAccounts({
     <CreatorSectionCardShell
       title="Platform Links & Followers"
       editing={editing}
-      onEdit={onEdit}
-      onDone={onDone}
       headerExtra={
         <div className="crm-detail-section-total">
           <span>Total Followers</span>

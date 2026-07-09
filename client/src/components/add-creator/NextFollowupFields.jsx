@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Box, Button, DatePicker, FormLayout, Popover, Select, TextField } from '@shopify/polaris';
+import { Box, Button, DatePicker, Icon, OptionList, Popover, TextField } from '@shopify/polaris';
 import { CalendarIcon } from '@shopify/polaris-icons';
+import { SelectIcon } from '@shopify/polaris-icons';
 import {
   combineFollowupDateTime,
   extractDateFromPickerRange,
@@ -27,6 +28,50 @@ const PERIOD_OPTIONS = [
   { label: 'AM', value: 'AM' },
   { label: 'PM', value: 'PM' },
 ];
+
+function TimePopoverSelect({ label, options, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const selectedLabel = options.find((option) => option.value === value)?.label || value;
+  const activator = (
+    <button
+      type="button"
+      className={`crm-add-creator-time-select__button${open ? ' crm-add-creator-time-select__button--open' : ''}`}
+      aria-label={label}
+      aria-expanded={open}
+      aria-haspopup="listbox"
+      onClick={() => setOpen((current) => !current)}
+    >
+      <span>{selectedLabel}</span>
+      <span className="crm-add-creator-time-select__icon" aria-hidden="true">
+        <Icon source={SelectIcon} tone="subdued" />
+      </span>
+    </button>
+  );
+
+  return (
+    <div className="crm-add-creator-time-select">
+      <Popover
+        active={open}
+        activator={activator}
+        onClose={() => setOpen(false)}
+        preferredAlignment="left"
+        preferredPosition="below"
+        zIndexOverride={560}
+      >
+        <Box className="crm-add-creator-time-select__menu">
+          <OptionList
+            options={options}
+            selected={[value]}
+            onChange={(selected) => {
+              onChange(selected[0]);
+              setOpen(false);
+            }}
+          />
+        </Box>
+      </Popover>
+    </div>
+  );
+}
 
 export default function NextFollowupFields({ value, onChange }) {
   const { date, hour, minute } = splitFollowupDateTime(value);
@@ -91,50 +136,49 @@ export default function NextFollowupFields({ value, onChange }) {
   );
 
   return (
-    <FormLayout.Group>
-      <Popover
-        active={popoverActive}
-        activator={dateActivator}
-        onClose={() => setPopoverActive(false)}
-        preferredAlignment="left"
-      >
-        <Box padding="300" minWidth="320px">
-          <DatePicker
-            month={visibleMonth}
-            year={visibleYear}
-            onChange={handleDateSelection}
-            onMonthChange={handleMonthChange}
-            selected={pickerSelected}
-          />
-        </Box>
-      </Popover>
+    <div className="crm-add-creator__next-followup-fields">
+      <div className="crm-add-creator__date-field">
+        <Popover
+          active={popoverActive}
+          activator={dateActivator}
+          onClose={() => setPopoverActive(false)}
+          preferredAlignment="left"
+        >
+          <Box padding="300" minWidth="320px">
+            <DatePicker
+              month={visibleMonth}
+              year={visibleYear}
+              onChange={handleDateSelection}
+              onMonthChange={handleMonthChange}
+              selected={pickerSelected}
+            />
+          </Box>
+        </Popover>
+      </div>
 
       <div className="crm-add-creator__reminder-time">
         <p className="crm-add-creator__reminder-time-label">Reminder Time</p>
-        <FormLayout.Group condensed>
-          <Select
+        <div className="crm-add-creator__reminder-time-controls">
+          <TimePopoverSelect
             label="Hour"
-            labelHidden
             options={HOUR_12_OPTIONS}
             value={hour12}
             onChange={(nextHour) => handleTimeChange(nextHour, minute, period)}
           />
-          <Select
+          <TimePopoverSelect
             label="Minute"
-            labelHidden
             options={MINUTE_OPTIONS}
             value={minute}
             onChange={(nextMinute) => handleTimeChange(hour12, nextMinute, period)}
           />
-          <Select
+          <TimePopoverSelect
             label="AM/PM"
-            labelHidden
             options={PERIOD_OPTIONS}
             value={period}
             onChange={(nextPeriod) => handleTimeChange(hour12, minute, nextPeriod)}
           />
-        </FormLayout.Group>
+        </div>
       </div>
-    </FormLayout.Group>
+    </div>
   );
 }

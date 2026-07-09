@@ -14,6 +14,8 @@
     "preview": "npm run build && npm start",
     "seed:demo": "node scripts/seed-demo-data.js --clear",
     "seed:demo:append": "node scripts/seed-demo-data.js",
+    "seed:filter-test": "node scripts/seed-filter-test-data.js --clear",
+    "seed:filter-test:append": "node scripts/seed-filter-test-data.js",
     "import:onboarding": "node scripts/import-onboarding-influencers.js --skip-existing",
     "import:onboarding:dry-run": "node scripts/import-onboarding-influencers.js --skip-existing --dry-run"
   },

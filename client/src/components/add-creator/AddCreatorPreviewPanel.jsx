@@ -1,8 +1,11 @@
 import {
+  formatCompactNumber,
   formatFollowupDateTime,
   getPrimaryChannelPlatformKey,
+  previewAmbassadorLevel,
 } from '../../constants';
 import CreatorTableAvatar from '../dashboard/CreatorTableAvatar';
+import LevelBadge from '../dashboard/LevelBadge';
 import PlatformIcon from '../PlatformIcon';
 import StatusBadge from '../dashboard/StatusBadge';
 
@@ -30,14 +33,16 @@ function PreviewMetaBlock({ label, value, iconKey }) {
 export default function AddCreatorPreviewPanel({ form, platformPreview, nextFollowupAt }) {
   const displayName = form.name.trim() || 'New Creator';
   const handle = previewHandle(form.channel);
-  const { platforms, primaryChannel } = platformPreview;
+  const { platforms, primaryChannel, connectedPlatformsCount } = platformPreview;
   const primaryChannelLabel = primaryChannel || 'Not selected';
   const primaryChannelIconKey =
     primaryChannelLabel === 'Not selected'
       ? null
       : getPrimaryChannelPlatformKey(primaryChannelLabel);
-  const managerOwner = form.manager_owner?.trim() || 'Not set';
   const nextFollowupLabel = formatFollowupDateTime(nextFollowupAt) || 'None';
+  const ambassadorLevel = previewAmbassadorLevel(form);
+  const totalFollowers = platforms.reduce((sum, platform) => sum + platform.followers, 0);
+  const hasPlatformSignal = platforms.some((platform) => platform.isConnected || platform.followers > 0);
 
   return (
     <div className="crm-add-creator__preview-stack">
@@ -54,8 +59,11 @@ export default function AddCreatorPreviewPanel({ form, platformPreview, nextFoll
             <p className="crm-add-creator-preview__handle">{handle}</p>
           </div>
         </div>
-        <div className="crm-add-creator-preview__badge-row">
+        <div
+          className={`crm-add-creator-preview__badge-row${hasPlatformSignal ? '' : ' crm-add-creator-preview__badge-row--muted'}`}
+        >
           <StatusBadge status={form.status || 'Applied'} />
+          <LevelBadge level={ambassadorLevel} />
         </div>
         <hr className="crm-add-creator-preview__divider" />
         <div className="crm-add-creator-preview__meta">
@@ -64,10 +72,21 @@ export default function AddCreatorPreviewPanel({ form, platformPreview, nextFoll
             value={primaryChannelLabel}
             iconKey={primaryChannelIconKey}
           />
+          <PreviewMetaBlock
+            label="Ambassador Level"
+            value={ambassadorLevel}
+          />
+          <PreviewMetaBlock
+            label="Total Followers"
+            value={formatCompactNumber(totalFollowers)}
+          />
           <PreviewMetaBlock label="Region" value={form.region.trim() || 'Not set'} />
-          <PreviewMetaBlock label="Manager / Owner" value={managerOwner} />
           <PreviewMetaBlock label="Next Follow-up" value={nextFollowupLabel} />
         </div>
+        <p className="crm-add-creator-preview__hint">
+          Ambassador Level, Primary Channel, and Total Followers update automatically from
+          platform follower counts.
+        </p>
       </section>
 
       <section className="crm-add-creator__preview-card">
@@ -86,6 +105,11 @@ export default function AddCreatorPreviewPanel({ form, platformPreview, nextFoll
             </li>
           ))}
         </ul>
+        <p className="crm-add-creator-preview__hint">
+          {connectedPlatformsCount > 0
+            ? `${connectedPlatformsCount} connected platform${connectedPlatformsCount === 1 ? '' : 's'}`
+            : 'Add follower counts or links to connect platforms.'}
+        </p>
       </section>
     </div>
   );

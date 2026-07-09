@@ -1,3 +1,8 @@
+import {
+  computeAmbassadorLevelFromFollowers,
+} from './utils/ambassadorLevel';
+import { derivePrimaryChannelFromFollowers } from './utils/primaryChannel';
+
 export const STATUS_OPTIONS = [
   { label: 'Applied', value: 'Applied' },
   { label: 'Contacted', value: 'Contacted' },
@@ -17,9 +22,9 @@ export const STATUS_FILTER_OPTIONS = [
 
 export const AMBASSADOR_TIERS = [
   'Creator Sponsorship',
-  'Rising Ambassador',
   'Ambassador 1',
-  'Ambassador 5',
+  'Ambassador 2',
+  'Ambassador 3',
 ];
 
 export const LEVEL_OPTIONS = [
@@ -64,11 +69,12 @@ export function getPrimaryChannelPlatformKey(channelLabel) {
 }
 
 export const FOLLOWUP_FILTER_HELP =
-  'Shows creators with Next Follow-up set within the next 7 days, including overdue dates.';
+  'Due in 7 days shows upcoming follow-ups only. Overdue shows past-due dates only.';
 
 export const DUE_FOLLOWUP_FILTER_OPTIONS = [
   { label: 'All follow-ups', value: '' },
-  { label: 'Due within 7 days', value: 'due' },
+  { label: 'Due in 7 days', value: 'due' },
+  { label: 'Overdue', value: 'overdue' },
 ];
 
 function startOfDay(date) {
@@ -404,6 +410,10 @@ export function parseFollowerCount(value) {
   return Math.max(0, parsed);
 }
 
+export function derivePrimaryChannel(form) {
+  return derivePrimaryChannelFromFollowers(form);
+}
+
 export function deriveAddCreatorPlatformPreview(form) {
   const platformFields = {
     youtube_followers: form?.youtube_followers ?? '',
@@ -432,26 +442,7 @@ export function deriveAddCreatorPlatformPreview(form) {
   });
 
   const connectedPlatformsCount = platforms.filter((platform) => platform.isConnected).length;
-
-  let primaryChannel = 'Not selected';
-  const selectedPrimaryChannel = String(form?.primary_channel ?? '').trim();
-
-  if (selectedPrimaryChannel) {
-    primaryChannel = selectedPrimaryChannel;
-  } else {
-    let highestFollowers = 0;
-
-    for (const platform of platforms) {
-      if (platform.followers > highestFollowers) {
-        highestFollowers = platform.followers;
-        primaryChannel = platform.label;
-      }
-    }
-
-    if (highestFollowers === 0) {
-      primaryChannel = 'Not selected';
-    }
-  }
+  const primaryChannel = derivePrimaryChannel(form);
 
   return {
     platformFields,
@@ -469,24 +460,41 @@ export const MONTHLY_PERIOD_LABELS = [
   'Period 5',
 ];
 
-export function displayAmbassadorLevel(level) {
-  const trimmed = String(level ?? '').trim();
+export function displayAmbassadorLevel(levelOrForm, totalFollowers) {
+  if (levelOrForm && typeof levelOrForm === 'object') {
+    const total =
+      parseFollowerCount(levelOrForm.youtube_followers) +
+      parseFollowerCount(levelOrForm.facebook_followers) +
+      parseFollowerCount(levelOrForm.instagram_followers) +
+      parseFollowerCount(levelOrForm.tiktok_followers);
+
+    return computeAmbassadorLevelFromFollowers(
+      levelOrForm.total_followers ?? total
+    );
+  }
+
+  if (totalFollowers != null) {
+    return computeAmbassadorLevelFromFollowers(totalFollowers);
+  }
+
+  const trimmed = String(levelOrForm ?? '').trim();
   if (!trimmed) return '—';
   return trimmed;
 }
 
 export function levelTone(level) {
-  if (level === 'Ambassador 5') return 'success';
-  if (level === 'Rising Ambassador') return 'info';
+  if (level === 'Ambassador 3') return 'success';
+  if (level === 'Ambassador 2') return 'success';
+  if (level === 'Ambassador 1') return 'info';
   if (level === 'Creator Sponsorship') return 'attention';
   return undefined;
 }
 
 export function getAmbassadorLevelClass(level) {
-  if (level === 'Ambassador 5') return 'crm-level-pill--5';
-  if (level === 'Rising Ambassador') return 'crm-level-pill--rising';
-  if (level === 'Creator Sponsorship') return 'crm-level-pill--sponsorship';
+  if (level === 'Ambassador 3') return 'crm-level-pill--3';
+  if (level === 'Ambassador 2') return 'crm-level-pill--2';
   if (level === 'Ambassador 1') return 'crm-level-pill--1';
+  if (level === 'Creator Sponsorship') return 'crm-level-pill--sponsorship';
   return 'crm-level-pill--legacy';
 }
 
@@ -541,10 +549,21 @@ function toInputDate(value) {
 }
 
 export function buildFormStateFromRecord(record) {
+  const formFollowers = {
+    youtube_followers: record.youtube_followers ?? 0,
+    facebook_followers: record.facebook_followers ?? 0,
+    instagram_followers: record.instagram_followers ?? 0,
+    tiktok_followers: record.tiktok_followers ?? 0,
+    total_followers: record.total_followers ?? 0,
+  };
+
   return {
     name: record.name || '',
     channel: record.channel || '',
-    primary_channel: record.primary_channel || '',
+    primary_channel: derivePrimaryChannel({
+      ...record,
+      ...formFollowers,
+    }),
     niche_category: record.niche_category || '',
     bio: record.bio || '',
     manager_owner: record.manager_owner || '',
@@ -556,7 +575,7 @@ export function buildFormStateFromRecord(record) {
     required_deliverables: record.required_deliverables || '',
     email: record.email || '',
     region: record.region || '',
-    status: record.status || 'Active Ambassador',
+    status: record.status || 'Applied',
     notes: record.notes || '',
     youtube_url: record.youtube_url || '',
     facebook_url: record.facebook_url || '',
@@ -571,7 +590,7 @@ export function buildFormStateFromRecord(record) {
     next_followup_at: toInputDate(record.next_followup_at),
     followers_last_verified_at: formatVerifiedTimestamp(record.followers_last_verified_at),
     followers_verified_by: record.followers_verified_by || '',
-    ambassador_level: record.ambassador_level || '',
+    ambassador_level: computeAmbassadorLevelFromFollowers(record.total_followers),
     monthly_progress: normalizeMonthlyProgressForForm(record.monthly_progress),
   };
 }
@@ -599,7 +618,7 @@ export function buildSavePayload(form) {
     required_deliverables: form.required_deliverables.trim() || null,
     email: form.email.trim() || null,
     region: form.region.trim() || null,
-    status: form.status || 'Active Ambassador',
+    status: form.status || 'Applied',
     notes: form.notes.trim() || null,
     youtube_url: form.youtube_url.trim() || null,
     facebook_url: form.facebook_url.trim() || null,
@@ -609,6 +628,10 @@ export function buildSavePayload(form) {
     facebook_followers: parseFollowerCount(form.facebook_followers),
     instagram_followers: parseFollowerCount(form.instagram_followers),
     tiktok_followers: parseFollowerCount(form.tiktok_followers),
+    niche_category: form.niche_category.trim() || null,
+    bio: form.bio.trim() || null,
+    tags: form.tags.trim() || null,
+    manager_owner: form.manager_owner.trim() || null,
     contract_status: form.contract_status.trim() || null,
     last_contacted_at: form.last_contacted_at
       ? new Date(form.last_contacted_at).toISOString()
@@ -626,5 +649,10 @@ export function buildSavePayload(form) {
 }
 
 export function previewAmbassadorLevel(form) {
-  return form.ambassador_level || null;
+  return computeAmbassadorLevelFromFollowers(
+    parseFollowerCount(form.youtube_followers) +
+      parseFollowerCount(form.facebook_followers) +
+      parseFollowerCount(form.instagram_followers) +
+      parseFollowerCount(form.tiktok_followers)
+  );
 }

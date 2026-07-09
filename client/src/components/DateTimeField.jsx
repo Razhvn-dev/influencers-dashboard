@@ -4,13 +4,12 @@ import {
   Box,
   Button,
   DatePicker,
-  FormLayout,
-  InlineStack,
+  Icon,
+  OptionList,
   Popover,
-  Select,
   TextField,
 } from '@shopify/polaris';
-import { CalendarIcon } from '@shopify/polaris-icons';
+import { CalendarIcon, SelectIcon } from '@shopify/polaris-icons';
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
   const value = String(hour).padStart(2, '0');
@@ -72,6 +71,50 @@ function todayIsoDate() {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+function TimePopoverSelect({ label, options, value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const selectedLabel = options.find((option) => option.value === value)?.label || value;
+  const activator = (
+    <button
+      type="button"
+      className={`crm-detail-time-select__button${open ? ' crm-detail-time-select__button--open' : ''}`}
+      aria-label={label}
+      aria-expanded={open}
+      aria-haspopup="listbox"
+      onClick={() => setOpen((current) => !current)}
+    >
+      <span>{selectedLabel}</span>
+      <span className="crm-detail-time-select__icon" aria-hidden="true">
+        <Icon source={SelectIcon} tone="subdued" />
+      </span>
+    </button>
+  );
+
+  return (
+    <div className="crm-detail-time-select">
+      <Popover
+        active={open}
+        activator={activator}
+        onClose={() => setOpen(false)}
+        preferredAlignment="left"
+        preferredPosition="below"
+        zIndexOverride={560}
+      >
+        <Box className="crm-detail-time-select__menu">
+          <OptionList
+            options={options}
+            selected={[value]}
+            onChange={(selected) => {
+              onChange(selected[0]);
+              setOpen(false);
+            }}
+          />
+        </Box>
+      </Popover>
+    </div>
+  );
 }
 
 export default function DateTimeField({ label, value, onChange, helpText }) {
@@ -160,27 +203,26 @@ export default function DateTimeField({ label, value, onChange, helpText }) {
         </Box>
       </Popover>
 
-      <FormLayout.Group>
-        <Select
-          label="Hour"
-          options={HOUR_OPTIONS}
-          value={hour}
-          onChange={handleHourChange}
-        />
-        <Select
-          label="Minute"
-          options={MINUTE_OPTIONS}
-          value={minute}
-          onChange={handleMinuteChange}
-        />
-      </FormLayout.Group>
-
       {value ? (
-        <InlineStack align="start">
-          <Button variant="plain" onClick={handleClear}>
-            Clear
-          </Button>
-        </InlineStack>
+        <>
+          <div className="crm-detail-time-controls">
+            <TimePopoverSelect
+              label="Hour"
+              options={HOUR_OPTIONS}
+              value={hour}
+              onChange={handleHourChange}
+            />
+            <TimePopoverSelect
+              label="Minute"
+              options={MINUTE_OPTIONS}
+              value={minute}
+              onChange={handleMinuteChange}
+            />
+            <Button variant="plain" onClick={handleClear}>
+              Clear
+            </Button>
+          </div>
+        </>
       ) : null}
     </BlockStack>
   );

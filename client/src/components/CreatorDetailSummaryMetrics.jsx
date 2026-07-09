@@ -1,71 +1,51 @@
-import { InlineGrid } from '@shopify/polaris';
 import {
-  CalendarIcon,
-  PhoneIcon,
+  ContractIcon,
+  PersonIcon,
   ShieldCheckMarkIcon,
-  TeamIcon,
 } from '@shopify/polaris-icons';
 import {
   formatCompactNumber,
   formatFollowupDate,
-  formatLastContactLabel,
   formatRelativeTime,
-  getFollowupEmphasis,
-  normalizeExternalUrl,
   parseFollowerCount,
-  PLATFORM_META,
 } from '../constants';
-import MetricCard from './MetricCard';
+import DetailMetricCard from './DetailMetricCard';
 
-function activePlatformCount(form) {
-  return PLATFORM_META.filter(
-    (platform) =>
-      normalizeExternalUrl(form?.[platform.key]) ||
-      parseFollowerCount(form?.[platform.followerField]) > 0
-  ).length;
+function display(value) {
+  const text = String(value ?? '').trim();
+  return text || 'Not set';
 }
 
 export default function CreatorDetailSummaryMetrics({ record, form }) {
+  const verifiedRelative = record?.followers_last_verified_at
+    ? formatRelativeTime(record.followers_last_verified_at)
+    : 'Never';
+  const verifiedBy = record?.followers_verified_by || form.manager_owner || '';
+  const verifiedHelp = record?.followers_last_verified_at
+    ? `${formatFollowupDate(record.followers_last_verified_at)}${verifiedBy ? ` · ${verifiedBy}` : ''}`
+    : 'Updates when counts are saved';
+
   const totalFollowers =
     parseFollowerCount(form.youtube_followers) +
     parseFollowerCount(form.facebook_followers) +
     parseFollowerCount(form.instagram_followers) +
     parseFollowerCount(form.tiktok_followers);
 
-  const platformCount = activePlatformCount(form);
-  const verifiedRelative = record?.followers_last_verified_at
-    ? formatRelativeTime(record.followers_last_verified_at)
-    : 'Never';
-  const verifiedBy = record?.followers_verified_by || form.manager_owner || '';
-  const verifiedHelp = record?.followers_last_verified_at
-    ? `${formatFollowupDate(record.followers_last_verified_at)}${verifiedBy ? ` by ${verifiedBy}` : ''}`
-    : 'Updates when counts are saved';
-  const followupEmphasis = getFollowupEmphasis(
-    form.next_followup_at ? new Date(form.next_followup_at).toISOString() : null
-  );
-  const lastContact = formatLastContactLabel(
-    form.last_contacted_at ? new Date(form.last_contacted_at).toISOString() : null
-  );
-  const owner = form.manager_owner || record?.followers_verified_by || '';
-  const lastContactHelp = form.last_contacted_at
-    ? `${formatFollowupDate(form.last_contacted_at)}${owner ? ` by ${owner}` : ''}`
-    : 'No contact recorded';
+  const contractHelp = String(form.commission ?? '').trim() === 'NO'
+    ? 'No commission'
+    : String(form.commission ?? '').trim() || '';
 
   return (
-    <InlineGrid columns={{ xs: 1, sm: 2, lg: 4 }} gap="500" className="crm-detail-metrics">
-      <MetricCard
-        label="Total Followers"
-        value={totalFollowers.toLocaleString('en-US')}
-        helpText={
-          platformCount > 0
-            ? `Across ${platformCount} platform${platformCount === 1 ? '' : 's'}`
-            : 'Manual count across platforms'
-        }
-        iconSource={TeamIcon}
-        iconBackground="#EDE9FE"
-        iconColor="#7C3AED"
+    <div className="crm-detail-kpi-grid">
+      <DetailMetricCard
+        label="Contract"
+        value={display(form.contract_status)}
+        helpText={contractHelp}
+        iconSource={ContractIcon}
+        iconBackground="#E0E7FF"
+        iconColor="#4338CA"
       />
-      <MetricCard
+      <DetailMetricCard
         label="Last Verified"
         value={verifiedRelative}
         helpText={verifiedHelp}
@@ -73,27 +53,14 @@ export default function CreatorDetailSummaryMetrics({ record, form }) {
         iconBackground="#DCFCE7"
         iconColor="#16A34A"
       />
-      <MetricCard
-        label="Next Follow-up"
-        value={followupEmphasis?.label || 'Not scheduled'}
-        helpText={
-          form.next_followup_at
-            ? formatFollowupDate(new Date(form.next_followup_at).toISOString())
-            : 'Set a follow-up date in Relationship'
-        }
-        iconSource={CalendarIcon}
-        iconBackground="#FFEDD5"
-        iconColor="#EA580C"
-        tone={followupEmphasis?.tone === 'critical' ? 'critical' : 'default'}
+      <DetailMetricCard
+        label="Total Followers"
+        value={formatCompactNumber(totalFollowers)}
+        helpText="Across connected platforms"
+        iconSource={PersonIcon}
+        iconBackground="#DBEAFE"
+        iconColor="#2563EB"
       />
-      <MetricCard
-        label="Last Contact"
-        value={lastContact}
-        helpText={lastContactHelp}
-        iconSource={PhoneIcon}
-        iconBackground="#DCFCE7"
-        iconColor="#16A34A"
-      />
-    </InlineGrid>
+    </div>
   );
 }
