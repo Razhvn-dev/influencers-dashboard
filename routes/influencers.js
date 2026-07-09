@@ -174,6 +174,8 @@ function buildRecordPayload(body, existing = {}) {
     throw error;
   }
 
+  const ambassadorLevel = cleanCell(body.ambassador_level ?? existing.ambassador_level);
+
   const profile = normalizeProfilePayload(
     mergeProfileFields(existing, {
       email: body.email,
@@ -191,6 +193,7 @@ function buildRecordPayload(body, existing = {}) {
       contract_status: body.contract_status,
       last_contacted_at: body.last_contacted_at,
       next_followup_at: body.next_followup_at,
+      ambassador_level: ambassadorLevel,
     })
   );
 
@@ -205,6 +208,7 @@ function buildRecordPayload(body, existing = {}) {
       body.required_deliverables ?? existing.required_deliverables
     ),
     ...profile,
+    ambassador_level: ambassadorLevel ?? profile.ambassador_level,
     monthly_progress: normalizeMonthlyProgress(
       body.monthly_progress ?? existing.monthly_progress
     ),
@@ -303,7 +307,7 @@ router.get('/stats/summary', async (req, res) => {
             WHERE status IN ('Active Ambassador', 'Partnered', 'Approved')
           )::INT AS contract_signed,
           COUNT(*) FILTER (
-            WHERE ambassador_level IN ('Level 2', 'Level 3')
+            WHERE ambassador_level IN ('Ambassador 5', 'Rising Ambassador')
           )::INT AS elevated_levels,
           COUNT(*) FILTER (
             WHERE next_followup_at IS NOT NULL

@@ -1,9 +1,15 @@
-import { BlockStack, Box, Button, Text, TextField } from '@shopify/polaris';
-import { EditIcon } from '@shopify/polaris-icons';
+import { FormLayout, Select, TextField } from '@shopify/polaris';
+import { formatRelativeTime, STATUS_OPTIONS } from '../constants';
 import CreatorSectionCard from './CreatorSectionCard';
+
+function notePreview(value) {
+  const text = String(value ?? '').trim();
+  return text || 'No notes yet.';
+}
 
 export default function CreatorNotesCard({
   form,
+  record = null,
   onChange,
   editing = false,
   onEdit,
@@ -13,49 +19,52 @@ export default function CreatorNotesCard({
     onChange({ ...form, [field]: value });
   };
 
-  const notes = String(form.notes || '').trim();
+  const updatedAt = record?.updated_at || record?.followers_last_verified_at || record?.last_contacted_at;
+  const updatedLabel = updatedAt ? formatRelativeTime(updatedAt) : 'Not updated yet';
+  const updatedBy = record?.followers_verified_by || form.manager_owner || 'Current User';
 
-  const readContent = notes ? (
-    <Box className="crm-note-timeline">
-      <span className="crm-note-timeline__line" aria-hidden="true" />
-      <Box className="crm-note-entry" padding="500">
-        <BlockStack gap="300">
-          <Text as="p" variant="bodySm" tone="subdued" fontWeight="medium">
-            Latest activity
-          </Text>
-          <Text as="p" variant="bodyMd" whiteSpace="pre-wrap">
-            {notes}
-          </Text>
-        </BlockStack>
-      </Box>
-    </Box>
-  ) : (
-    <Box className="crm-empty-note" padding="600">
-      <BlockStack gap="300" inlineAlign="center">
-        <Text as="p" tone="subdued" variant="bodyMd" alignment="center">
-          No notes yet
-        </Text>
-        <Button icon={EditIcon} onClick={onEdit}>
-          Add Note
-        </Button>
-      </BlockStack>
-    </Box>
+  const readContent = (
+    <div className="crm-detail-notes">
+      <label className="crm-detail-field-label" htmlFor="crm-detail-status-read">
+        Status
+      </label>
+      <div id="crm-detail-status-read" className="crm-detail-status-display">
+        {form.status || 'Not set'}
+      </div>
+
+      <label className="crm-detail-field-label" htmlFor="crm-detail-notes-read">
+        Notes
+      </label>
+      <div id="crm-detail-notes-read" className="crm-detail-note-preview">
+        {notePreview(form.notes)}
+      </div>
+
+      <p className="crm-detail-card-footnote">Last updated: {updatedLabel} by {updatedBy}</p>
+    </div>
   );
 
   const editContent = (
-    <TextField
-      label="Notes"
-      value={form.notes}
-      onChange={updateField('notes')}
-      multiline={6}
-      autoComplete="off"
-      helpText="Outreach notes and communication history"
-    />
+    <FormLayout>
+      <Select
+        label="Status"
+        options={STATUS_OPTIONS}
+        value={form.status}
+        onChange={updateField('status')}
+      />
+      <TextField
+        label="Notes"
+        value={form.notes}
+        onChange={updateField('notes')}
+        multiline={5}
+        autoComplete="off"
+      />
+      <p className="crm-detail-card-footnote">Last updated: {updatedLabel} by {updatedBy}</p>
+    </FormLayout>
   );
 
   return (
     <CreatorSectionCard
-      title="Notes & History"
+      title="Notes & Status"
       editing={editing}
       onEdit={onEdit}
       onDone={onDone}

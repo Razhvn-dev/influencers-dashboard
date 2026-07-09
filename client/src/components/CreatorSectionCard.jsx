@@ -9,17 +9,19 @@ function SectionHeader({ title, editing, onEdit, onDone, headerExtra = null }) {
       </Text>
       <InlineStack gap="300" blockAlign="center" wrap={false}>
         {headerExtra}
-        <Box className="crm-section-card__edit">
-          {editing ? (
-            <Button variant="plain" onClick={onDone}>
-              Done
-            </Button>
-          ) : (
-            <Button variant="plain" icon={EditIcon} onClick={onEdit}>
-              Edit
-            </Button>
-          )}
-        </Box>
+        {onEdit || onDone ? (
+          <Box className="crm-section-card__edit">
+            {editing ? (
+              <Button variant="plain" onClick={onDone}>
+                Done
+              </Button>
+            ) : (
+              <Button variant="plain" icon={EditIcon} onClick={onEdit}>
+                Edit
+              </Button>
+            )}
+          </Box>
+        ) : null}
       </InlineStack>
     </InlineStack>
   );

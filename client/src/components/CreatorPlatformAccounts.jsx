@@ -1,11 +1,5 @@
-import {
-  BlockStack,
-  Box,
-  InlineGrid,
-  InlineStack,
-  Text,
-  TextField,
-} from '@shopify/polaris';
+import { BlockStack, Box, Icon, InlineGrid, Text, TextField } from '@shopify/polaris';
+import { ExternalSmallIcon } from '@shopify/polaris-icons';
 import {
   formatCompactNumber,
   normalizeExternalUrl,
@@ -33,39 +27,49 @@ function PlatformReadRow({ platform, form }) {
   const url = form[platform.key];
   const hasUrl = Boolean(normalizeExternalUrl(url));
   const followerCount = parseFollowerCount(form[platform.followerField]);
-  const handle = platformHandleFromUrl(url);
+  const handle = hasUrl ? platformHandleFromUrl(url) : 'Not connected';
 
   return (
-    <Box className="crm-platform-read-row" padding="500">
-      <InlineStack align="space-between" blockAlign="center" wrap gap="400">
-        <InlineStack gap="400" blockAlign="center" wrap={false}>
-          <PlatformIcon platformKey={platform.key} size="large" withTooltip={false} />
-          <BlockStack gap="100">
-            <Text as="p" variant="bodyMd" fontWeight="semibold">
-              {platform.label}
-            </Text>
-            <Text as="p" variant="bodySm" tone="subdued">
-              {hasUrl ? handle : 'Not connected'}
-            </Text>
-          </BlockStack>
-        </InlineStack>
+    <div className="crm-detail-platform-row">
+      <div className="crm-detail-platform-row__identity">
+        <PlatformIcon platformKey={platform.key} size="large" withTooltip={false} />
+        <span className="crm-detail-platform-row__name">{platform.label}</span>
+      </div>
 
-        <InlineStack gap="500" blockAlign="center" wrap={false}>
-          <Text as="span" variant="bodyLg" fontWeight="bold" className="crm-platform-followers">
-            {formatCompactNumber(followerCount)}
-          </Text>
-          {hasUrl ? (
-            <button
-              type="button"
-              className="crm-open-link"
-              onClick={() => openExternalUrl(url)}
-            >
-              Open ↗
-            </button>
-          ) : null}
-        </InlineStack>
-      </InlineStack>
-    </Box>
+      <div className="crm-detail-platform-row__url">
+        {hasUrl ? (
+          <button
+            type="button"
+            className="crm-detail-url-pill"
+            onClick={() => openExternalUrl(url)}
+          >
+            <span>{handle}</span>
+            <Icon source={ExternalSmallIcon} />
+          </button>
+        ) : (
+          <span className="crm-detail-muted">Not connected</span>
+        )}
+      </div>
+
+      <div className="crm-detail-platform-row__action">
+        {hasUrl ? (
+          <button
+            type="button"
+            className="crm-detail-open-button"
+            onClick={() => openExternalUrl(url)}
+          >
+            Open
+          </button>
+        ) : null}
+      </div>
+
+      <div className="crm-detail-platform-row__followers">
+        <span className="crm-detail-platform-row__count">
+          {hasUrl || followerCount > 0 ? formatCompactNumber(followerCount) : 'Not connected'}
+        </span>
+        <span className="crm-detail-platform-row__verified">Manual count</span>
+      </div>
+    </div>
   );
 }
 
@@ -77,12 +81,10 @@ function PlatformEditRow({ platform, form, onChange }) {
   return (
     <Box className="crm-platform-account-row" padding="400">
       <InlineGrid columns={{ xs: 1, md: 'auto 1fr 160px' }} gap="400" alignItems="center">
-        <InlineStack gap="300" blockAlign="center" wrap={false}>
+        <div className="crm-detail-platform-edit-label">
           <PlatformIcon platformKey={platform.key} size="large" withTooltip={false} />
-          <Text as="p" variant="bodyMd" fontWeight="semibold">
-            {platform.label}
-          </Text>
-        </InlineStack>
+          <span>{platform.label}</span>
+        </div>
 
         <UrlFieldWithOpen
           label={`${platform.label} URL`}
@@ -119,36 +121,20 @@ export default function CreatorPlatformAccounts({
 
   const readContent = (
     <BlockStack gap="0">
-      {PLATFORM_META.map((platform, index) => (
-        <Box
-          key={platform.key}
-          borderBlockStartWidth={index === 0 ? '025' : undefined}
-          borderBlockEndWidth="025"
-          borderColor="border"
-        >
-          <PlatformReadRow platform={platform} form={form} />
-        </Box>
+      <div className="crm-detail-platform-note">
+        Counts are not synced from platform APIs. Last verified updates when follower
+        counts are saved.
+      </div>
+      {PLATFORM_META.map((platform) => (
+        <PlatformReadRow key={platform.key} platform={platform} form={form} />
       ))}
-      <Box padding="400" background="bg-surface-secondary">
-        <Text as="p" tone="subdued" variant="bodySm">
-          Counts are not synced from platform APIs. Last Verified updates when follower
-          counts are saved.
-        </Text>
-      </Box>
     </BlockStack>
   );
 
   const editContent = (
     <BlockStack gap="0">
-      {PLATFORM_META.map((platform, index) => (
-        <Box
-          key={platform.key}
-          borderBlockStartWidth={index === 0 ? '025' : undefined}
-          borderBlockEndWidth="025"
-          borderColor="border"
-        >
-          <PlatformEditRow platform={platform} form={form} onChange={onChange} />
-        </Box>
+      {PLATFORM_META.map((platform) => (
+        <PlatformEditRow key={platform.key} platform={platform} form={form} onChange={onChange} />
       ))}
       <Box padding="400" background="bg-surface-secondary">
         <Text as="p" tone="subdued" variant="bodySm">
@@ -160,17 +146,15 @@ export default function CreatorPlatformAccounts({
 
   return (
     <CreatorSectionCardShell
-      title="Platform Accounts"
+      title="Platform Links & Followers"
       editing={editing}
       onEdit={onEdit}
       onDone={onDone}
       headerExtra={
-        <Text as="p" variant="bodySm" tone="subdued">
-          Total{' '}
-          <Text as="span" fontWeight="semibold">
-            {formatCompactNumber(totalFollowers)}
-          </Text>
-        </Text>
+        <div className="crm-detail-section-total">
+          <span>Total Followers</span>
+          <strong>{formatCompactNumber(totalFollowers)}</strong>
+        </div>
       }
       readContent={readContent}
       editContent={editContent}

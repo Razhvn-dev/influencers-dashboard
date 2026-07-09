@@ -66,12 +66,16 @@ export default function CreatorRelationshipPanel({
 
         <Box className="crm-relationship-badge-item">
           <Text as="p" variant="bodySm" tone="subdued">
-            Ambassador Level
+            Ambassador Tier
           </Text>
           <Box paddingBlockStart="200">
-            <Badge tone={levelTone(ambassadorLevel)} size="large">
-              {displayAmbassadorLevel(ambassadorLevel)}
-            </Badge>
+            {ambassadorLevel ? (
+              <Badge tone={levelTone(ambassadorLevel)} size="large">
+                {displayAmbassadorLevel(ambassadorLevel)}
+              </Badge>
+            ) : (
+              <Text as="p">—</Text>
+            )}
           </Box>
         </Box>
       </InlineGrid>
@@ -129,13 +133,17 @@ export default function CreatorRelationshipPanel({
 
       <BlockStack gap="150">
         <Text as="p" variant="bodySm">
-          Ambassador Level
+          Ambassador Tier
         </Text>
-        <Badge tone={levelTone(ambassadorLevel)}>
-          {displayAmbassadorLevel(ambassadorLevel)}
-        </Badge>
+        {ambassadorLevel ? (
+          <Badge tone={levelTone(ambassadorLevel)}>
+            {displayAmbassadorLevel(ambassadorLevel)}
+          </Badge>
+        ) : (
+          <Text as="p">—</Text>
+        )}
         <Text as="p" tone="subdued" variant="bodySm">
-          Auto-calculated from follower counts
+          Tier is set during onboarding import
         </Text>
       </BlockStack>
 

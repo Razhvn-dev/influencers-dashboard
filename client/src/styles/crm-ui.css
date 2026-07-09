@@ -808,3 +808,2320 @@
 .crm-platform-account-row .Polaris-TextField {
   width: 100%;
 }
+
+/* Creator detail CRM redesign */
+.crm-detail-page .Polaris-Page__Content {
+  padding: 24px;
+  background: #f3f4f6;
+}
+
+.crm-detail-page .Polaris-Layout,
+.crm-detail-page .Polaris-Layout__Section {
+  margin: 0;
+  padding: 0;
+}
+
+.crm-detail-stack {
+  max-width: 1360px;
+  margin: 0 auto;
+}
+
+.crm-detail-header {
+  padding: 0;
+  margin: 0;
+}
+
+.crm-detail-back {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.crm-detail-back .Polaris-Icon {
+  width: 16px;
+  height: 16px;
+}
+
+.crm-detail-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.crm-detail-breadcrumb strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.crm-detail-header__actions .Polaris-Button,
+.crm-detail-footer .Polaris-Button {
+  min-height: 36px;
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.crm-detail-header__actions .Polaris-Button--primary,
+.crm-detail-footer .Polaris-Button--primary {
+  background: #111827;
+  border-color: #111827;
+}
+
+.crm-detail-hero {
+  margin-top: 26px;
+}
+
+.crm-detail-header__avatar .Polaris-Avatar,
+.crm-detail-header .Polaris-Avatar--sizeXl {
+  width: 88px;
+  height: 88px;
+  border-radius: 12px;
+  background: #ede9fe;
+  color: #5b3db2;
+}
+
+.crm-detail-header__name {
+  color: #111827;
+  font-size: 24px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.crm-detail-header__handle {
+  color: #4b5563;
+}
+
+.crm-detail-header__badges .Polaris-Badge {
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.crm-detail-page .crm-v2-metric-card .Polaris-Card,
+.crm-detail-page .crm-section-card .Polaris-Card,
+.crm-detail-footer {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 5%);
+}
+
+.crm-detail-page .crm-v2-metric-card .Polaris-Card {
+  min-height: 92px;
+  padding: 18px 20px;
+}
+
+.crm-v2-metric-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  flex: 0 0 48px;
+}
+
+.crm-v2-metric-card__icon .Polaris-Icon {
+  width: 24px;
+  height: 24px;
+}
+
+.crm-detail-page .crm-v2-metric-card__label {
+  margin: 0;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.crm-detail-page .crm-v2-metric-card__value {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.crm-v2-metric-card__help {
+  margin: 0;
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.crm-detail-layout {
+  display: grid;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (min-width: 1120px) {
+  .crm-detail-layout {
+    grid-template-columns: minmax(260px, 28fr) minmax(420px, 44fr) minmax(260px, 28fr);
+  }
+}
+
+.crm-detail-column {
+  min-width: 0;
+}
+
+.crm-detail-page .crm-section-card .Polaris-Card {
+  overflow: hidden;
+}
+
+.crm-section-card__header {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.crm-section-card__title {
+  color: #111827;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.crm-section-card__edit .Polaris-Button {
+  color: #2563eb;
+}
+
+.crm-detail-profile-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.crm-detail-profile-row {
+  display: grid;
+  grid-template-columns: 22px minmax(86px, 1fr) minmax(0, 1.35fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 38px;
+  padding: 9px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.crm-detail-profile-row:last-child {
+  border-bottom: 0;
+}
+
+.crm-detail-profile-row__icon {
+  display: inline-flex;
+  color: #374151;
+}
+
+.crm-detail-profile-row__icon .Polaris-Icon {
+  width: 17px;
+  height: 17px;
+}
+
+.crm-detail-profile-row__label,
+.crm-detail-field-label {
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.crm-detail-profile-row__value {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.crm-detail-profile-row__value--success {
+  color: #059669;
+}
+
+.crm-detail-profile-row__value--critical {
+  color: #dc2626;
+}
+
+.crm-detail-section-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.crm-detail-section-total strong {
+  color: #111827;
+  font-size: 14px;
+}
+
+.crm-detail-platform-note {
+  padding: 0 20px 14px;
+  color: #6b7280;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.crm-detail-platform-row {
+  display: grid;
+  grid-template-columns: minmax(118px, 0.9fr) minmax(150px, 1.25fr) 70px minmax(94px, 0.8fr);
+  gap: 12px;
+  align-items: center;
+  min-height: 52px;
+  padding: 12px 20px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.crm-detail-platform-row__identity,
+.crm-detail-platform-edit-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.crm-detail-platform-row__name,
+.crm-detail-platform-edit-label span {
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.crm-detail-url-pill {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #005bd3;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.crm-detail-url-pill span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-detail-url-pill .Polaris-Icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.crm-detail-open-button {
+  appearance: none;
+  min-height: 30px;
+  padding: 5px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.crm-detail-platform-row__followers {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+}
+
+.crm-detail-platform-row__count {
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.crm-detail-platform-row__verified,
+.crm-detail-muted {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.crm-detail-sponsorship-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.crm-detail-sponsorship-grid div {
+  min-width: 0;
+}
+
+.crm-detail-sponsorship-grid span {
+  display: block;
+  margin-bottom: 5px;
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.crm-detail-sponsorship-grid strong {
+  display: block;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.crm-detail-progress {
+  padding: 0 20px 12px;
+}
+
+.crm-detail-progress-metrics {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  padding-bottom: 14px;
+}
+
+.crm-detail-progress-metric {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.crm-detail-progress-metric__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.crm-detail-progress-metric__icon--blue { background: #dbeafe; color: #2563eb; }
+.crm-detail-progress-metric__icon--green { background: #dcfce7; color: #16a34a; }
+.crm-detail-progress-metric__icon--mint { background: #d1fae5; color: #059669; }
+.crm-detail-progress-metric__icon--indigo { background: #e0e7ff; color: #4f46e5; }
+.crm-detail-progress-metric__icon--orange { background: #ffedd5; color: #ea580c; }
+
+.crm-detail-progress-metric__icon .Polaris-Icon {
+  width: 18px;
+  height: 18px;
+}
+
+.crm-detail-progress-metric small {
+  display: block;
+  color: #6b7280;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.crm-detail-progress-metric strong {
+  display: block;
+  margin-top: 2px;
+  color: #111827;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.crm-detail-progress-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.crm-detail-progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+
+.crm-detail-progress-table th,
+.crm-detail-progress-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  color: #111827;
+  font-size: 12px;
+  text-align: left;
+}
+
+.crm-detail-progress-table th {
+  color: #374151;
+  font-weight: 700;
+  background: #fff;
+}
+
+.crm-detail-progress-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.crm-detail-progress-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.crm-detail-progress-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: #d1d5db;
+}
+
+.crm-detail-progress-dot--done { background: #22c55e; }
+.crm-detail-progress-dot--pending { background: #facc15; }
+.crm-detail-progress-dot--empty { background: #d1d5db; }
+
+.crm-detail-progress-footnote {
+  margin: 0;
+  padding: 8px 10px;
+  border-top: 1px solid #f3f4f6;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.crm-detail-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.crm-detail-status-display,
+.crm-detail-note-preview {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  font-size: 13px;
+}
+
+.crm-detail-status-display {
+  min-height: 36px;
+  padding: 9px 12px;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.crm-detail-note-preview {
+  min-height: 84px;
+  padding: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.crm-detail-card-footnote {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.crm-detail-activity-timeline {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-left: 22px;
+}
+
+.crm-detail-activity-timeline::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 6px;
+  width: 1px;
+  background: #d1d5db;
+}
+
+.crm-detail-activity-item {
+  position: relative;
+  display: flex;
+  gap: 12px;
+}
+
+.crm-detail-activity-item__dot {
+  position: absolute;
+  top: 4px;
+  left: -20px;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: #2563eb;
+}
+
+.crm-detail-activity-item__dot--purple {
+  background: #6d28d9;
+}
+
+.crm-detail-activity-item__title {
+  margin: 0;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.crm-detail-activity-item__meta {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.crm-detail-empty-state {
+  padding: 20px;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 13px;
+  text-align: center;
+}
+
+.crm-detail-footer {
+  max-width: 1360px;
+  margin: 20px auto 0;
+  padding: 14px 24px !important;
+  position: static;
+  z-index: auto;
+}
+
+@media (max-width: 1180px) {
+  .crm-detail-platform-row {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-detail-platform-row__followers {
+    align-items: flex-start;
+  }
+
+  .crm-detail-sponsorship-grid,
+  .crm-detail-progress-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .crm-detail-page .Polaris-Page__Content {
+    padding: 16px;
+  }
+
+  .crm-detail-hero {
+    align-items: flex-start;
+  }
+
+  .crm-detail-profile-row {
+    grid-template-columns: 22px minmax(80px, 1fr);
+  }
+
+  .crm-detail-profile-row__value {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .crm-detail-sponsorship-grid,
+  .crm-detail-progress-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Creator detail polish pass */
+.crm-detail-page .crm-detail-stack {
+  gap: 24px !important;
+}
+
+.crm-detail-page .crm-detail-metrics {
+  gap: 24px !important;
+}
+
+.crm-detail-page .crm-detail-layout {
+  gap: 24px;
+}
+
+.crm-detail-page .crm-detail-column {
+  gap: 24px !important;
+}
+
+.crm-detail-page .crm-v2-metric-card .Polaris-Card,
+.crm-detail-page .crm-section-card .Polaris-Card,
+.crm-detail-footer {
+  border-color: #e5e7eb;
+  border-radius: 12px;
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 4%),
+    0 8px 24px rgb(15 23 42 / 4%);
+}
+
+.crm-detail-page .crm-v2-metric-card .Polaris-Card {
+  min-height: 124px;
+  padding: 24px;
+}
+
+.crm-detail-page .crm-v2-metric-card__icon {
+  width: 56px;
+  height: 56px;
+  flex-basis: 56px;
+}
+
+.crm-detail-page .crm-v2-metric-card__icon .Polaris-Icon {
+  width: 28px;
+  height: 28px;
+}
+
+.crm-detail-page .crm-v2-metric-card__label {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+.crm-detail-page .crm-v2-metric-card__value {
+  font-size: 24px;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+}
+
+.crm-detail-page .crm-v2-metric-card__help {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #6b7280;
+}
+
+.crm-detail-page .crm-section-card__header {
+  padding: 24px 24px 16px !important;
+}
+
+.crm-detail-page .crm-section-card__body {
+  padding-block-start: 0;
+}
+
+.crm-detail-page .crm-section-card .Polaris-Card > .Polaris-Box {
+  padding: 24px;
+}
+
+.crm-detail-page .crm-section-card .crm-section-card__header + .crm-section-card__body,
+.crm-detail-page .crm-section-card .crm-section-card__header + .Polaris-Box {
+  padding-inline: 24px !important;
+  padding-block-end: 24px !important;
+}
+
+.crm-detail-hero {
+  margin-top: 30px;
+  gap: 20px !important;
+}
+
+.crm-detail-header__avatar .Polaris-Avatar,
+.crm-detail-header .Polaris-Avatar--sizeXl {
+  width: 80px;
+  height: 80px;
+}
+
+.crm-detail-header__avatar .Polaris-Avatar__Initials {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.crm-detail-header__name {
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.crm-detail-header__identity-text {
+  gap: 8px !important;
+}
+
+.crm-detail-header__badges {
+  gap: 8px !important;
+  padding-top: 4px;
+}
+
+.crm-detail-header__badges .Polaris-Badge {
+  padding: 4px 11px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.crm-detail-profile-row {
+  grid-template-columns: 24px minmax(98px, 1fr) minmax(0, 1.2fr);
+  min-height: 48px;
+  padding: 13px 0;
+  border-bottom-color: #f1f5f9;
+}
+
+.crm-detail-profile-row__icon {
+  color: #4b5563;
+}
+
+.crm-detail-profile-row__icon .Polaris-Icon {
+  width: 18px;
+  height: 18px;
+}
+
+.crm-detail-profile-row__label,
+.crm-detail-field-label {
+  font-size: 12px;
+  line-height: 1.35;
+  color: #6b7280;
+}
+
+.crm-detail-profile-row__value {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.crm-detail-platform-note {
+  padding: 0 24px 16px;
+}
+
+.crm-detail-platform-row {
+  grid-template-columns: minmax(120px, 0.9fr) minmax(170px, 1.35fr) 76px minmax(104px, 0.85fr);
+  gap: 14px;
+  min-height: 64px;
+  padding: 14px 24px;
+  border-top-color: #f1f5f9;
+}
+
+.crm-detail-platform-row__identity,
+.crm-detail-platform-row__url,
+.crm-detail-platform-row__action,
+.crm-detail-platform-row__followers {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+}
+
+.crm-detail-platform-row__url {
+  min-width: 0;
+}
+
+.crm-detail-platform-row__action {
+  justify-content: flex-start;
+}
+
+.crm-detail-platform-row__followers {
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.crm-detail-url-pill,
+.crm-detail-open-button {
+  min-height: 34px;
+}
+
+.crm-detail-muted {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+}
+
+.crm-detail-sponsorship-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.crm-detail-sponsorship-grid div {
+  min-height: 76px;
+  padding: 14px 16px;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.crm-detail-sponsorship-grid span {
+  margin-bottom: 8px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.crm-detail-sponsorship-grid strong {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.crm-detail-progress {
+  padding: 0 24px 16px;
+}
+
+.crm-detail-progress-metrics {
+  gap: 14px;
+  padding-bottom: 18px;
+}
+
+.crm-detail-progress-table-wrap {
+  overflow-x: hidden;
+}
+
+.crm-detail-progress-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.crm-detail-progress-table th,
+.crm-detail-progress-table td {
+  padding: 9px 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  vertical-align: middle;
+}
+
+.crm-detail-progress-table th:nth-child(1),
+.crm-detail-progress-table td:nth-child(1) {
+  width: 16%;
+}
+
+.crm-detail-progress-table th:nth-child(2),
+.crm-detail-progress-table td:nth-child(2) {
+  width: 20%;
+}
+
+.crm-detail-progress-table th:nth-child(3),
+.crm-detail-progress-table td:nth-child(3) {
+  width: 25%;
+}
+
+.crm-detail-progress-table th:nth-child(4),
+.crm-detail-progress-table td:nth-child(4) {
+  width: 14%;
+}
+
+.crm-detail-progress-table th:nth-child(5),
+.crm-detail-progress-table td:nth-child(5) {
+  width: 25%;
+}
+
+.crm-detail-progress-cell {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.crm-detail-progress-table .Polaris-Badge {
+  max-width: 100%;
+}
+
+.crm-detail-notes {
+  gap: 8px;
+}
+
+.crm-detail-note-preview {
+  min-height: 64px;
+  max-height: 112px;
+  overflow: auto;
+}
+
+.crm-detail-card-footnote {
+  margin-top: 2px;
+}
+
+.crm-detail-activity-timeline {
+  gap: 28px;
+  padding: 4px 0 4px 24px;
+}
+
+.crm-detail-activity-timeline::before {
+  top: 10px;
+  bottom: 10px;
+}
+
+.crm-detail-activity-item__title {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.crm-detail-activity-item__meta {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@media (min-width: 1120px) {
+  .crm-detail-page .crm-detail-layout {
+    grid-template-columns: minmax(280px, 28fr) minmax(460px, 44fr) minmax(280px, 28fr);
+  }
+}
+
+@media (max-width: 1180px) {
+  .crm-detail-platform-row {
+    grid-template-columns: minmax(140px, 1fr) minmax(180px, 1.4fr) 76px minmax(112px, 0.9fr);
+  }
+
+  .crm-detail-sponsorship-grid,
+  .crm-detail-progress-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .crm-detail-platform-row {
+    grid-template-columns: 1fr;
+  }
+
+  .crm-detail-progress-table th:nth-child(1),
+  .crm-detail-progress-table td:nth-child(1) {
+    width: 18%;
+  }
+
+  .crm-detail-progress-table th:nth-child(2),
+  .crm-detail-progress-table td:nth-child(2),
+  .crm-detail-progress-table th:nth-child(3),
+  .crm-detail-progress-table td:nth-child(3) {
+    width: 22%;
+  }
+
+  .crm-detail-progress-table th:nth-child(4),
+  .crm-detail-progress-table td:nth-child(4) {
+    width: 14%;
+  }
+
+  .crm-detail-progress-table th:nth-child(5),
+  .crm-detail-progress-table td:nth-child(5) {
+    width: 24%;
+  }
+}
+
+/* Target screenshot alignment pass */
+.crm-detail-page .Polaris-Page__Content {
+  padding: 24px 30px 0 !important;
+  background: #f3f4f6;
+}
+
+.crm-detail-page .crm-detail-stack {
+  max-width: 1476px;
+  margin: 0 auto;
+  gap: 14px !important;
+}
+
+.crm-detail-header {
+  min-height: 172px;
+}
+
+.crm-detail-back {
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.crm-detail-breadcrumb {
+  margin-top: 4px;
+  gap: 9px;
+  font-size: 12px;
+}
+
+.crm-detail-header__actions {
+  gap: 14px !important;
+}
+
+.crm-detail-header__actions .Polaris-Button {
+  min-height: 32px;
+  padding-inline: 16px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.crm-detail-header__actions .Polaris-Button--primary {
+  min-height: 34px;
+  padding-inline: 18px;
+}
+
+.crm-detail-hero {
+  margin-top: 28px;
+  gap: 26px !important;
+}
+
+.crm-detail-header__avatar .Polaris-Avatar,
+.crm-detail-header .Polaris-Avatar--sizeXl {
+  width: 102px;
+  height: 102px;
+  border-radius: 8px;
+  background: #ede9fe;
+  color: #5b3db2;
+}
+
+.crm-detail-header__avatar .Polaris-Avatar__Initials {
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.crm-detail-header__name {
+  font-size: 28px;
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
+.crm-detail-header__handle {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+.crm-detail-header__identity-text {
+  gap: 7px !important;
+}
+
+.crm-detail-header__badges {
+  gap: 8px !important;
+  padding-top: 3px;
+}
+
+.crm-detail-header__badges .Polaris-Badge {
+  min-height: 18px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.2;
+  font-weight: 500;
+}
+
+.crm-detail-page .crm-detail-metrics {
+  width: calc(100% - 380px);
+  margin-top: -112px;
+  margin-left: 380px;
+  gap: 12px !important;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+
+.crm-detail-page .crm-v2-metric-card {
+  height: 102px;
+}
+
+.crm-detail-page .crm-v2-metric-card > .Polaris-ShadowBevel,
+.crm-detail-page .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box,
+.crm-detail-page .crm-v2-metric-card .Polaris-Card {
+  height: 100%;
+  min-height: 102px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%) !important;
+}
+
+.crm-detail-page .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box,
+.crm-detail-page .crm-v2-metric-card .Polaris-Card {
+  padding: 20px 22px !important;
+}
+
+.crm-detail-page .crm-v2-metric-card .Polaris-InlineStack {
+  height: 100%;
+  gap: 18px !important;
+}
+
+.crm-detail-page .crm-v2-metric-card__icon {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+}
+
+.crm-detail-page .crm-v2-metric-card__icon .Polaris-Icon {
+  width: 25px;
+  height: 25px;
+}
+
+.crm-detail-page .crm-v2-metric-card__content {
+  gap: 4px !important;
+}
+
+.crm-detail-page .crm-v2-metric-card__label {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.crm-detail-page .crm-v2-metric-card__value {
+  font-size: 17px;
+  line-height: 1.22;
+  font-weight: 800;
+}
+
+.crm-detail-page .crm-v2-metric-card__help {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.crm-detail-page .crm-detail-layout {
+  grid-template-columns: minmax(338px, 25fr) minmax(560px, 50fr) minmax(320px, 25fr);
+  gap: 14px;
+  margin-top: 0;
+}
+
+.crm-detail-page .crm-detail-column {
+  display: flex !important;
+  flex-direction: column;
+  gap: 12px !important;
+}
+
+.crm-detail-page .crm-section-card > .Polaris-ShadowBevel,
+.crm-detail-page .crm-section-card > .Polaris-ShadowBevel > .Polaris-Box,
+.crm-detail-page .crm-section-card .Polaris-Card,
+.crm-detail-footer {
+  border-radius: 8px !important;
+  border-color: #e5e7eb !important;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 6%) !important;
+}
+
+.crm-detail-page .crm-section-card__header {
+  padding: 16px 20px 8px !important;
+  border-bottom: 0;
+}
+
+.crm-detail-page .crm-section-card__title {
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.crm-detail-page .crm-section-card__edit .Polaris-Button {
+  min-height: 24px;
+  font-size: 12px;
+}
+
+.crm-detail-page .crm-section-card__edit .Polaris-Icon {
+  width: 14px;
+  height: 14px;
+}
+
+.crm-detail-page .crm-section-card .Polaris-Card > .Polaris-Box {
+  padding: 18px 20px !important;
+}
+
+.crm-detail-page .crm-section-card .crm-section-card__header + .crm-section-card__body,
+.crm-detail-page .crm-section-card .crm-section-card__header + .Polaris-Box {
+  padding: 0 20px 16px !important;
+}
+
+.crm-detail-profile-row {
+  grid-template-columns: 20px minmax(104px, 1fr) minmax(0, 1.2fr);
+  gap: 12px;
+  min-height: 43px;
+  padding: 10px 0;
+  border-bottom-color: #e9edf2;
+}
+
+.crm-detail-profile-row__icon .Polaris-Icon {
+  width: 15px;
+  height: 15px;
+}
+
+.crm-detail-profile-row__label {
+  font-size: 12px;
+  color: #5f6b7a;
+}
+
+.crm-detail-profile-row__value {
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.crm-detail-platform-note {
+  padding: 0 20px 16px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.crm-detail-section-total {
+  min-width: 120px;
+  padding-right: 48px;
+  align-items: flex-start;
+  font-size: 11px;
+}
+
+.crm-detail-section-total strong {
+  font-size: 13px;
+}
+
+.crm-detail-platform-row {
+  grid-template-columns: 136px minmax(210px, 1fr) 88px 150px;
+  min-height: 54px;
+  padding: 9px 20px;
+  gap: 14px;
+  border-top-color: #e9edf2;
+}
+
+.crm-detail-platform-row__identity {
+  gap: 12px;
+}
+
+.crm-detail-platform-row .crm-platform-icon {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.crm-detail-platform-row .crm-platform-icon__image {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.crm-detail-platform-row__name {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.crm-detail-platform-row__identity,
+.crm-detail-platform-row__url,
+.crm-detail-platform-row__action,
+.crm-detail-platform-row__followers {
+  min-height: 32px;
+}
+
+.crm-detail-url-pill,
+.crm-detail-open-button {
+  min-height: 30px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.crm-detail-open-button {
+  min-width: 56px;
+  padding-inline: 14px;
+}
+
+.crm-detail-platform-row__count {
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.crm-detail-platform-row__verified,
+.crm-detail-muted {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.crm-detail-sponsorship-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 1fr 0.75fr 1.35fr;
+  gap: 22px;
+  padding-top: 2px;
+}
+
+.crm-detail-sponsorship-grid div {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.crm-detail-sponsorship-grid span {
+  margin-bottom: 7px;
+  font-size: 11px;
+  line-height: 1.25;
+  color: #5f6b7a;
+}
+
+.crm-detail-sponsorship-grid strong {
+  font-size: 12px;
+  line-height: 1.28;
+  font-weight: 800;
+}
+
+.crm-detail-progress {
+  padding: 0 18px 10px;
+}
+
+.crm-detail-progress-metrics {
+  grid-template-columns: 1fr 0.85fr 1.15fr 0.85fr 0.9fr;
+  gap: 12px;
+  padding: 6px 0 14px;
+}
+
+.crm-detail-progress-metric {
+  gap: 9px;
+}
+
+.crm-detail-progress-metric__icon {
+  width: 36px;
+  height: 36px;
+}
+
+.crm-detail-progress-metric small {
+  font-size: 11px;
+}
+
+.crm-detail-progress-metric strong {
+  font-size: 14px;
+}
+
+.crm-detail-progress-table-wrap {
+  overflow: hidden;
+  border-radius: 7px;
+}
+
+.crm-detail-progress-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.crm-detail-progress-table th,
+.crm-detail-progress-table td {
+  height: 30px;
+  padding: 6px 9px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.crm-detail-progress-table th:nth-child(1),
+.crm-detail-progress-table td:nth-child(1) {
+  width: 16%;
+}
+
+.crm-detail-progress-table th:nth-child(2),
+.crm-detail-progress-table td:nth-child(2) {
+  width: 20%;
+}
+
+.crm-detail-progress-table th:nth-child(3),
+.crm-detail-progress-table td:nth-child(3) {
+  width: 25%;
+}
+
+.crm-detail-progress-table th:nth-child(4),
+.crm-detail-progress-table td:nth-child(4) {
+  width: 14%;
+}
+
+.crm-detail-progress-table th:nth-child(5),
+.crm-detail-progress-table td:nth-child(5) {
+  width: 25%;
+}
+
+.crm-detail-progress-footnote {
+  padding: 8px 10px;
+  font-size: 12px;
+}
+
+.crm-detail-status-display {
+  min-height: 34px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.crm-detail-note-preview {
+  min-height: 70px;
+  max-height: 84px;
+  padding: 11px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.crm-detail-card-footnote {
+  margin-top: 5px;
+  font-size: 12px;
+}
+
+.crm-detail-activity-timeline {
+  gap: 24px;
+  padding-left: 24px;
+}
+
+.crm-detail-activity-item__dot {
+  left: -20px;
+  width: 9px;
+  height: 9px;
+}
+
+.crm-detail-activity-item__title {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.crm-detail-activity-item__meta {
+  margin-top: 7px;
+  font-size: 12px;
+}
+
+.crm-detail-footer {
+  max-width: none;
+  margin: 14px -20px 0;
+  padding: 16px 32px !important;
+  border-radius: 8px !important;
+}
+
+@media (max-width: 1320px) {
+  .crm-detail-page .crm-detail-metrics {
+    width: 100%;
+    margin-top: 0;
+    margin-left: 0;
+  }
+
+  .crm-detail-header {
+    min-height: 0;
+  }
+
+  .crm-detail-page .crm-detail-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* DOM-verified target overrides */
+.Polaris-Page {
+  max-width: none !important;
+  padding: 24px 30px 0 !important;
+}
+
+.Polaris-Page__Content {
+  max-width: none !important;
+  padding: 0 !important;
+}
+
+.crm-detail-stack {
+  max-width: 1476px !important;
+  width: 100%;
+  margin: 0 auto !important;
+  gap: 14px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid {
+  width: calc(100% - 380px) !important;
+  margin-top: -112px !important;
+  margin-left: 380px !important;
+  gap: 12px !important;
+  position: relative;
+  z-index: 2;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card {
+  height: 102px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel,
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box {
+  height: 102px !important;
+  min-height: 102px !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 8%) !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box {
+  --pc-box-padding-block-start-xs: 20px !important;
+  --pc-box-padding-block-end-xs: 20px !important;
+  --pc-box-padding-inline-start-xs: 22px !important;
+  --pc-box-padding-inline-end-xs: 22px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card .Polaris-InlineStack {
+  --pc-inline-stack-gap-xs: 18px !important;
+  height: 100%;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__icon {
+  width: 52px !important;
+  height: 52px !important;
+  flex-basis: 52px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__icon .Polaris-Icon {
+  width: 25px;
+  height: 25px;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__content {
+  gap: 4px !important;
+  height: auto;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__label {
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__value {
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__help {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.crm-detail-layout {
+  grid-template-columns: minmax(340px, 25fr) minmax(620px, 50fr) minmax(320px, 25fr) !important;
+  gap: 14px !important;
+}
+
+.crm-detail-column {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+.crm-section-card > .Polaris-ShadowBevel,
+.crm-section-card > .Polaris-ShadowBevel > .Polaris-Box {
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 6%) !important;
+}
+
+.crm-section-card > .Polaris-ShadowBevel > .Polaris-Box {
+  --pc-box-padding-block-start-xs: 18px !important;
+  --pc-box-padding-block-end-xs: 18px !important;
+  --pc-box-padding-inline-start-xs: 20px !important;
+  --pc-box-padding-inline-end-xs: 20px !important;
+}
+
+.crm-section-card__header {
+  padding: 16px 20px 8px !important;
+}
+
+.crm-section-card__header + .crm-section-card__body,
+.crm-section-card__header + .Polaris-Box {
+  padding: 0 20px 16px !important;
+}
+
+.crm-detail-platform-row {
+  grid-template-columns: 136px minmax(220px, 1fr) 88px 150px !important;
+}
+
+.crm-detail-footer {
+  width: auto;
+  max-width: none !important;
+  margin: 14px -20px 0 !important;
+}
+
+@media (max-width: 1320px) {
+  .crm-detail-header + .Polaris-InlineGrid {
+    width: 100% !important;
+    margin-top: 0 !important;
+    margin-left: 0 !important;
+  }
+
+  .crm-detail-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Final target calibration, intentionally last. */
+.crm-detail-hero {
+  margin-top: 46px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid {
+  grid-template-columns: 230px 238px 238px minmax(260px, 1fr) !important;
+  margin-top: -100px !important;
+  margin-bottom: 13px !important;
+}
+
+.crm-detail-layout {
+  grid-template-columns: 366px 724px 338px !important;
+  justify-content: start !important;
+}
+
+.crm-section-card:has(.crm-detail-platform-row) > .Polaris-ShadowBevel > .Polaris-Box,
+.crm-section-card:has(.crm-detail-progress) > .Polaris-ShadowBevel > .Polaris-Box {
+  --pc-box-padding-block-start-xs: 0 !important;
+  --pc-box-padding-block-end-xs: 0 !important;
+  --pc-box-padding-inline-start-xs: 0 !important;
+  --pc-box-padding-inline-end-xs: 0 !important;
+}
+
+.crm-section-card:has(.crm-detail-platform-row) .crm-section-card__header {
+  padding: 16px 20px 8px !important;
+}
+
+.crm-detail-platform-note {
+  padding: 0 20px 8px !important;
+}
+
+.crm-detail-platform-row {
+  grid-template-columns: 136px minmax(220px, 1fr) 88px 150px !important;
+  min-height: 48px !important;
+  padding: 5px 20px !important;
+}
+
+.crm-detail-platform-row__identity,
+.crm-detail-platform-row__url,
+.crm-detail-platform-row__action,
+.crm-detail-platform-row__followers {
+  min-height: 30px !important;
+}
+
+.crm-section-card:has(.crm-detail-sponsorship-grid) > .Polaris-ShadowBevel > .Polaris-Box {
+  --pc-box-padding-block-start-xs: 16px !important;
+  --pc-box-padding-block-end-xs: 16px !important;
+  --pc-box-padding-inline-start-xs: 20px !important;
+  --pc-box-padding-inline-end-xs: 20px !important;
+}
+
+.crm-detail-sponsorship-grid {
+  grid-template-columns: 1.25fr 1fr 1fr 0.75fr 1.35fr !important;
+  gap: 22px !important;
+  padding-top: 0 !important;
+}
+
+.crm-detail-sponsorship-grid div {
+  min-height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.crm-detail-sponsorship-grid span {
+  margin-bottom: 7px !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+}
+
+.crm-detail-sponsorship-grid strong {
+  font-size: 12px !important;
+  line-height: 1.28 !important;
+  font-weight: 800 !important;
+}
+
+.crm-section-card:has(.crm-detail-progress) .crm-section-card__header {
+  padding: 16px 18px 8px !important;
+}
+
+.crm-detail-progress {
+  padding: 0 18px 8px !important;
+}
+
+.crm-detail-progress-metrics {
+  grid-template-columns: 1fr 0.85fr 1.15fr 0.85fr 0.9fr !important;
+  gap: 12px !important;
+  padding: 2px 0 10px !important;
+}
+
+.crm-detail-progress-metric__icon {
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.crm-detail-progress-table th,
+.crm-detail-progress-table td {
+  height: 28px !important;
+  padding: 5px 9px !important;
+  line-height: 1.25 !important;
+}
+
+.crm-detail-progress-footnote {
+  padding: 7px 10px !important;
+}
+
+@media (max-width: 1320px) {
+  .crm-detail-header + .Polaris-InlineGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .crm-detail-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Final card height calibration against target screenshot. */
+.crm-section-card:has(.crm-detail-sponsorship-grid) > .Polaris-ShadowBevel > .Polaris-Box {
+  --pc-box-padding-block-start-xs: 10px !important;
+  --pc-box-padding-block-end-xs: 10px !important;
+}
+
+.crm-section-card:has(.crm-detail-sponsorship-grid) .Polaris-BlockStack {
+  --pc-block-stack-gap-xs: 12px !important;
+}
+
+.crm-section-card:has(.crm-detail-sponsorship-grid) .crm-section-card__title {
+  line-height: 1.25 !important;
+}
+
+.crm-detail-sponsorship-grid span {
+  margin-bottom: 5px !important;
+}
+
+.crm-section-card:has(.crm-detail-progress) .crm-section-card__header {
+  padding: 12px 18px 6px !important;
+}
+
+.crm-section-card:has(.crm-detail-progress) .Polaris-BlockStack {
+  --pc-block-stack-gap-xs: 0 !important;
+}
+
+.crm-detail-progress {
+  padding: 0 18px 7px !important;
+}
+
+.crm-detail-progress-metrics {
+  padding: 0 0 8px !important;
+}
+
+.crm-detail-progress-metric__icon {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.crm-detail-progress-metric__icon .Polaris-Icon {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+.crm-detail-progress-metric small {
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+}
+
+.crm-detail-progress-metric strong {
+  margin-top: 1px !important;
+  font-size: 13px !important;
+  line-height: 1.15 !important;
+}
+
+.crm-detail-progress-table th,
+.crm-detail-progress-table td {
+  height: 25px !important;
+  padding: 4px 9px !important;
+}
+
+.crm-detail-progress-footnote {
+  padding: 6px 10px !important;
+}
+
+.crm-section-card:has(.crm-detail-activity-timeline) {
+  min-height: 323px !important;
+}
+
+.crm-section-card:has(.crm-detail-activity-timeline) > .Polaris-ShadowBevel,
+.crm-section-card:has(.crm-detail-activity-timeline) > .Polaris-ShadowBevel > .Polaris-Box {
+  min-height: 323px !important;
+}
+
+.crm-detail-activity-timeline {
+  gap: 30px !important;
+}
+
+/* Final micro-alignment after screenshot comparison. */
+.crm-detail-hero {
+  margin-top: 64px !important;
+  --pc-inline-stack-gap-xs: 26px !important;
+}
+
+.crm-section-card:has(.crm-detail-platform-row) .crm-section-card__header {
+  --pc-box-padding-block-start-xs: 8px !important;
+  --pc-box-padding-block-end-xs: 8px !important;
+  padding: 8px 20px 8px !important;
+}
+
+.crm-section-card:has(.crm-detail-notes),
+.crm-section-card:has(.crm-detail-notes) > .Polaris-ShadowBevel,
+.crm-section-card:has(.crm-detail-notes) > .Polaris-ShadowBevel > .Polaris-Box {
+  min-height: 289px !important;
+}
+
+.crm-section-card:has(.crm-detail-activity-timeline) .crm-section-card__header {
+  --pc-box-padding-block-start-xs: 16px !important;
+  --pc-box-padding-block-end-xs: 8px !important;
+  padding: 16px 20px 8px !important;
+}
+
+.crm-detail-hero {
+  transform: translateY(44px);
+}
+
+.crm-detail-platform-row {
+  min-height: 49px !important;
+}
+
+/* Final UI polish against target hierarchy. */
+.crm-detail-header__avatar .Polaris-Avatar,
+.crm-detail-header .Polaris-Avatar--sizeXl {
+  width: 104px !important;
+  height: 104px !important;
+}
+
+.crm-detail-header__avatar .Polaris-Avatar__Initials {
+  font-size: 35px !important;
+}
+
+.crm-detail-header__name {
+  font-size: 26px !important;
+  line-height: 1.24 !important;
+  font-weight: 600 !important;
+}
+
+.crm-detail-header__handle {
+  display: block !important;
+  color: #9ca3af !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  margin-top: 4px !important;
+}
+
+.crm-detail-header__identity-text {
+  gap: 9px !important;
+}
+
+.crm-detail-header__badges {
+  margin-top: 2px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card {
+  height: 108px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel,
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box {
+  height: 108px !important;
+  min-height: 108px !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 5%), 0 6px 18px rgb(15 23 42 / 4%) !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box {
+  --pc-box-padding-block-start-xs: 22px !important;
+  --pc-box-padding-block-end-xs: 22px !important;
+  --pc-box-padding-inline-start-xs: 22px !important;
+  --pc-box-padding-inline-end-xs: 22px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__icon {
+  width: 56px !important;
+  height: 56px !important;
+  flex-basis: 56px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__icon .Polaris-Icon {
+  width: 27px !important;
+  height: 27px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__label {
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__value {
+  color: #111827 !important;
+  font-size: 20px !important;
+  font-weight: 800 !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__help {
+  color: #6b7280 !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+
+.crm-section-card > .Polaris-ShadowBevel,
+.crm-section-card > .Polaris-ShadowBevel > .Polaris-Box,
+.crm-detail-footer {
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%), 0 6px 18px rgb(15 23 42 / 3%) !important;
+}
+
+.crm-detail-profile-row {
+  min-height: 46px !important;
+  padding: 11px 0 !important;
+  grid-template-columns: 22px minmax(116px, 1fr) minmax(0, 1.18fr) !important;
+  gap: 12px !important;
+}
+
+.crm-detail-profile-row__label,
+.crm-detail-field-label,
+.crm-detail-sponsorship-grid span,
+.crm-detail-progress-metric small,
+.crm-detail-platform-row__verified,
+.crm-detail-muted,
+.crm-detail-activity-item__meta {
+  color: #6b7280 !important;
+}
+
+.crm-detail-profile-row__value,
+.crm-detail-sponsorship-grid strong,
+.crm-detail-platform-row__count {
+  color: #111827 !important;
+  font-weight: 800 !important;
+}
+
+.crm-detail-platform-row {
+  min-height: 52px !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+
+.crm-detail-platform-row__count {
+  font-size: 14px !important;
+  line-height: 1.25 !important;
+}
+
+.crm-detail-platform-row__verified {
+  margin-top: 3px !important;
+  font-size: 12px !important;
+}
+
+.crm-detail-progress-metrics {
+  padding-top: 4px !important;
+  padding-bottom: 12px !important;
+  align-items: center !important;
+}
+
+.crm-detail-progress-metric {
+  gap: 10px !important;
+}
+
+.crm-detail-progress-metric__icon {
+  width: 36px !important;
+  height: 36px !important;
+}
+
+.crm-detail-progress-table th,
+.crm-detail-progress-table td {
+  height: 29px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
+.crm-detail-progress-table th {
+  color: #374151 !important;
+  font-weight: 700 !important;
+}
+
+.crm-detail-activity-timeline {
+  gap: 28px !important;
+  padding-left: 25px !important;
+}
+
+.crm-detail-activity-timeline::before {
+  width: 1px !important;
+  background: #d9e0ea !important;
+}
+
+.crm-detail-activity-item__dot {
+  width: 8px !important;
+  height: 8px !important;
+  left: -20px !important;
+}
+
+.crm-detail-activity-item__title {
+  color: #111827 !important;
+  font-size: 13px !important;
+  line-height: 1.35 !important;
+  font-weight: 800 !important;
+}
+
+.crm-detail-activity-item__meta {
+  margin-top: 6px !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+}
+
+/* Keep polish while preserving target proportions. */
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card,
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel,
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box {
+  height: 102px !important;
+  min-height: 102px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box {
+  --pc-box-padding-block-start-xs: 20px !important;
+  --pc-box-padding-block-end-xs: 20px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__icon {
+  width: 54px !important;
+  height: 54px !important;
+  flex-basis: 54px !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__value {
+  font-size: 19px !important;
+}
+
+.crm-detail-profile-row {
+  min-height: 43px !important;
+  padding: 10px 0 !important;
+}
+
+.crm-detail-platform-row {
+  min-height: 49px !important;
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+}
+
+.crm-detail-progress-metrics {
+  padding-top: 2px !important;
+  padding-bottom: 9px !important;
+}
+
+.crm-detail-progress-metric__icon {
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.crm-detail-progress-table th,
+.crm-detail-progress-table td {
+  height: 26px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Softer typography and final hierarchy polish. */
+.crm-detail-header__name {
+  font-size: 26px !important;
+  line-height: 1.24 !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.crm-detail-header__handle {
+  color: #9ca3af !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
+}
+
+.crm-detail-header__badges .crm-status-pill,
+.crm-detail-header__badges .crm-level-pill {
+  font-weight: 600 !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel,
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card > .Polaris-ShadowBevel > .Polaris-Box,
+.crm-section-card > .Polaris-ShadowBevel,
+.crm-section-card > .Polaris-ShadowBevel > .Polaris-Box,
+.crm-detail-footer {
+  box-shadow: 0 1px 2px rgb(15 23 42 / 4%), 0 4px 14px rgb(15 23 42 / 3%) !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__label {
+  color: #6b7280 !important;
+  font-weight: 500 !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__value {
+  color: #111827 !important;
+  font-size: 19px !important;
+  font-weight: 700 !important;
+}
+
+.crm-detail-header + .Polaris-InlineGrid .crm-v2-metric-card__help {
+  color: #6b7280 !important;
+  font-weight: 400 !important;
+}
+
+.crm-section-card__title,
+.crm-detail-platform-row__name,
+.crm-detail-activity-item__title {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+.crm-detail-profile-row__label,
+.crm-detail-field-label,
+.crm-detail-sponsorship-grid span,
+.crm-detail-progress-metric small,
+.crm-detail-platform-row__verified,
+.crm-detail-muted,
+.crm-detail-activity-item__meta {
+  color: #6b7280 !important;
+  font-weight: 400 !important;
+}
+
+.crm-detail-profile-row__value,
+.crm-detail-sponsorship-grid strong,
+.crm-detail-platform-row__count,
+.crm-detail-progress-metric strong,
+.crm-detail-status-display {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+.crm-detail-profile-row__value--success {
+  color: #059669 !important;
+  font-weight: 600 !important;
+}
+
+.crm-detail-platform-row__count {
+  font-size: 14px !important;
+}
+
+.crm-detail-platform-row__verified {
+  font-size: 12px !important;
+}
+
+.crm-detail-progress-table th {
+  color: #374151 !important;
+  font-weight: 600 !important;
+}
+
+.crm-detail-progress-table td {
+  color: #374151 !important;
+  font-weight: 400 !important;
+}
+
+.crm-detail-progress-table .Polaris-Badge {
+  font-weight: 500 !important;
+}
+
+.crm-detail-activity-timeline::before {
+  width: 1px !important;
+  background: #d7dee8 !important;
+}
+
+.crm-detail-activity-item__dot {
+  width: 7px !important;
+  height: 7px !important;
+  left: -19px !important;
+}
+
+/* Left section visual polish (header identity + profile card). */
+.crm-detail-header > .Polaris-InlineStack:nth-of-type(2).crm-detail-hero {
+  margin-top: 24px;
+  --pc-inline-stack-gap-xs: 20px;
+  gap: 20px;
+}
+
+.crm-detail-header__identity-text {
+  --pc-block-stack-gap-xs: 12px !important;
+  gap: 12px !important;
+}
+
+.crm-detail-header__identity-text h1,
+.crm-detail-header__name {
+  color: #111827 !important;
+  font-size: 26px !important;
+  line-height: 1.24 !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.crm-detail-header__identity-text h1 + span,
+.crm-detail-header__handle {
+  margin-top: 4px !important;
+  color: #9ca3af !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
+}
+
+.crm-detail-header__badges {
+  margin-top: 14px !important;
+  --pc-inline-stack-gap-xs: 8px !important;
+  gap: 8px !important;
+}
+
+.crm-detail-header__badges .crm-status-pill,
+.crm-detail-header__badges .crm-level-pill {
+  min-height: 28px !important;
+  padding: 6px 14px !important;
+  border-radius: 9999px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+}
+
+.crm-detail-column--left .crm-section-card__header {
+  padding: 18px 22px 12px !important;
+}
+
+.crm-detail-column--left .crm-section-card .Polaris-Card > .Polaris-Box,
+.crm-detail-column--left .crm-section-card .crm-section-card__header + .crm-section-card__body,
+.crm-detail-column--left .crm-section-card .crm-section-card__header + .Polaris-Box {
+  padding: 4px 22px 20px !important;
+}
+
+.crm-detail-column--left .crm-section-card__title {
+  font-weight: 600 !important;
+}
+
+.crm-detail-column--left .crm-detail-profile-row {
+  min-height: 44px !important;
+  padding: 11px 0 !important;
+  border-bottom: 1px solid #f3f4f6 !important;
+}
+
+.crm-detail-column--left .crm-detail-profile-row:last-child {
+  border-bottom: 0 !important;
+}
+
+.crm-detail-column--left .crm-detail-profile-row__label {
+  color: #9ca3af !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+}
+
+.crm-detail-column--left .crm-detail-profile-row__value {
+  color: #1f2937 !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+}
+
+.crm-detail-column--left .crm-detail-profile-row__value--success {
+  color: #059669 !important;
+  font-weight: 600 !important;
+}
+
+.crm-detail-column--left .crm-detail-profile-row__icon {
+  color: #9ca3af !important;
+}
+
+.crm-detail-column--left .crm-detail-profile-row__icon .Polaris-Icon {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+@media (max-width: 700px) {
+  .Polaris-Page {
+    padding-left: 30px !important;
+    padding-right: 14px !important;
+  }
+
+  .crm-detail-stack {
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .crm-detail-header > .Polaris-InlineStack:first-child {
+    transform: translateX(-20px) !important;
+  }
+
+  .crm-detail-header > .Polaris-InlineStack:nth-of-type(2) {
+    transform: translate(-20px, 20px) !important;
+  }
+
+  .crm-detail-layout {
+    transform: translateX(-20px) !important;
+  }
+
+  .crm-detail-header__avatar .Polaris-Avatar,
+  .crm-detail-header .Polaris-Avatar--sizeXl {
+    width: 102px !important;
+    height: 102px !important;
+  }
+
+  .crm-detail-header__identity-text {
+    margin-left: 4px !important;
+  }
+
+  .crm-detail-column--left .crm-section-card {
+    width: 366px !important;
+  }
+}
+
+@media (min-width: 701px) {
+  .crm-detail-header > .Polaris-InlineStack:nth-of-type(2) {
+    transform: translateY(18px);
+  }
+
+  .crm-detail-column--left .crm-section-card {
+    margin-top: 0;
+  }
+}
+
+.crm-detail-header__avatar .Polaris-Avatar,
+.crm-detail-header .Polaris-Avatar--sizeXl {
+  color: #5632b8;
+}
+
+.crm-detail-header__avatar .Polaris-Avatar__Initials svg,
+.crm-detail-header .Polaris-Avatar--sizeXl .Polaris-Avatar__Initials svg {
+  stroke-width: 2.35px;
+}

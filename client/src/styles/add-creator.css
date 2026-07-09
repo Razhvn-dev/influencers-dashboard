@@ -581,7 +581,7 @@
 .crm-add-creator__footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
   margin-top: 24px;
   padding: 14px 24px;

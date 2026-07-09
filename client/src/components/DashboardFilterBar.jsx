@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Box, Icon, InlineStack, Popover, Select } from '@shopify/polaris';
+import { BlockStack, Box, Icon, InlineStack, Popover, Select } from '@shopify/polaris';
 import { FilterIcon } from '@shopify/polaris-icons';
 import {
   COMMISSION_FILTER_OPTIONS,
@@ -83,14 +83,17 @@ export default function DashboardFilterBar({
             }
             onClose={toggleMoreFilters}
             preferredAlignment="right"
+            preferredPosition="below"
           >
-            <Box padding="400" minWidth="240px" className="crm-v2-toolbar__popover">
-              <Select
-                label="Commission"
-                options={COMMISSION_FILTER_OPTIONS}
-                value={commissionFilter}
-                onChange={onCommissionFilterChange}
-              />
+            <Box padding="500" minWidth="280px" className="crm-v2-toolbar__popover">
+              <BlockStack gap="200">
+                <Select
+                  label="Commission"
+                  options={COMMISSION_FILTER_OPTIONS}
+                  value={commissionFilter}
+                  onChange={onCommissionFilterChange}
+                />
+              </BlockStack>
             </Box>
           </Popover>
 

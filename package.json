@@ -13,7 +13,9 @@
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "preview": "npm run build && npm start",
     "seed:demo": "node scripts/seed-demo-data.js --clear",
-    "seed:demo:append": "node scripts/seed-demo-data.js"
+    "seed:demo:append": "node scripts/seed-demo-data.js",
+    "import:onboarding": "node scripts/import-onboarding-influencers.js --skip-existing",
+    "import:onboarding:dry-run": "node scripts/import-onboarding-influencers.js --skip-existing --dry-run"
   },
   "dependencies": {
     "@shopify/shopify-api": "^11.12.0",

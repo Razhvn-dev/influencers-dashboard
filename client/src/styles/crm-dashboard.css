@@ -346,6 +346,39 @@
   color: #6b7280;
 }
 
+.crm-v2-toolbar__popover {
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.crm-v2-toolbar__popover .Polaris-Labelled {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+.crm-v2-toolbar__popover .Polaris-Labelled__LabelWrapper {
+  margin: 0 0 6px;
+  padding: 0;
+}
+
+.crm-v2-toolbar__popover .Polaris-Label__Text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+  line-height: 1.35;
+  display: block;
+}
+
+.crm-v2-toolbar__popover .Polaris-Select {
+  width: 100%;
+  min-width: 220px;
+}
+
+.Polaris-Popover__Pane:has(.crm-v2-toolbar__popover) {
+  overflow: visible;
+}
+
 /* Table */
 .crm-v2-table {
   background: #fff;
@@ -654,6 +687,26 @@
 .crm-level-pill--1 {
   background: #eff6ff;
   color: #2563eb;
+}
+
+.crm-level-pill--5 {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.crm-level-pill--rising {
+  background: #f5f3ff;
+  color: #6d28d9;
+}
+
+.crm-level-pill--sponsorship {
+  background: #fff7ed;
+  color: #c2410c;
+}
+
+.crm-level-pill--legacy {
+  background: #f3f4f6;
+  color: #6b7280;
 }
 
 .crm-level-pill--2,

@@ -15,11 +15,16 @@ export const STATUS_FILTER_OPTIONS = [
   ...STATUS_OPTIONS,
 ];
 
+export const AMBASSADOR_TIERS = [
+  'Creator Sponsorship',
+  'Rising Ambassador',
+  'Ambassador 1',
+  'Ambassador 5',
+];
+
 export const LEVEL_OPTIONS = [
   { label: 'All levels', value: '' },
-  { label: 'Ambassador 1', value: 'Level 1' },
-  { label: 'Ambassador 2', value: 'Level 2' },
-  { label: 'Ambassador 3', value: 'Level 3' },
+  ...AMBASSADOR_TIERS.map((tier) => ({ label: tier, value: tier })),
 ];
 
 export const COMMISSION_OPTIONS = [
@@ -137,6 +142,17 @@ export function formatFollowupDateTime(value) {
   const hour12 = hour % 12 || 12;
 
   return `${dateLabel}, ${hour12}:${String(minute).padStart(2, '0')} ${period}`;
+}
+
+export function getNextFollowupPreviewLabel(value) {
+  const formatted = formatFollowupDateTime(value);
+  if (formatted) return formatted;
+
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed) return 'None';
+
+  const dateOnly = formatFollowupDate(trimmed);
+  return dateOnly !== '—' ? dateOnly : 'None';
 }
 
 export function getFollowupStatus(nextFollowupAt) {
@@ -454,10 +470,24 @@ export const MONTHLY_PERIOD_LABELS = [
 ];
 
 export function displayAmbassadorLevel(level) {
-  if (level === 'Level 3') return 'Ambassador 3';
-  if (level === 'Level 2') return 'Ambassador 2';
-  if (level === 'Level 1') return 'Ambassador 1';
-  return level || 'Ambassador 1';
+  const trimmed = String(level ?? '').trim();
+  if (!trimmed) return '—';
+  return trimmed;
+}
+
+export function levelTone(level) {
+  if (level === 'Ambassador 5') return 'success';
+  if (level === 'Rising Ambassador') return 'info';
+  if (level === 'Creator Sponsorship') return 'attention';
+  return undefined;
+}
+
+export function getAmbassadorLevelClass(level) {
+  if (level === 'Ambassador 5') return 'crm-level-pill--5';
+  if (level === 'Rising Ambassador') return 'crm-level-pill--rising';
+  if (level === 'Creator Sponsorship') return 'crm-level-pill--sponsorship';
+  if (level === 'Ambassador 1') return 'crm-level-pill--1';
+  return 'crm-level-pill--legacy';
 }
 
 export function statusTone(status) {
@@ -475,12 +505,6 @@ export function statusTone(status) {
   if (status === 'Applied') return 'attention';
   if (status === 'Past Partner') return 'attention';
   return 'attention';
-}
-
-export function levelTone(level) {
-  if (level === 'Level 3') return 'success';
-  if (level === 'Level 2') return 'info';
-  return undefined;
 }
 
 export function emptyMonthlyProgress() {
@@ -547,6 +571,7 @@ export function buildFormStateFromRecord(record) {
     next_followup_at: toInputDate(record.next_followup_at),
     followers_last_verified_at: formatVerifiedTimestamp(record.followers_last_verified_at),
     followers_verified_by: record.followers_verified_by || '',
+    ambassador_level: record.ambassador_level || '',
     monthly_progress: normalizeMonthlyProgressForForm(record.monthly_progress),
   };
 }
@@ -601,14 +626,5 @@ export function buildSavePayload(form) {
 }
 
 export function previewAmbassadorLevel(form) {
-  const total =
-    parseFollowerCount(form.youtube_followers) +
-    parseFollowerCount(form.facebook_followers) +
-    parseFollowerCount(form.instagram_followers) +
-    parseFollowerCount(form.tiktok_followers);
-  const youtube = parseFollowerCount(form.youtube_followers);
-
-  if (total > 500000 && youtube > 100000) return 'Level 3';
-  if (total > 100000) return 'Level 2';
-  return 'Level 1';
+  return form.ambassador_level || null;
 }

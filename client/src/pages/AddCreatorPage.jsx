@@ -1,17 +1,17 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Banner,
+  BlockStack,
   Box,
   Button,
   FormLayout,
-  Icon,
   InlineStack,
   Page,
   Select,
+  Text,
   TextField,
 } from '@shopify/polaris';
-import { ArrowLeftIcon } from '@shopify/polaris-icons';
 import { createSponsorshipRecord } from '../api';
 import {
   buildEmptyCreatorForm,
@@ -26,7 +26,7 @@ import AddCreatorFormCard from '../components/add-creator/AddCreatorFormCard';
 import AddCreatorPlatformTable from '../components/add-creator/AddCreatorPlatformTable';
 import AddCreatorPreviewPanel from '../components/add-creator/AddCreatorPreviewPanel';
 import DateOnlyField from '../components/add-creator/DateOnlyField';
-import ReminderTimeField from '../components/add-creator/ReminderTimeField';
+import NextFollowupFields from '../components/add-creator/NextFollowupFields';
 import MonthlyProgressEditor from '../components/MonthlyProgressEditor';
 
 export default function AddCreatorPage() {
@@ -38,6 +38,15 @@ export default function AddCreatorPage() {
   const updateField = (field) => (value) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
+
+  const updateNextFollowupAt = useCallback((value) => {
+    setForm((current) => ({ ...current, next_followup_at: value }));
+  }, []);
+
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    window.__crmSetFollowup = updateNextFollowupAt;
+    window.__crmGetFollowup = () => form.next_followup_at;
+  }
 
   const updateFollowerField = (field) => (value) => {
     setForm((current) => ({ ...current, [field]: sanitizeFollowerInput(value) }));
@@ -80,14 +89,10 @@ export default function AddCreatorPage() {
               className="crm-add-creator__back"
               onClick={handleCancel}
             >
-              <Icon source={ArrowLeftIcon} tone="subdued" />
-              Back to Dashboard
+              ← Back
             </button>
             <div className="crm-add-creator__heading">
               <h1 className="crm-add-creator__title">Add Creator</h1>
-              <p className="crm-add-creator__subtitle">
-                Add a new creator to your influencer network. You can update all details later.
-              </p>
             </div>
           </div>
 
@@ -217,6 +222,7 @@ export default function AddCreatorPage() {
                       value={form.notes}
                       onChange={updateField('notes')}
                       multiline={3}
+                      placeholder="Internal communication notes..."
                       autoComplete="off"
                     />
                     <DateOnlyField
@@ -225,18 +231,10 @@ export default function AddCreatorPage() {
                       onChange={updateField('last_contacted_at')}
                     />
                   </FormLayout.Group>
-                  <FormLayout.Group>
-                    <DateOnlyField
-                      label="Next Follow-up"
-                      value={form.next_followup_at}
-                      onChange={updateField('next_followup_at')}
-                    />
-                    <ReminderTimeField
-                      label="Reminder Time"
-                      value={form.next_followup_at}
-                      onChange={updateField('next_followup_at')}
-                    />
-                  </FormLayout.Group>
+                  <NextFollowupFields
+                    value={form.next_followup_at}
+                    onChange={updateNextFollowupAt}
+                  />
                 </FormLayout>
               </AddCreatorFormCard>
 
@@ -283,28 +281,35 @@ export default function AddCreatorPage() {
               </AddCreatorFormCard>
 
               <AddCreatorFormCard title="Monthly Progress (Optional)">
-                <MonthlyProgressEditor
-                  periods={form.monthly_progress}
-                  onChange={(monthly_progress) =>
-                    setForm((current) => ({ ...current, monthly_progress }))
-                  }
-                  embedded
-                  checkInOptions="yesNo"
-                  urlVariant="icon"
-                />
+                <BlockStack gap="300">
+                  <Text as="p" tone="subdued" variant="bodySm">
+                    Fixed 5 contract periods (matches the sponsorship spreadsheet). Edit each row
+                    directly — there is no add/delete row. Use Clear to reset a period, then save.
+                  </Text>
+                  <MonthlyProgressEditor
+                    periods={form.monthly_progress}
+                    onChange={(monthly_progress) =>
+                      setForm((current) => ({ ...current, monthly_progress }))
+                    }
+                    embedded
+                    checkInOptions="yesNo"
+                    urlVariant="icon"
+                  />
+                </BlockStack>
               </AddCreatorFormCard>
             </div>
           </div>
 
           <aside className="crm-add-creator__preview-column">
-            <AddCreatorPreviewPanel form={form} platformPreview={platformPreview} />
+            <AddCreatorPreviewPanel
+              form={form}
+              platformPreview={platformPreview}
+              nextFollowupAt={form.next_followup_at}
+            />
           </aside>
         </div>
 
         <footer className="crm-add-creator__footer">
-          <p className="crm-add-creator__footer-hint">
-            Changes are only saved after clicking Save Creator.
-          </p>
           <div className="crm-add-creator__footer-actions">
             <Button onClick={handleCancel} disabled={saving} className="crm-add-creator__btn-secondary">
               Cancel

@@ -1,26 +1,10 @@
-import { Badge, BlockStack, Box, FormLayout, InlineStack, Text, TextField } from '@shopify/polaris';
-import CreatorInfoRow from './CreatorInfoRow';
+import { FormLayout, Select, TextField } from '@shopify/polaris';
+import { COMMISSION_OPTIONS } from '../constants';
 import CreatorSectionCard from './CreatorSectionCard';
 
-function ProductChips({ products }) {
-  const items = products
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  if (items.length === 0) {
-    return <Text as="p">—</Text>;
-  }
-
-  return (
-    <InlineStack gap="200" wrap>
-      {items.map((item) => (
-        <Box key={item} className="crm-product-chip">
-          <Badge tone="info">{item}</Badge>
-        </Box>
-      ))}
-    </InlineStack>
-  );
+function display(value) {
+  const text = String(value ?? '').trim();
+  return text || 'Not set';
 }
 
 export default function CreatorSponsorshipDetails({
@@ -34,38 +18,29 @@ export default function CreatorSponsorshipDetails({
     onChange({ ...form, [field]: value });
   };
 
-  const products = String(form.sponsored_products || '').trim();
-  const orders = String(form.order_numbers || '').trim();
-  const deliverables = String(form.required_deliverables || '').trim();
-
   const readContent = (
-    <BlockStack gap="500">
-      <BlockStack gap="250">
-        <Text as="p" variant="bodySm" tone="subdued">
-          Sponsored Product(s)
-        </Text>
-        <ProductChips products={products} />
-      </BlockStack>
-
-      <Box className="crm-info-list">
-        <CreatorInfoRow label="Order #'s" value={orders} />
-      </Box>
-
-      {deliverables ? (
-        <Box className="crm-callout-box" padding="500">
-          <BlockStack gap="200">
-            <Text as="p" variant="bodySm" tone="subdued">
-              Required Deliverables
-            </Text>
-            <Text as="p" variant="bodyMd" whiteSpace="pre-wrap">
-              {deliverables}
-            </Text>
-          </BlockStack>
-        </Box>
-      ) : (
-        <CreatorInfoRow label="Required Deliverables" value="—" />
-      )}
-    </BlockStack>
+    <div className="crm-detail-sponsorship-grid">
+      <div>
+        <span>Sponsored Product(s)</span>
+        <strong>{display(form.sponsored_products)}</strong>
+      </div>
+      <div>
+        <span>Order #'s</span>
+        <strong>{display(form.order_numbers)}</strong>
+      </div>
+      <div>
+        <span>Required Deliverables</span>
+        <strong>{display(form.required_deliverables)}</strong>
+      </div>
+      <div>
+        <span>Commission</span>
+        <strong>{display(form.commission)}</strong>
+      </div>
+      <div>
+        <span>Contract</span>
+        <strong>{display(form.contract_status)}</strong>
+      </div>
+    </div>
   );
 
   const editContent = (
@@ -90,6 +65,19 @@ export default function CreatorSponsorshipDetails({
         onChange={updateField('required_deliverables')}
         multiline={3}
         autoComplete="off"
+      />
+      <Select
+        label="Commission"
+        options={COMMISSION_OPTIONS}
+        value={form.commission}
+        onChange={updateField('commission')}
+      />
+      <TextField
+        label="Contract"
+        value={form.contract_status}
+        onChange={updateField('contract_status')}
+        autoComplete="off"
+        placeholder="Contract status or signed date"
       />
     </FormLayout>
   );

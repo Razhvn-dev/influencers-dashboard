@@ -1,9 +1,9 @@
 import { InlineGrid } from '@shopify/polaris';
 import {
   CalendarIcon,
-  EmailIcon,
+  PhoneIcon,
   ShieldCheckMarkIcon,
-  TargetIcon,
+  TeamIcon,
 } from '@shopify/polaris-icons';
 import {
   formatCompactNumber,
@@ -18,7 +18,11 @@ import {
 import MetricCard from './MetricCard';
 
 function activePlatformCount(form) {
-  return PLATFORM_META.filter((platform) => normalizeExternalUrl(form?.[platform.key])).length;
+  return PLATFORM_META.filter(
+    (platform) =>
+      normalizeExternalUrl(form?.[platform.key]) ||
+      parseFollowerCount(form?.[platform.followerField]) > 0
+  ).length;
 }
 
 export default function CreatorDetailSummaryMetrics({ record, form }) {
@@ -31,33 +35,40 @@ export default function CreatorDetailSummaryMetrics({ record, form }) {
   const platformCount = activePlatformCount(form);
   const verifiedRelative = record?.followers_last_verified_at
     ? formatRelativeTime(record.followers_last_verified_at)
-    : 'Not verified yet';
-  const verifiedBy = record?.followers_verified_by;
+    : 'Never';
+  const verifiedBy = record?.followers_verified_by || form.manager_owner || '';
+  const verifiedHelp = record?.followers_last_verified_at
+    ? `${formatFollowupDate(record.followers_last_verified_at)}${verifiedBy ? ` by ${verifiedBy}` : ''}`
+    : 'Updates when counts are saved';
   const followupEmphasis = getFollowupEmphasis(
     form.next_followup_at ? new Date(form.next_followup_at).toISOString() : null
   );
   const lastContact = formatLastContactLabel(
     form.last_contacted_at ? new Date(form.last_contacted_at).toISOString() : null
   );
+  const owner = form.manager_owner || record?.followers_verified_by || '';
+  const lastContactHelp = form.last_contacted_at
+    ? `${formatFollowupDate(form.last_contacted_at)}${owner ? ` by ${owner}` : ''}`
+    : 'No contact recorded';
 
   return (
     <InlineGrid columns={{ xs: 1, sm: 2, lg: 4 }} gap="500" className="crm-detail-metrics">
       <MetricCard
         label="Total Followers"
-        value={formatCompactNumber(totalFollowers)}
+        value={totalFollowers.toLocaleString('en-US')}
         helpText={
           platformCount > 0
             ? `Across ${platformCount} platform${platformCount === 1 ? '' : 's'}`
             : 'Manual count across platforms'
         }
-        iconSource={TargetIcon}
+        iconSource={TeamIcon}
         iconBackground="#EDE9FE"
         iconColor="#7C3AED"
       />
       <MetricCard
         label="Last Verified"
         value={verifiedRelative}
-        helpText={verifiedBy ? `by ${verifiedBy}` : 'Updates when counts are saved'}
+        helpText={verifiedHelp}
         iconSource={ShieldCheckMarkIcon}
         iconBackground="#DCFCE7"
         iconColor="#16A34A"
@@ -78,10 +89,10 @@ export default function CreatorDetailSummaryMetrics({ record, form }) {
       <MetricCard
         label="Last Contact"
         value={lastContact}
-        helpText={form.email ? `Contact: ${form.email}` : 'Most recent outreach'}
-        iconSource={EmailIcon}
-        iconBackground="#DBEAFE"
-        iconColor="#2563EB"
+        helpText={lastContactHelp}
+        iconSource={PhoneIcon}
+        iconBackground="#DCFCE7"
+        iconColor="#16A34A"
       />
     </InlineGrid>
   );

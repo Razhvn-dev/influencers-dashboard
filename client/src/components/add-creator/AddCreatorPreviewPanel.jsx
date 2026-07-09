@@ -27,7 +27,7 @@ function PreviewMetaBlock({ label, value, iconKey }) {
   );
 }
 
-export default function AddCreatorPreviewPanel({ form, platformPreview }) {
+export default function AddCreatorPreviewPanel({ form, platformPreview, nextFollowupAt }) {
   const displayName = form.name.trim() || 'New Creator';
   const handle = previewHandle(form.channel);
   const { platforms, primaryChannel } = platformPreview;
@@ -37,7 +37,7 @@ export default function AddCreatorPreviewPanel({ form, platformPreview }) {
       ? null
       : getPrimaryChannelPlatformKey(primaryChannelLabel);
   const managerOwner = form.manager_owner?.trim() || 'Not set';
-  const nextFollowupLabel = formatFollowupDateTime(form.next_followup_at) || 'None';
+  const nextFollowupLabel = formatFollowupDateTime(nextFollowupAt) || 'None';
 
   return (
     <div className="crm-add-creator__preview-stack">
@@ -86,21 +86,6 @@ export default function AddCreatorPreviewPanel({ form, platformPreview }) {
             </li>
           ))}
         </ul>
-      </section>
-
-      <section className="crm-add-creator__preview-card crm-add-creator__preview-card--tip">
-        <div className="crm-add-creator-preview__tip">
-          <span className="crm-add-creator-preview__tip-icon" aria-hidden="true">
-            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="8" cy="8" r="6.25" stroke="currentColor" strokeWidth="1.25" />
-              <path d="M8 7.25V11" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-              <circle cx="8" cy="5.25" r="0.75" fill="currentColor" />
-            </svg>
-          </span>
-          <p className="crm-add-creator-preview__tip-text">
-            Creator details can always be updated later.
-          </p>
-        </div>
       </section>
     </div>
   );

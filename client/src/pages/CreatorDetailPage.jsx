@@ -28,7 +28,7 @@ import CreatorNotesCard from '../components/CreatorNotesCard';
 import CreatorPlatformAccounts from '../components/CreatorPlatformAccounts';
 import CreatorProfileHeader from '../components/CreatorProfileHeader';
 import CreatorProfilePanel from '../components/CreatorProfilePanel';
-import CreatorRelationshipPanel from '../components/CreatorRelationshipPanel';
+import CreatorRecentActivity from '../components/CreatorRecentActivity';
 import CreatorSponsorshipDetails from '../components/CreatorSponsorshipDetails';
 
 const SECTION_KEYS = [
@@ -36,7 +36,6 @@ const SECTION_KEYS = [
   'platforms',
   'sponsorship',
   'monthly',
-  'relationship',
   'notes',
 ];
 
@@ -196,12 +195,6 @@ export default function CreatorDetailPage({ localPreview = false }) {
         <Layout>
           <Layout.Section>
             <BlockStack gap="800" className="crm-detail-stack">
-              {localPreview ? (
-                <Banner tone="info" title="Local preview mode">
-                  <p>Previewing outside Shopify Admin. Data comes from LOCAL_DEV_SHOP.</p>
-                </Banner>
-              ) : null}
-
               {success ? (
                 <Banner tone="success" onDismiss={() => setSuccess('')}>
                   <p>{success}</p>
@@ -218,6 +211,7 @@ export default function CreatorDetailPage({ localPreview = false }) {
                 form={form}
                 ambassadorLevel={ambassadorLevel}
                 onBack={handleCancel}
+                onEditProfile={() => setSectionEditing('profile', true)}
                 onSave={handleSave}
                 saving={saving}
                 deleting={deleting}
@@ -226,7 +220,7 @@ export default function CreatorDetailPage({ localPreview = false }) {
               <CreatorDetailSummaryMetrics record={record} form={form} />
 
               <Box className="crm-detail-layout">
-                <BlockStack gap="600" className="crm-detail-column">
+                <BlockStack gap="600" className="crm-detail-column crm-detail-column--left">
                   <CreatorProfilePanel form={form} onChange={setForm} {...sectionProps('profile')} />
                 </BlockStack>
 
@@ -243,13 +237,13 @@ export default function CreatorDetailPage({ localPreview = false }) {
                 </BlockStack>
 
                 <BlockStack gap="600" className="crm-detail-column">
-                  <CreatorRelationshipPanel
+                  <CreatorNotesCard
+                    record={record}
                     form={form}
                     onChange={setForm}
-                    ambassadorLevel={ambassadorLevel}
-                    {...sectionProps('relationship')}
+                    {...sectionProps('notes')}
                   />
-                  <CreatorNotesCard form={form} onChange={setForm} {...sectionProps('notes')} />
+                  <CreatorRecentActivity record={record} form={form} />
                 </BlockStack>
               </Box>
             </BlockStack>

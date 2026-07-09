@@ -33,10 +33,16 @@ export default function CreatorSummaryCards({ record, form, ambassadorLevel }) {
 
   return (
     <InlineGrid columns={{ xs: 1, sm: 3 }} gap="300">
-      <SummaryCard label="Ambassador Level">
-        <Badge tone={levelTone(ambassadorLevel)}>
-          {displayAmbassadorLevel(ambassadorLevel)}
-        </Badge>
+      <SummaryCard label="Ambassador Tier">
+        {ambassadorLevel ? (
+          <Badge tone={levelTone(ambassadorLevel)}>
+            {displayAmbassadorLevel(ambassadorLevel)}
+          </Badge>
+        ) : (
+          <Text as="p" variant="bodyMd" tone="subdued">
+            —
+          </Text>
+        )}
       </SummaryCard>
 
       <SummaryCard label="Total Followers">
