@@ -14,17 +14,31 @@ async function authFetch(url, options = {}) {
   }
 
   if (sessionTokenFetcher) {
-    const token = await sessionTokenFetcher();
+    try {
+      const token = await sessionTokenFetcher();
 
-    if (token) {
-      headers.set('Authorization', `Bearer ${token}`);
+      if (token) {
+        headers.set('Authorization', `Bearer ${token}`);
+      }
+    } catch {
+      throw new Error('Session expired. Please refresh the page and try again.');
     }
   }
 
-  return fetch(url, {
-    ...options,
-    headers,
-  });
+  try {
+    return await fetch(url, {
+      ...options,
+      headers,
+    });
+  } catch (err) {
+    if (err?.message === 'Failed to fetch') {
+      throw new Error(
+        'Unable to reach the app server. Confirm shopify app dev is running, then refresh and try again.'
+      );
+    }
+
+    throw err;
+  }
 }
 
 async function parseResponse(response) {

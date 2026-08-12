@@ -15,6 +15,13 @@ export const STATUS_OPTIONS = [
   { label: 'Partnered (legacy)', value: 'Partnered' },
 ];
 
+export function getTranslatedStatusOptions(t) {
+  return STATUS_OPTIONS.map((option) => ({
+    ...option,
+    label: option.value ? t(`status.${option.value}`) : option.label,
+  }));
+}
+
 export const STATUS_FILTER_OPTIONS = [
   { label: 'All statuses', value: '' },
   ...STATUS_OPTIONS,
@@ -38,6 +45,13 @@ export const COMMISSION_OPTIONS = [
   { label: 'NO', value: 'NO' },
 ];
 
+export function getTranslatedCommissionOptions(t) {
+  return COMMISSION_OPTIONS.map((option) => ({
+    ...option,
+    label: option.value ? option.label : t('common.emptyValue'),
+  }));
+}
+
 export const COMMISSION_FILTER_OPTIONS = [
   { label: 'All commission values', value: '' },
   { label: 'YES', value: 'YES' },
@@ -56,6 +70,13 @@ export const MANAGER_OWNER_OPTIONS = [
   { label: '—', value: '' },
   { label: 'Current User', value: 'Current User' },
 ];
+
+export function getTranslatedManagerOwnerOptions(t) {
+  return MANAGER_OWNER_OPTIONS.map((option) => ({
+    ...option,
+    label: option.value ? t('common.currentUser') : t('common.emptyValue'),
+  }));
+}
 
 export const PRIMARY_CHANNEL_PLATFORM_KEYS = {
   YouTube: 'youtube_url',
@@ -639,11 +660,11 @@ export function buildSavePayload(form) {
     next_followup_at: form.next_followup_at
       ? new Date(form.next_followup_at).toISOString()
       : null,
-    monthly_progress: form.monthly_progress.map((period) => ({
+    monthly_progress: (form.monthly_progress || []).map((period) => ({
       period_index: period.period_index,
-      monthly_check_in: period.monthly_check_in.trim() || null,
-      content_delivered: period.content_delivered.trim() || null,
-      link: period.link.trim() || null,
+      monthly_check_in: String(period.monthly_check_in ?? '').trim() || null,
+      content_delivered: String(period.content_delivered ?? '').trim() || null,
+      link: String(period.link ?? '').trim() || null,
     })),
   };
 }

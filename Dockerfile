@@ -26,6 +26,9 @@ RUN npm ci --omit=dev
 COPY server.js db.js shopify.js ./
 COPY routes ./routes
 COPY lib ./lib
+COPY init.sql ./init.sql
+COPY migrations ./migrations
+COPY scripts/run-migrations.mjs ./scripts/run-migrations.mjs
 COPY --from=client-builder /app/client/dist ./client/dist
 
 EXPOSE 3000

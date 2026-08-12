@@ -10,6 +10,7 @@ import {
 } from '@shopify/polaris';
 import { MONTHLY_PERIOD_LABELS } from '../constants';
 import UrlFieldWithOpen from './UrlFieldWithOpen';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 const MONTHLY_CHECKIN_OPTIONS = [
   { label: '—', value: '' },
@@ -32,6 +33,7 @@ export default function MonthlyProgressEditor({
   checkInOptions = 'default',
   urlVariant = 'button',
 }) {
+  const { t } = useTranslation();
   const checkInSelectOptions =
     checkInOptions === 'yesNo' ? MONTHLY_CHECKIN_YES_NO_OPTIONS : MONTHLY_CHECKIN_OPTIONS;
   const updatePeriod = (periodIndex, field) => (value) => {
@@ -62,7 +64,7 @@ export default function MonthlyProgressEditor({
   const rows = periods.map((period) => [
     MONTHLY_PERIOD_LABELS[period.period_index - 1] || `Period ${period.period_index}`,
     <Select
-      label={`Monthly Check-In (${period.period_index})`}
+      label={`${t('progress.monthlyCheckIn')} (${period.period_index})`}
       labelHidden
       options={checkInSelectOptions}
       value={period.monthly_check_in}
@@ -70,11 +72,11 @@ export default function MonthlyProgressEditor({
       disabled={disabled}
     />,
     <TextField
-      label={`Content Delivered (${period.period_index})`}
+      label={`${t('progress.contentDelivered')} (${period.period_index})`}
       labelHidden
       value={period.content_delivered}
       onChange={updatePeriod(period.period_index, 'content_delivered')}
-      placeholder="Describe delivered content"
+      placeholder={t('progress.describeContent')}
       autoComplete="off"
       disabled={disabled}
     />,
@@ -94,7 +96,7 @@ export default function MonthlyProgressEditor({
         disabled={disabled}
         onClick={() => clearPeriod(period.period_index)}
       >
-        Clear
+        {t('progress.clearPeriod')}
       </Button>
     </InlineStack>,
   ]);
@@ -104,11 +106,10 @@ export default function MonthlyProgressEditor({
       {embedded ? null : (
         <BlockStack gap="100">
           <Text as="h3" variant="headingMd">
-            Monthly Progress
+            {t('progress.editorTitle')}
           </Text>
           <Text as="p" tone="subdued" variant="bodySm">
-            Fixed 5 contract periods (matches the sponsorship spreadsheet). Edit each row
-            directly — there is no add/delete row. Use Clear to reset a period, then save.
+            {t('progress.editorHelp')}
           </Text>
         </BlockStack>
       )}
@@ -116,11 +117,11 @@ export default function MonthlyProgressEditor({
         <DataTable
           columnContentTypes={['text', 'text', 'text', 'text', 'text']}
           headings={[
-            'Period',
-            'Monthly Check-In',
-            'Content Delivered',
-            'Link',
-            'Actions',
+            t('progress.period'),
+            t('progress.monthlyCheckIn'),
+            t('progress.contentDelivered'),
+            t('progress.link'),
+            t('progress.actions'),
           ]}
           rows={rows}
           hideScrollIndicator={embedded}

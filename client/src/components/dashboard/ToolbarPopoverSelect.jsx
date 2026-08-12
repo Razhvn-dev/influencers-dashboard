@@ -81,6 +81,7 @@ export default function ToolbarPopoverSelect({
       className={`crm-v2-toolbar-popover-select__activator${open ? ' crm-v2-toolbar-popover-select__activator--open' : ''}`}
       aria-expanded={open}
       aria-haspopup="listbox"
+      aria-label={labelHidden ? label : undefined}
       onClick={toggleOpen}
     >
       <span className="crm-v2-toolbar-popover-select__value">{selectedLabel}</span>

@@ -10,6 +10,7 @@ import {
   TextField,
 } from '@shopify/polaris';
 import { CalendarIcon, SelectIcon } from '@shopify/polaris-icons';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 const HOUR_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
   const value = String(hour).padStart(2, '0');
@@ -118,6 +119,7 @@ function TimePopoverSelect({ label, options, value, onChange }) {
 }
 
 export default function DateTimeField({ label, value, onChange, helpText }) {
+  const { t } = useTranslation();
   const { date, hour, minute } = splitDateTime(value);
   const selectedDate = parseDateParts(date);
   const anchorDate = selectedDate || new Date();
@@ -170,7 +172,7 @@ export default function DateTimeField({ label, value, onChange, helpText }) {
       label={label}
       value={formatDisplay(value)}
       onChange={() => {}}
-      placeholder="Select date and time"
+      placeholder={t('common.selectDateAndTime')}
       autoComplete="off"
       helpText={helpText}
       readOnly
@@ -178,7 +180,7 @@ export default function DateTimeField({ label, value, onChange, helpText }) {
         <Button
           icon={CalendarIcon}
           onClick={togglePopover}
-          accessibilityLabel={`Choose ${label}`}
+          accessibilityLabel={t('creatorCreate.chooseFollowupDate')}
         />
       }
     />
@@ -207,19 +209,19 @@ export default function DateTimeField({ label, value, onChange, helpText }) {
         <>
           <div className="crm-detail-time-controls">
             <TimePopoverSelect
-              label="Hour"
+              label={t('common.hour')}
               options={HOUR_OPTIONS}
               value={hour}
               onChange={handleHourChange}
             />
             <TimePopoverSelect
-              label="Minute"
+              label={t('common.minute')}
               options={MINUTE_OPTIONS}
               value={minute}
               onChange={handleMinuteChange}
             />
             <Button variant="plain" onClick={handleClear}>
-              Clear
+              {t('common.clear')}
             </Button>
           </div>
         </>

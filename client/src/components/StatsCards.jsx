@@ -1,37 +1,6 @@
 import { formatCompactNumber } from '../constants';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 import DashboardKpiCard from './dashboard/DashboardKpiCard';
-
-const KPI_GROUPS = [
-  {
-    id: 'overview',
-    label: 'Overview',
-    items: [
-      { title: 'Total creators', key: 'total', format: 'count' },
-      { title: 'Active influencers', key: 'partnered', format: 'count' },
-      { title: 'In discussion', key: 'in_discussion', format: 'count' },
-    ],
-  },
-  {
-    id: 'followups',
-    label: 'Follow-ups',
-    items: [
-      {
-        title: 'Overdue follow-ups',
-        key: 'followups_overdue',
-        format: 'count',
-        hint: 'Creators with a next follow-up date in the past',
-        tone: 'alert',
-      },
-      {
-        title: 'Due in 7 days',
-        key: 'followups_due_7d',
-        format: 'count',
-        hint: 'Upcoming follow-ups within 7 days (excludes overdue)',
-        tone: 'warning',
-      },
-    ],
-  },
-];
 
 function formatKpiValue(stats, item) {
   const raw = stats?.[item.key];
@@ -43,29 +12,60 @@ function formatKpiValue(stats, item) {
   return Number(raw || 0).toLocaleString('en-US');
 }
 
-export default function StatsCards({ stats, loading }) {
+export default function StatsCards({ stats, loading, onKpiClick }) {
+  const { t } = useTranslation();
+
+  const overviewItems = [
+    { title: t('kpi.totalCreators'), key: 'total', format: 'count' },
+    { title: t('kpi.activeInfluencers'), key: 'partnered', format: 'count' },
+    { title: t('kpi.inDiscussion'), key: 'in_discussion', format: 'count' },
+  ];
+
+  const followupItems = [
+    {
+      title: t('kpi.overdueFollowups'),
+      key: 'followups_overdue',
+      format: 'count',
+      hint: t('kpi.overdueHint'),
+      tone: 'alert',
+      filterKey: 'due_followup',
+      filterValue: 'overdue',
+    },
+    {
+      title: t('kpi.dueIn7Days'),
+      key: 'followups_due_7d',
+      format: 'count',
+      hint: t('kpi.dueIn7DaysHint'),
+      tone: 'warning',
+      filterKey: 'due_followup',
+      filterValue: 'due',
+    },
+  ];
+
+  const renderCard = (item) => (
+    <DashboardKpiCard
+      key={item.key}
+      title={item.title}
+      value={formatKpiValue(stats, item)}
+      hint={item.hint}
+      tone={item.tone}
+      loading={loading}
+      onClick={
+        item.filterKey && onKpiClick
+          ? () => onKpiClick(item.filterKey, item.filterValue)
+          : undefined
+      }
+    />
+  );
+
   return (
     <div className="crm-dashboard-v2__metrics-wrap">
-      {KPI_GROUPS.map((group) => (
-        <section key={group.id} className="crm-dashboard-v2__metrics-group">
-          <h2 className="crm-dashboard-v2__metrics-group-label">{group.label}</h2>
-          <div className={`crm-dashboard-v2__metrics crm-dashboard-v2__metrics--${group.id}`}>
-            {group.items.map((item) => (
-              <DashboardKpiCard
-                key={item.key}
-                title={item.title}
-                value={formatKpiValue(stats, item)}
-                hint={item.hint}
-                tone={item.tone}
-                loading={loading}
-              />
-            ))}
-          </div>
-        </section>
-      ))}
-      <p className="crm-dashboard-v2__metrics-note">
-        Store-wide totals — not affected by table filters below.
-      </p>
+      <div className="crm-dashboard-v2__metrics crm-dashboard-v2__metrics--overview">
+        {overviewItems.map(renderCard)}
+      </div>
+      <div className="crm-dashboard-v2__metrics crm-dashboard-v2__metrics--followups">
+        {followupItems.map(renderCard)}
+      </div>
     </div>
   );
 }

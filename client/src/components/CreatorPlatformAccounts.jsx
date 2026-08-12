@@ -1,17 +1,25 @@
-import { BlockStack, Box, Icon, Text, TextField } from '@shopify/polaris';
-import { ExternalSmallIcon } from '@shopify/polaris-icons';
+import { useMemo, useState } from 'react';
+import { BlockStack, Box, Text, TextField } from '@shopify/polaris';
 import {
-  formatCompactNumber,
+  derivePrimaryChannel,
+  getPrimaryChannelPlatformKey,
   normalizeExternalUrl,
-  openExternalUrl,
   parseFollowerCount,
   PLATFORM_META,
-  platformHandleFromUrl,
   sanitizeFollowerInput,
 } from '../constants';
 import { CreatorSectionCardShell } from './CreatorSectionCard';
+import CreatorPlatformProfileCard from './CreatorPlatformProfileCard';
 import PlatformIcon from './PlatformIcon';
 import UrlFieldWithOpen from './UrlFieldWithOpen';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
+
+function isPlatformConnected(platform, form) {
+  return (
+    Boolean(normalizeExternalUrl(form[platform.key])) ||
+    parseFollowerCount(form[platform.followerField]) > 0
+  );
+}
 
 function followerFieldProps(field, form, onChange) {
   return {
@@ -23,44 +31,7 @@ function followerFieldProps(field, form, onChange) {
   };
 }
 
-function PlatformReadRow({ platform, form }) {
-  const url = form[platform.key];
-  const hasUrl = Boolean(normalizeExternalUrl(url));
-  const followerCount = parseFollowerCount(form[platform.followerField]);
-  const handle = hasUrl ? platformHandleFromUrl(url) : 'Not connected';
-
-  return (
-    <div className="crm-detail-platform-row">
-      <div className="crm-detail-platform-row__identity">
-        <PlatformIcon platformKey={platform.key} size="large" withTooltip={false} />
-        <span className="crm-detail-platform-row__name">{platform.label}</span>
-      </div>
-
-      <div className="crm-detail-platform-row__url">
-        {hasUrl ? (
-          <button
-            type="button"
-            className="crm-detail-url-pill"
-            onClick={() => openExternalUrl(url)}
-          >
-            <span>{handle}</span>
-            <Icon source={ExternalSmallIcon} />
-          </button>
-        ) : (
-          <span className="crm-detail-muted">Not connected</span>
-        )}
-      </div>
-
-      <div className="crm-detail-platform-row__followers">
-        <span className="crm-detail-platform-row__count">
-          {hasUrl || followerCount > 0 ? formatCompactNumber(followerCount) : '—'}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function PlatformEditRow({ platform, form, onChange }) {
+function PlatformEditRow({ platform, form, onChange, t }) {
   const updateField = (field) => (value) => {
     onChange({ ...form, [field]: value });
   };
@@ -73,7 +44,7 @@ function PlatformEditRow({ platform, form, onChange }) {
       </div>
 
       <UrlFieldWithOpen
-        label={`${platform.label} URL`}
+        label={`${platform.label} ${t('creatorDetail.profileUrl')}`}
         labelHidden
         value={form[platform.key]}
         onChange={updateField(platform.key)}
@@ -81,7 +52,7 @@ function PlatformEditRow({ platform, form, onChange }) {
       />
 
       <TextField
-        label={`${platform.label} followers`}
+        label={`${platform.label} ${t('creatorDetail.followers')}`}
         labelHidden
         type="number"
         min={0}
@@ -97,53 +68,99 @@ export default function CreatorPlatformAccounts({
   onChange,
   editing = false,
 }) {
-  const totalFollowers =
-    parseFollowerCount(form.youtube_followers) +
-    parseFollowerCount(form.facebook_followers) +
-    parseFollowerCount(form.instagram_followers) +
-    parseFollowerCount(form.tiktok_followers);
+  const { t } = useTranslation();
+  const primaryPlatformKey = getPrimaryChannelPlatformKey(derivePrimaryChannel(form));
+  const [showDisconnected, setShowDisconnected] = useState(false);
+
+  const { connectedPlatforms, disconnectedPlatforms } = useMemo(() => {
+    const connected = [];
+    const disconnected = [];
+    PLATFORM_META.forEach((platform) => {
+      if (isPlatformConnected(platform, form)) {
+        connected.push(platform);
+      } else {
+        disconnected.push(platform);
+      }
+    });
+    return { connectedPlatforms: connected, disconnectedPlatforms: disconnected };
+  }, [form]);
 
   const readContent = (
-    <BlockStack gap="0">
-      <div className="crm-detail-platform-columns" aria-hidden="true">
-        <span>Platform</span>
-        <span>Profile</span>
-        <span>Followers</span>
+    <section className="crm-detail-channel-surface" aria-label={t('creatorDetail.socialPlatforms')} role="table">
+      <div className="crm-detail-view-section__header">
+        <h2>{t('creatorDetail.socialPlatforms')}</h2>
       </div>
-      {PLATFORM_META.map((platform) => (
-        <PlatformReadRow key={platform.key} platform={platform} form={form} />
-      ))}
-    </BlockStack>
+      <div
+        className="crm-detail-platform-columns crm-detail-platform-columns--read"
+        role="row"
+      >
+        <span role="columnheader">{t('creatorDetail.platform')}</span>
+        <span role="columnheader">{t('creatorDetail.profile')}</span>
+        <span role="columnheader">{t('creatorDetail.followers')}</span>
+        <span role="columnheader">{t('creatorDetail.actions')}</span>
+      </div>
+      <div className="crm-detail-platform-list" role="rowgroup">
+        {connectedPlatforms.map((platform) => (
+          <CreatorPlatformProfileCard
+            key={platform.key}
+            platform={platform}
+            form={form}
+            primaryPlatformKey={primaryPlatformKey}
+          />
+        ))}
+      </div>
+      {disconnectedPlatforms.length ? (
+        <div className="crm-detail-platform-disconnected">
+          <button
+            type="button"
+            className="crm-detail-platform-disconnected__toggle"
+            onClick={() => setShowDisconnected((open) => !open)}
+            aria-expanded={showDisconnected}
+          >
+            {showDisconnected
+              ? t('creatorDetail.hideDisconnectedPlatforms', { count: disconnectedPlatforms.length })
+              : t('creatorDetail.showDisconnectedPlatforms', { count: disconnectedPlatforms.length })}
+          </button>
+          {showDisconnected ? (
+            <div className="crm-detail-platform-list crm-detail-platform-list--disconnected">
+              {disconnectedPlatforms.map((platform) => (
+                <CreatorPlatformProfileCard
+                  key={platform.key}
+                  platform={platform}
+                  form={form}
+                  primaryPlatformKey={primaryPlatformKey}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+    </section>
   );
 
   const editContent = (
     <BlockStack gap="0">
       <div className="crm-detail-platform-columns crm-detail-platform-columns--edit" aria-hidden="true">
-        <span>Platform</span>
-        <span>Profile URL</span>
-        <span>Followers</span>
+        <span>{t('creatorDetail.platform')}</span>
+        <span>{t('creatorDetail.profileUrl')}</span>
+        <span>{t('creatorDetail.followers')}</span>
       </div>
       {PLATFORM_META.map((platform) => (
-        <PlatformEditRow key={platform.key} platform={platform} form={form} onChange={onChange} />
+        <PlatformEditRow key={platform.key} platform={platform} form={form} onChange={onChange} t={t} />
       ))}
       <Box padding="400" background="bg-surface-secondary">
         <Text as="p" tone="subdued" variant="bodySm">
-          Paste profile URLs, open public pages, and enter follower counts manually.
+          {t('creatorDetail.platformEditHelp')}
         </Text>
       </Box>
     </BlockStack>
   );
 
+  if (!editing) return readContent;
   return (
     <CreatorSectionCardShell
-      title="Platform Links & Followers"
+      title={t('creatorDetail.socialPlatforms')}
       editing={editing}
-      headerExtra={
-        <div className="crm-detail-section-total">
-          <span>Total Followers</span>
-          <strong>{formatCompactNumber(totalFollowers)}</strong>
-        </div>
-      }
       readContent={readContent}
       editContent={editContent}
     />

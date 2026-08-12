@@ -7,7 +7,17 @@ export default function DetailMetricCard({
   iconSource = null,
   iconBackground = '#EEF2FF',
   iconColor = '#4F46E5',
+  compact = false,
 }) {
+  if (compact) {
+    return (
+      <div className="crm-detail-kpi-card crm-detail-kpi-card--compact">
+        <span className="crm-detail-kpi-card__label">{label}</span>
+        <span className="crm-detail-kpi-card__value">{value}</span>
+      </div>
+    );
+  }
+
   return (
     <div className="crm-detail-kpi-card">
       {iconSource ? (

@@ -15,6 +15,11 @@ export default defineConfig(({ mode }) => {
     '';
   const localDev =
     env.LOCAL_DEV || rootEnv.LOCAL_DEV || process.env.LOCAL_DEV || '';
+  const apiProxyTarget =
+    env.API_PROXY_TARGET ||
+    rootEnv.API_PROXY_TARGET ||
+    process.env.API_PROXY_TARGET ||
+    'http://localhost:3000';
 
   return {
     build: {
@@ -44,11 +49,11 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         '/api': {
-          target: 'http://localhost:3000',
+          target: apiProxyTarget,
           changeOrigin: true,
         },
         '/auth': {
-          target: 'http://localhost:3000',
+          target: apiProxyTarget,
           changeOrigin: true,
         },
       },

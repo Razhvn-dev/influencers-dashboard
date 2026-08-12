@@ -1,88 +1,82 @@
 import { FormLayout, Select, TextField } from '@shopify/polaris';
 import {
   formatFollowupDate,
-  formatLastContactLabel,
   formatRelativeTime,
-  STATUS_OPTIONS,
+  getTranslatedStatusOptions,
 } from '../constants';
 import CreatorSectionCard from './CreatorSectionCard';
+import CreatorCommunicationSummary from './CreatorCommunicationSummary';
 import DateTimeField from './DateTimeField';
-import FieldRow from './FieldRow';
-
-function notePreview(value) {
-  const text = String(value ?? '').trim();
-  return text || 'No notes yet.';
-}
-
-function formatFollowupRead(value) {
-  if (!value) return 'Not scheduled';
-  return formatFollowupDate(new Date(value).toISOString());
-}
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 export default function CreatorNotesCard({
   form,
   record = null,
   onChange,
   editing = false,
+  embedded = false,
 }) {
+  const { t } = useTranslation();
   const updateField = (field) => (value) => {
     onChange({ ...form, [field]: value });
   };
 
   const updatedAt = record?.updated_at || record?.followers_last_verified_at || record?.last_contacted_at;
-  const updatedLabel = updatedAt ? formatRelativeTime(updatedAt) : 'Not updated yet';
-  const updatedBy = record?.followers_verified_by || form.manager_owner || 'Current User';
+  const updatedLabel = updatedAt ? formatRelativeTime(updatedAt) : t('common.notSet');
+  const updatedBy = record?.followers_verified_by || form.manager_owner || t('common.currentUser');
 
   const readContent = (
-    <div className="crm-field-row-list">
-      <FieldRow label="Notes" value={notePreview(form.notes)} multiline />
-      <FieldRow
-        label="Last Contact"
-        value={formatLastContactLabel(
-          form.last_contacted_at ? new Date(form.last_contacted_at).toISOString() : null
-        )}
-        muted={!form.last_contacted_at}
-      />
-      <FieldRow
-        label="Next Follow-up"
-        value={formatFollowupRead(form.next_followup_at)}
-        muted={!form.next_followup_at}
-      />
-    </div>
+    <CreatorCommunicationSummary
+      notes={form.notes}
+      lastContact={
+        form.last_contacted_at
+          ? formatFollowupDate(form.last_contacted_at)
+          : t('common.notSet')
+      }
+    />
   );
 
   const editContent = (
     <FormLayout>
       <Select
-        label="Status"
-        options={STATUS_OPTIONS}
+        label={t('dashboard.columns.status')}
+        options={getTranslatedStatusOptions(t)}
         value={form.status}
         onChange={updateField('status')}
       />
       <TextField
-        label="Notes"
+        label={t('creatorDetail.notes')}
         value={form.notes}
         onChange={updateField('notes')}
         multiline={5}
         autoComplete="off"
       />
       <DateTimeField
-        label="Last Contact"
+        label={t('creatorDetail.lastContacted')}
         value={form.last_contacted_at}
         onChange={updateField('last_contacted_at')}
       />
       <DateTimeField
-        label="Next Follow-up"
+        label={t('creatorDetail.nextFollowup')}
         value={form.next_followup_at}
         onChange={updateField('next_followup_at')}
       />
-      <p className="crm-detail-card-footnote">Last updated: {updatedLabel} by {updatedBy}</p>
+      <p className="crm-detail-card-footnote">{t('creatorDetail.lastUpdated', { updated: updatedLabel, owner: updatedBy })}</p>
     </FormLayout>
   );
 
+  if (embedded && !editing) {
+    return (
+      <section className="crm-detail-supporting-section crm-detail-supporting-section--communication">
+        <h2>{t('creatorDetail.communication')}</h2>
+        {readContent}
+      </section>
+    );
+  }
+
   return (
     <CreatorSectionCard
-      title={editing ? 'Notes & Status' : 'Notes'}
+      title={editing ? t('creatorDetail.communicationStatus') : t('creatorDetail.communication')}
       editing={editing}
       readContent={readContent}
       editContent={editContent}

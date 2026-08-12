@@ -1,40 +1,28 @@
+import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { baseUrl, chromePath } from './qa-config.mjs';
 
-const url = 'http://localhost:5173/creators/new';
-
-async function getPreviewFollowup(page) {
+function previewFollowup(page) {
   return page.evaluate(() => {
-    const blocks = [...document.querySelectorAll('.crm-add-creator-preview__meta-block')];
-    const block = blocks.find((el) => el.textContent?.includes('Next Follow-up'));
-    const valueEl = block?.querySelector('.crm-add-creator-preview__meta-value');
-    return valueEl?.textContent?.trim() ?? null;
+    const row = [...document.querySelectorAll('.crm-creator-preview__meta-list > div')].find(
+      (node) => node.querySelector('dt')?.textContent?.trim().toLowerCase() === 'next follow-up'
+    );
+    return row?.querySelector('dd')?.textContent?.trim() ?? null;
   });
 }
 
-async function main() {
-  const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, executablePath: chromePath });
+try {
   const page = await browser.newPage();
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(`${baseUrl}/creators/new`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.evaluate(() => localStorage.setItem('crm-locale', 'en'));
+  await page.reload({ waitUntil: 'networkidle' });
 
-  console.log('initial:', await getPreviewFollowup(page));
+  await page.evaluate(() => window.__crmSetFollowup?.('2026-07-17T23:17'));
+  await page.waitForTimeout(150);
+  assert.equal(await previewFollowup(page), 'Jul 17, 2026, 11:17 PM');
 
-  await page.evaluate(() => {
-    window.__crmSetFollowup?.('2026-07-17T23:17');
-  });
-  await page.waitForTimeout(300);
-
-  const after = await getPreviewFollowup(page);
-  console.log('after programmatic set:', after);
-
-  if (after !== 'Jul 17, 2026, 11:17 PM') {
-    throw new Error(`Expected formatted preview, got: ${after}`);
-  }
-
+  console.log('Follow-up preview updates from current form state.');
+} finally {
   await browser.close();
-  console.log('PASS preview updates when form state changes');
 }
-
-main().catch((err) => {
-  console.error('FAIL', err.message);
-  process.exit(1);
-});

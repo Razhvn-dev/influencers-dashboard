@@ -8,7 +8,7 @@ const influencerRoutes = require('./routes/influencers');
 const { renderExitIframePage } = require('./lib/exitiframe');
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 const clientDist = path.join(__dirname, 'client', 'dist');
 const isLocalDev = process.env.LOCAL_DEV === 'true';
 
@@ -89,12 +89,47 @@ app.get('/api/config', (_req, res) => {
 if (isLocalDev) {
   app.use('/api/influencers', injectLocalDevSession, influencerRoutes);
 } else {
-  app.use(
-    '/api/influencers',
-    shopify.validateAuthenticatedSession(),
-    influencerRoutes
-  );
+  const validateSession = shopify.validateAuthenticatedSession();
+  app.use('/api/influencers', (req, res, next) => {
+    validateSession(req, res, (err) => {
+      if (err) {
+        console.error('Session validation failed:', err?.message || err);
+        if (!res.headersSent) {
+          res.status(401).json({
+            success: false,
+            message: 'Session validation failed. Please refresh the page and try again.',
+          });
+        }
+        return;
+      }
+
+      if (!res.headersSent) {
+        next();
+      }
+    });
+  }, influencerRoutes);
 }
+
+app.use((err, _req, res, next) => {
+  console.error('Unhandled server error:', err.message);
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
+  res.status(err.statusCode || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
+  });
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled promise rejection:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+});
 
 if (fs.existsSync(clientDist)) {
   // Do not serve index.html from static middleware — ensureInstalledOnShop must
@@ -104,6 +139,11 @@ if (fs.existsSync(clientDist)) {
       index: false,
       setHeaders(res, filePath) {
         if (filePath.endsWith('.html')) {
+          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+          return;
+        }
+
+        if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
           res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         }
       },

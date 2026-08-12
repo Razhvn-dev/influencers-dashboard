@@ -1,13 +1,14 @@
 import { CreatorSectionCardShell } from './CreatorSectionCard';
 import { formatFollowupDate, formatRelativeTime } from '../constants';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 function activityTime(value, fallback = '') {
   if (!value) return fallback;
   return formatRelativeTime(value) || formatFollowupDate(value);
 }
 
-function buildActivities(record, form) {
-  const owner = record?.followers_verified_by || form.manager_owner || 'Current User';
+function buildActivities(record, form, t) {
+  const owner = record?.followers_verified_by || form.manager_owner || t('common.currentUser');
   const activities = [];
   const updatedAt = record?.updated_at;
   const hasNotes = Boolean(String(form.notes || '').trim());
@@ -15,8 +16,8 @@ function buildActivities(record, form) {
 
   if (record?.followers_last_verified_at) {
     activities.push({
-      title: 'Followers updated',
-      meta: `${activityTime(record.followers_last_verified_at)} by ${owner}`,
+      title: t('creatorDetail.followersUpdated'),
+      meta: `${activityTime(record.followers_last_verified_at)} ${t('creatorDetail.byOwner', { owner })}`,
       tone: 'blue',
       date: record.followers_last_verified_at,
     });
@@ -24,16 +25,16 @@ function buildActivities(record, form) {
 
   if (hasStatus && hasNotes && updatedAt) {
     activities.push({
-      title: `Notes & status updated (${form.status})`,
-      meta: `${activityTime(updatedAt)} by ${owner}`,
+      title: t('creatorDetail.notesStatusUpdated', { status: form.status }),
+      meta: `${activityTime(updatedAt)} ${t('creatorDetail.byOwner', { owner })}`,
       tone: 'purple',
       date: updatedAt,
     });
   } else {
     if (hasStatus) {
       activities.push({
-        title: `Status changed to ${form.status}`,
-        meta: updatedAt ? `${activityTime(updatedAt)} by ${owner}` : `by ${owner}`,
+        title: t('creatorDetail.statusChanged', { status: form.status }),
+        meta: updatedAt ? `${activityTime(updatedAt)} ${t('creatorDetail.byOwner', { owner })}` : t('creatorDetail.byOwner', { owner }),
         tone: 'blue',
         date: updatedAt || null,
       });
@@ -41,8 +42,8 @@ function buildActivities(record, form) {
 
     if (hasNotes) {
       activities.push({
-        title: 'Notes updated',
-        meta: updatedAt ? `${activityTime(updatedAt)} by ${owner}` : `by ${owner}`,
+        title: t('creatorDetail.notesUpdated'),
+        meta: updatedAt ? `${activityTime(updatedAt)} ${t('creatorDetail.byOwner', { owner })}` : t('creatorDetail.byOwner', { owner }),
         tone: 'purple',
         date: updatedAt || null,
       });
@@ -50,10 +51,10 @@ function buildActivities(record, form) {
   }
 
   activities.push({
-    title: 'Creator added',
+    title: t('creatorDetail.creatorAdded'),
     meta: record?.created_at
-      ? `${formatFollowupDate(record.created_at)} by ${owner}`
-      : `by ${owner}`,
+      ? `${formatFollowupDate(record.created_at)} ${t('creatorDetail.byOwner', { owner })}`
+      : t('creatorDetail.byOwner', { owner }),
     tone: 'blue',
     date: record?.created_at || null,
   });
@@ -66,8 +67,9 @@ function buildActivities(record, form) {
     .slice(0, 4);
 }
 
-export default function CreatorRecentActivity({ record, form }) {
-  const activities = buildActivities(record, form);
+export default function CreatorRecentActivity({ record, form, embedded = false }) {
+  const { t } = useTranslation();
+  const activities = buildActivities(record, form, t);
 
   const readContent = activities.length ? (
     <div className="crm-detail-activity-timeline">
@@ -85,10 +87,9 @@ export default function CreatorRecentActivity({ record, form }) {
       ))}
     </div>
   ) : (
-    <div className="crm-detail-empty-state">No recent activity yet.</div>
+    <div className="crm-detail-empty-state">{t('creatorDetail.noRecentActivity')}</div>
   );
 
-  return (
-    <CreatorSectionCardShell title="Recent Activity" readContent={readContent} editContent={readContent} />
-  );
+  if (embedded) return <section className="crm-detail-supporting-section crm-detail-supporting-section--activity"><h2>{t('creatorDetail.recentChanges')}</h2>{readContent}</section>;
+  return <CreatorSectionCardShell title={t('creatorDetail.recentChanges')} readContent={readContent} editContent={readContent} />;
 }

@@ -2,6 +2,7 @@ import { Icon, TextField } from '@shopify/polaris';
 import { ExternalIcon } from '@shopify/polaris-icons';
 import { normalizeExternalUrl, openExternalUrl, PLATFORM_META } from '../../constants';
 import PlatformIcon from '../PlatformIcon';
+import { useTranslation } from '../../i18n/LanguageContext.jsx';
 
 function PlatformOpenButton({ url, label }) {
   const canOpen = Boolean(normalizeExternalUrl(url));
@@ -51,7 +52,7 @@ function PlatformRow({ platform, form, onFieldChange, onFollowerFieldChange }) {
         <TextField
           label={`${platform.label} followers`}
           labelHidden
-          placeholder="Followers"
+          placeholder="0"
           inputMode="numeric"
           value={followerValue}
           autoComplete="off"
@@ -67,15 +68,17 @@ export default function AddCreatorPlatformTable({
   onFieldChange,
   onFollowerFieldChange,
 }) {
+  const { t } = useTranslation();
+
   return (
     <div className="crm-add-creator__platform-table-wrap">
       <table className="crm-add-creator__platform-table">
         <thead>
           <tr>
-            <th>Platform</th>
-            <th>Profile Link</th>
-            <th aria-label="Open profile" />
-            <th>Followers</th>
+            <th>{t('addCreator.platforms')}</th>
+            <th>{t('creatorCreate.profileUrl')}</th>
+            <th aria-label="Open" />
+            <th>{t('creatorCreate.followers')}</th>
           </tr>
         </thead>
         <tbody>
@@ -90,10 +93,6 @@ export default function AddCreatorPlatformTable({
           ))}
         </tbody>
       </table>
-      <p className="crm-add-creator__platform-footnote">
-        Counts are not synced from platform APIs. Last verified updates when follower counts
-        are saved.
-      </p>
     </div>
   );
 }

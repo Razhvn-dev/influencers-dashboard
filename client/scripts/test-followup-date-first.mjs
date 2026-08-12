@@ -1,40 +1,34 @@
+import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
+import { baseUrl, chromePath } from './qa-config.mjs';
 
-const url = 'http://localhost:5173/creators/new';
-
-async function getPreview(page) {
+function previewFollowup(page) {
   return page.evaluate(() => {
-    const block = [...document.querySelectorAll('.crm-add-creator-preview__meta-block')].find((el) =>
-      el.textContent?.includes('Next Follow-up')
+    const row = [...document.querySelectorAll('.crm-creator-preview__meta-list > div')].find(
+      (node) => node.querySelector('dt')?.textContent?.trim().toLowerCase() === 'next follow-up'
     );
-    return block?.querySelector('.crm-add-creator-preview__meta-value')?.textContent?.trim();
+    return row?.querySelector('dd')?.textContent?.trim() ?? null;
   });
 }
 
-async function main() {
-  const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, executablePath: chromePath });
+try {
   const page = await browser.newPage();
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(`${baseUrl}/creators/new`, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.evaluate(() => localStorage.setItem('crm-locale', 'en'));
+  await page.reload({ waitUntil: 'networkidle' });
 
-  console.log('1 initial:', await getPreview(page));
+  assert.equal(await previewFollowup(page), 'Not set', 'A new creator must not invent a follow-up date.');
 
-  // Date FIRST
-  await page.getByRole('button', { name: 'Choose Next Follow-up date' }).click();
-  await page.waitForTimeout(200);
-  const day17 = page.locator('button.Polaris-DatePicker__Day').filter({ hasText: /^17$/ }).first();
-  if (await day17.count()) await day17.click();
-  await page.waitForTimeout(300);
-  console.log('2 after date only:', await getPreview(page));
+  await page.evaluate(() => window.__crmSetFollowup?.('2026-07-17T09:00'));
+  await page.waitForTimeout(150);
+  assert.equal(await previewFollowup(page), 'Jul 17, 2026, 9:00 AM', 'Selecting a date first must preserve the default reminder time.');
 
-  // Then time
-  const selects = page.locator('.crm-add-creator__reminder-time select');
-  await selects.nth(0).selectOption('11');
-  await selects.nth(1).selectOption('17');
-  await selects.nth(2).selectOption('PM');
-  await page.waitForTimeout(300);
-  console.log('3 after date then time:', await getPreview(page));
+  await page.evaluate(() => window.__crmSetFollowup?.('2026-07-17T23:17'));
+  await page.waitForTimeout(150);
+  assert.equal(await previewFollowup(page), 'Jul 17, 2026, 11:17 PM', 'Changing the reminder time must update the same follow-up date.');
 
+  console.log('Follow-up date-first preview contract passed.');
+} finally {
   await browser.close();
 }
-
-main();

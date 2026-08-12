@@ -1,3 +1,5 @@
+import { translateStatus, useTranslation } from '../../i18n/LanguageContext.jsx';
+
 export function getStatusBadgeClass(status) {
   const map = {
     Applied: 'crm-status-applied',
@@ -17,13 +19,15 @@ export function getStatusBadgeClass(status) {
 }
 
 export default function StatusBadge({ status }) {
+  const { t } = useTranslation();
+
   if (!status) {
     return <span className="crm-table-muted">—</span>;
   }
 
   return (
     <span className={`crm-status-pill crm-v2-table-status-badge ${getStatusBadgeClass(status)}`}>
-      {status}
+      {translateStatus(t, status)}
     </span>
   );
 }

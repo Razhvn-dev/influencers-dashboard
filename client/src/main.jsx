@@ -3,12 +3,15 @@ import ReactDOM from 'react-dom/client';
 import { AppProvider as PolarisAppProvider } from '@shopify/polaris';
 import { NavMenu, useAppBridge } from '@shopify/app-bridge-react';
 import enTranslations from '@shopify/polaris/locales/en.json';
+import zhTranslations from '@shopify/polaris/locales/zh-CN.json';
 import '@shopify/polaris/build/esm/styles.css';
 import './styles/crm-ui.css';
 import './styles/crm-dashboard.css';
 import './styles/add-creator.css';
+import './styles/creator-detail.css';
 import App from './App.jsx';
 import { setSessionTokenFetcher } from './api.js';
+import { LanguageProvider, useTranslation } from './i18n/LanguageContext.jsx';
 
 function getHostFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -22,8 +25,16 @@ function getHostFromUrl() {
   return window.sessionStorage.getItem('shopify-host');
 }
 
+function PolarisLocaleProvider({ children }) {
+  const { locale } = useTranslation();
+  const polarisI18n = locale === 'zh' ? zhTranslations : enTranslations;
+
+  return <PolarisAppProvider i18n={polarisI18n}>{children}</PolarisAppProvider>;
+}
+
 function AuthenticatedApp({ children }) {
   const shopify = useAppBridge();
+  const { t } = useTranslation();
 
   useEffect(() => {
     setSessionTokenFetcher(() => shopify.idToken());
@@ -33,7 +44,7 @@ function AuthenticatedApp({ children }) {
     <>
       <NavMenu>
         <a href="/" rel="home">
-          Influencer Dashboard
+          {t('nav.appName')}
         </a>
       </NavMenu>
       {children}
@@ -56,34 +67,42 @@ function ShopifyAppRoot() {
 
   if (isLocalDev) {
     return (
-      <PolarisAppProvider i18n={enTranslations}>
-        <LocalDevApp />
-      </PolarisAppProvider>
+      <LanguageProvider>
+        <PolarisLocaleProvider>
+          <LocalDevApp />
+        </PolarisLocaleProvider>
+      </LanguageProvider>
     );
   }
 
   if (!apiKey) {
     return (
-      <PolarisAppProvider i18n={enTranslations}>
-        <App embedded={false} missingConfig="apiKey" />
-      </PolarisAppProvider>
+      <LanguageProvider>
+        <PolarisLocaleProvider>
+          <App embedded={false} missingConfig="apiKey" />
+        </PolarisLocaleProvider>
+      </LanguageProvider>
     );
   }
 
   if (!host) {
     return (
-      <PolarisAppProvider i18n={enTranslations}>
-        <App embedded={false} missingConfig="host" />
-      </PolarisAppProvider>
+      <LanguageProvider>
+        <PolarisLocaleProvider>
+          <App embedded={false} missingConfig="host" />
+        </PolarisLocaleProvider>
+      </LanguageProvider>
     );
   }
 
   return (
-    <PolarisAppProvider i18n={enTranslations}>
-      <AuthenticatedApp>
-        <App embedded />
-      </AuthenticatedApp>
-    </PolarisAppProvider>
+    <LanguageProvider>
+      <PolarisLocaleProvider>
+        <AuthenticatedApp>
+          <App embedded />
+        </AuthenticatedApp>
+      </PolarisLocaleProvider>
+    </LanguageProvider>
   );
 }
 

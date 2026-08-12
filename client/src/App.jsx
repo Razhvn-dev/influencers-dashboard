@@ -1,23 +1,42 @@
-import { useMemo } from 'react';
+import { lazy, Suspense, useMemo } from 'react';
 import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
-import { Banner, Layout, Page } from '@shopify/polaris';
-import DashboardPage from './pages/DashboardPage';
-import AddCreatorPage from './pages/AddCreatorPage';
-import CreatorDetailPage from './pages/CreatorDetailPage';
+import { Banner, Layout, Page, Spinner } from '@shopify/polaris';
+import { useTranslation } from './i18n/LanguageContext.jsx';
 
-function MissingConfigPage({ missingConfig }) {
-  const title =
-    missingConfig === 'apiKey'
-      ? 'Shopify API key is missing'
-      : 'Open this app from Shopify Admin';
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const AddCreatorPage = lazy(() => import('./pages/AddCreatorPage'));
+const CreatorDetailPage = lazy(() => import('./pages/CreatorDetailPage'));
 
-  const message =
-    missingConfig === 'apiKey'
-      ? 'Set SHOPIFY_API_KEY in your deployment environment and rebuild the frontend.'
-      : 'Install the app on your Shopify store, then open it from Apps in the Shopify admin.';
+function PageLoadFallback() {
+  const { t } = useTranslation();
 
   return (
-    <Page title="Influencer Dashboard" fullWidth className="crm-page">
+    <Page fullWidth className="crm-page">
+      <Layout>
+        <Layout.Section>
+          <div className="crm-page-loading">
+            <Spinner accessibilityLabel={t('detail.loading')} size="large" />
+          </div>
+        </Layout.Section>
+      </Layout>
+    </Page>
+  );
+}
+
+function LazyPage({ children }) {
+  return <Suspense fallback={<PageLoadFallback />}>{children}</Suspense>;
+}
+
+function MissingConfigPage({ missingConfig }) {
+  const { t } = useTranslation();
+  const title =
+    missingConfig === 'apiKey' ? t('config.apiKeyTitle') : t('config.hostTitle');
+
+  const message =
+    missingConfig === 'apiKey' ? t('config.apiKeyMessage') : t('config.hostMessage');
+
+  return (
+    <Page title={t('config.title')} fullWidth className="crm-page">
       <Layout>
         <Layout.Section>
           <Banner tone="warning" title={title}>
@@ -44,19 +63,25 @@ export default function App({
         {
           path: '/',
           element: (
-            <DashboardPage localPreview={localPreview} embedded={embedded} />
+            <LazyPage>
+              <DashboardPage localPreview={localPreview} embedded={embedded} />
+            </LazyPage>
           ),
         },
         {
           path: '/creators/new',
           element: (
-            <AddCreatorPage localPreview={localPreview} embedded={embedded} />
+            <LazyPage>
+              <AddCreatorPage localPreview={localPreview} embedded={embedded} />
+            </LazyPage>
           ),
         },
         {
           path: '/creators/:id',
           element: (
-            <CreatorDetailPage localPreview={localPreview} embedded={embedded} />
+            <LazyPage>
+              <CreatorDetailPage localPreview={localPreview} embedded={embedded} />
+            </LazyPage>
           ),
         },
         { path: '*', element: <Navigate to="/" replace /> },

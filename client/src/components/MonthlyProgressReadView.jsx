@@ -1,21 +1,22 @@
 import { MONTHLY_PERIOD_LABELS, openExternalUrl } from '../constants';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 function hasValue(value) {
   return String(value || '').trim().length > 0;
 }
 
-export function statusForPeriod(period) {
+export function statusForPeriod(period, t = null) {
   const checkIn = hasValue(period.monthly_check_in);
   const content = hasValue(period.content_delivered);
   const link = hasValue(period.link);
 
-  if (checkIn && content && link) return { label: 'Completed', tone: 'completed' };
-  if (checkIn || content || link) return { label: 'In progress', tone: 'progress' };
-  return { label: 'Not started', tone: 'pending' };
+  if (checkIn && content && link) return { label: t ? t('progress.completed') : 'Completed', tone: 'completed' };
+  if (checkIn || content || link) return { label: t ? t('progress.inProgress') : 'In progress', tone: 'progress' };
+  return { label: t ? t('progress.notStarted') : 'Not started', tone: 'pending' };
 }
 
 export function countCompletedPeriods(periods) {
-  return periods.filter((period) => statusForPeriod(period).label === 'Completed').length;
+  return periods.filter((period) => statusForPeriod(period).tone === 'completed').length;
 }
 
 function dotClass(value) {
@@ -30,16 +31,17 @@ function ProgressStatusPill({ label, tone }) {
 }
 
 export default function MonthlyProgressReadView({ periods }) {
+  const { t } = useTranslation();
   return (
     <div className="crm-detail-progress-table-wrap">
       <table className="crm-detail-progress-table">
         <thead>
           <tr>
-            <th>Period</th>
-            <th>Check-in</th>
-            <th>Content Delivered</th>
-            <th>Link</th>
-            <th>Status</th>
+            <th>{t('progress.period')}</th>
+            <th>{t('progress.checkIn')}</th>
+            <th>{t('progress.contentDelivered')}</th>
+            <th>{t('progress.link')}</th>
+            <th>{t('progress.status')}</th>
           </tr>
         </thead>
         <tbody>
@@ -47,37 +49,39 @@ export default function MonthlyProgressReadView({ periods }) {
             const checkIn = String(period.monthly_check_in || '').trim();
             const content = String(period.content_delivered || '').trim();
             const link = String(period.link || '').trim();
-            const status = statusForPeriod(period);
+            const status = statusForPeriod(period, t);
 
             return (
               <tr key={period.period_index}>
-                <td>{MONTHLY_PERIOD_LABELS[period.period_index - 1] || `Period ${period.period_index}`}</td>
-                <td>
+                <td data-label={t('progress.period')}>
+                  {MONTHLY_PERIOD_LABELS[period.period_index - 1] || `Period ${period.period_index}`}
+                </td>
+                <td data-label={t('progress.checkIn')}>
                   <span className="crm-detail-progress-cell">
                     <span className={`crm-detail-progress-dot ${dotClass(checkIn)}`} />
-                    {checkIn || 'Not started'}
+                    {checkIn || t('progress.notStarted')}
                   </span>
                 </td>
-                <td>
+                <td data-label={t('progress.contentDelivered')}>
                   <span className="crm-detail-progress-cell">
                     <span className={`crm-detail-progress-dot ${dotClass(content)}`} />
-                    {content || 'Not started'}
+                    {content || t('progress.notStarted')}
                   </span>
                 </td>
-                <td>
+                <td data-label={t('progress.link')}>
                   {link ? (
                     <button
                       type="button"
                       className="crm-open-link"
                       onClick={() => openExternalUrl(link)}
                     >
-                      Open
+                      {t('common.openProfile')}
                     </button>
                   ) : (
-                    'Not set'
+                    t('common.notSet')
                   )}
                 </td>
-                <td>
+                <td data-label={t('progress.status')}>
                   <ProgressStatusPill label={status.label} tone={status.tone} />
                 </td>
               </tr>
@@ -86,7 +90,7 @@ export default function MonthlyProgressReadView({ periods }) {
         </tbody>
       </table>
       <p className="crm-detail-progress-footnote">
-        Fixed 5 contract periods. Use Edit creator to update check-ins, content, and links.
+        {t('progress.readHelp')}
       </p>
     </div>
   );

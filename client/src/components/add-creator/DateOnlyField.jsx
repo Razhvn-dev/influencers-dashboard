@@ -9,8 +9,10 @@ import {
   splitFollowupDateTime,
   toFollowupPickerRange,
 } from '../../utils/followupDateTime';
+import { useTranslation } from '../../i18n/LanguageContext.jsx';
 
 export default function DateOnlyField({ label, value, onChange, helpText }) {
+  const { t } = useTranslation();
   const { date, hour, minute } = splitFollowupDateTime(value);
   const selectedDate = parseFollowupDateParts(date);
   const anchorDate = selectedDate || new Date();
@@ -44,7 +46,7 @@ export default function DateOnlyField({ label, value, onChange, helpText }) {
       label={label}
       value={formatFollowupDateOnlyDisplay(value)}
       onChange={() => {}}
-      placeholder="Select date"
+      placeholder={t('common.selectDate')}
       autoComplete="off"
       helpText={helpText}
       readOnly
@@ -52,7 +54,7 @@ export default function DateOnlyField({ label, value, onChange, helpText }) {
         <Button
           icon={CalendarIcon}
           onClick={() => setPopoverActive((active) => !active)}
-          accessibilityLabel={`Choose ${label}`}
+          accessibilityLabel={t('creatorCreate.chooseFollowupDate')}
         />
       }
     />

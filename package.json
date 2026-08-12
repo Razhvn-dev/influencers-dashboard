@@ -6,6 +6,8 @@
   "scripts": {
     "build": "npm run build --prefix client",
     "start": "node server.js",
+    "migrate": "node scripts/run-migrations.mjs",
+    "test:server-port": "node --test tests/server-port.test.js",
     "test:db": "node db.js",
     "build:client": "npm run build --prefix client",
     "dev:client": "npm run dev --prefix client",
@@ -17,12 +19,14 @@
     "seed:filter-test": "node scripts/seed-filter-test-data.js --clear",
     "seed:filter-test:append": "node scripts/seed-filter-test-data.js",
     "import:onboarding": "node scripts/import-onboarding-influencers.js --skip-existing",
-    "import:onboarding:dry-run": "node scripts/import-onboarding-influencers.js --skip-existing --dry-run"
+    "import:onboarding:dry-run": "node scripts/import-onboarding-influencers.js --skip-existing --dry-run",
+    "benchmark:api": "node scripts/benchmark-api.mjs",
+    "test:smoke-api": "node scripts/smoke-test-api.mjs"
   },
   "dependencies": {
-    "@shopify/shopify-api": "^11.12.0",
-    "@shopify/shopify-app-express": "^5.0.16",
-    "@shopify/shopify-app-session-storage-postgresql": "^4.0.20",
+    "@shopify/shopify-api": "^12.3.0",
+    "@shopify/shopify-app-express": "^6.0.5",
+    "@shopify/shopify-app-session-storage-postgresql": "^5.0.5",
     "dotenv": "^16.4.7",
     "exceljs": "^4.4.0",
     "express": "^4.21.2",

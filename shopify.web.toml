@@ -1,0 +1,7 @@
+name = "influencer-dashboard"
+roles = ["frontend"]
+webhooks_path = "/webhooks"
+
+[commands]
+build = "npm run build"
+dev = "npm start"

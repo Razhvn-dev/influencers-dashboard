@@ -6,7 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:creator-list-layout": "node scripts/test-creator-list-layout.mjs",
+    "test:creator-resource-row": "node scripts/test-creator-resource-row.mjs",
+    "test:creator-list-final-ux": "node scripts/test-creator-list-final-ux.mjs",
+    "test:dashboard-layout": "node scripts/test-dashboard-table-layout.mjs",
+    "test:creator-workflow-layout": "node scripts/test-creator-workflow-layout.mjs",
+    "test:creator-detail-step1": "node scripts/test-creator-detail-step1.mjs",
+    "test:creator-detail-step3": "node scripts/test-creator-detail-step1.mjs",
+    "verify:creator-detail-step3": "node scripts/verify-creator-detail-step3.mjs",
+    "verify:creator-detail-step4": "node scripts/verify-creator-detail-step3.mjs",
+    "qa:creator-detail-final": "node scripts/qa-creator-detail-final.mjs",
+    "test:dashboard-visual-polish": "node scripts/test-dashboard-visual-polish.mjs"
   },
   "dependencies": {
     "@shopify/app-bridge-react": "^4.1.6",
@@ -14,11 +25,13 @@
     "@shopify/polaris-icons": "^8.11.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^7.18.1"
+    "react-router-dom": "^7.18.2"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
+    "nanoid": "^3.3.18",
     "playwright": "^1.61.1",
+    "postcss": "^8.5.26",
     "vite": "^6.0.7"
   }
 }

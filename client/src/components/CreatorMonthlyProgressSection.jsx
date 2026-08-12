@@ -4,12 +4,15 @@ import { CheckCircleIcon } from '@shopify/polaris-icons';
 import CreatorSectionCard from './CreatorSectionCard';
 import MonthlyProgressEditor from './MonthlyProgressEditor';
 import MonthlyProgressReadView, { countCompletedPeriods } from './MonthlyProgressReadView';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 export default function CreatorMonthlyProgressSection({
   periods,
   onChange,
   editing = false,
+  embedded = false,
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(editing);
 
   useEffect(() => {
@@ -21,10 +24,10 @@ export default function CreatorMonthlyProgressSection({
   const completed = countCompletedPeriods(periods);
   const total = periods.length || 1;
   const progressPercent = Math.round((completed / total) * 100);
-  const summary = `${completed} of ${periods.length} periods complete`;
+  const summary = t('creatorDetail.periodsComplete', { completed, total: periods.length });
 
   const readContent = (
-    <div className="crm-detail-progress">
+    <div className={`crm-detail-progress${expanded ? '' : ' crm-detail-progress--collapsed'}`}>
       <div className="crm-detail-progress-summary">
         <div className="crm-detail-progress-summary__main">
           <div className="crm-detail-progress-summary__stats">
@@ -33,9 +36,28 @@ export default function CreatorMonthlyProgressSection({
             </span>
             <span className="crm-detail-progress-summary__text">{summary}</span>
           </div>
-          <div className="crm-detail-progress-bar-wrap">
+          {expanded ? (
+            <div className="crm-detail-progress-bar-wrap">
+              <div
+                className={`crm-detail-progress-bar${completed === 0 ? ' crm-detail-progress-bar--empty' : ''}`}
+                role="progressbar"
+                aria-valuenow={completed}
+                aria-valuemin={0}
+                aria-valuemax={periods.length}
+                aria-label={summary}
+              >
+                <div
+                  className="crm-detail-progress-bar__fill"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              {completed === 0 ? (
+                <p className="crm-detail-progress-bar__hint">{t('creatorDetail.noPeriodsComplete')}</p>
+              ) : null}
+            </div>
+          ) : (
             <div
-              className={`crm-detail-progress-bar${completed === 0 ? ' crm-detail-progress-bar--empty' : ''}`}
+              className={`crm-detail-progress-inline-bar${completed === 0 ? ' crm-detail-progress-inline-bar--empty' : ''}`}
               role="progressbar"
               aria-valuenow={completed}
               aria-valuemin={0}
@@ -43,14 +65,11 @@ export default function CreatorMonthlyProgressSection({
               aria-label={summary}
             >
               <div
-                className="crm-detail-progress-bar__fill"
+                className="crm-detail-progress-inline-bar__fill"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            {completed === 0 ? (
-              <p className="crm-detail-progress-bar__hint">No periods completed yet</p>
-            ) : null}
-          </div>
+          )}
         </div>
         <button
           type="button"
@@ -58,16 +77,18 @@ export default function CreatorMonthlyProgressSection({
           onClick={() => setExpanded((current) => !current)}
           aria-expanded={expanded}
         >
-          {expanded ? 'Hide details' : 'Show details'}
+          {expanded ? t('creatorDetail.hideDetails') : t('creatorDetail.showDetails')}
         </button>
       </div>
       {expanded ? <MonthlyProgressReadView periods={periods} /> : null}
     </div>
   );
 
+  if (embedded && !editing) return <section className="crm-detail-progress-surface"><div className="crm-detail-view-section__header"><h2>{t('creatorDetail.monthlyProgress')}</h2><span>{t('creatorDetail.periods', { count: periods.length })}</span></div>{readContent}</section>;
   return (
     <CreatorSectionCard
-      title={`Monthly Progress (${periods.length} Contract Periods)`}
+      title={t('creatorDetail.monthlyProgress')}
+      headerExtra={<span className="crm-detail-progress__periods">{t('creatorDetail.periods', { count: periods.length })}</span>}
       editing={editing}
       padding="0"
       readContent={readContent}

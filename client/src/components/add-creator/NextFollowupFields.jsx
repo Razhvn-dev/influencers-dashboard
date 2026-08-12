@@ -13,6 +13,7 @@ import {
   toFollowupPickerRange,
   todayIsoDate,
 } from '../../utils/followupDateTime';
+import { useTranslation } from '../../i18n/LanguageContext.jsx';
 
 const HOUR_12_OPTIONS = Array.from({ length: 12 }, (_, index) => {
   const hour = index + 1;
@@ -29,7 +30,7 @@ const PERIOD_OPTIONS = [
   { label: 'PM', value: 'PM' },
 ];
 
-function TimePopoverSelect({ label, options, value, onChange }) {
+function TimePopoverSelect({ label, options, value, onChange, variant = 'default' }) {
   const [open, setOpen] = useState(false);
   const selectedLabel = options.find((option) => option.value === value)?.label || value;
   const activator = (
@@ -41,7 +42,7 @@ function TimePopoverSelect({ label, options, value, onChange }) {
       aria-haspopup="listbox"
       onClick={() => setOpen((current) => !current)}
     >
-      <span>{selectedLabel}</span>
+      <span className="crm-add-creator-time-select__value">{selectedLabel}</span>
       <span className="crm-add-creator-time-select__icon" aria-hidden="true">
         <Icon source={SelectIcon} tone="subdued" />
       </span>
@@ -49,7 +50,7 @@ function TimePopoverSelect({ label, options, value, onChange }) {
   );
 
   return (
-    <div className="crm-add-creator-time-select">
+    <div className={`crm-add-creator-time-select crm-add-creator-time-select--${variant}`}>
       <Popover
         active={open}
         activator={activator}
@@ -74,6 +75,7 @@ function TimePopoverSelect({ label, options, value, onChange }) {
 }
 
 export default function NextFollowupFields({ value, onChange }) {
+  const { t } = useTranslation();
   const { date, hour, minute } = splitFollowupDateTime(value);
   const hour24 = Number.parseInt(hour, 10);
   const normalizedHour24 = Number.isNaN(hour24) ? 9 : hour24;
@@ -119,17 +121,17 @@ export default function NextFollowupFields({ value, onChange }) {
 
   const dateActivator = (
     <TextField
-      label="Next Follow-up"
+      label={t('creatorCreate.nextFollowup')}
       value={formatFollowupDateOnlyDisplay(value)}
       onChange={() => {}}
-      placeholder="Select date"
+      placeholder={t('common.selectDate')}
       autoComplete="off"
       readOnly
       connectedRight={
         <Button
           icon={CalendarIcon}
           onClick={() => setPopoverActive((active) => !active)}
-          accessibilityLabel="Choose Next Follow-up date"
+          accessibilityLabel={t('creatorCreate.chooseFollowupDate')}
         />
       }
     />
@@ -137,46 +139,57 @@ export default function NextFollowupFields({ value, onChange }) {
 
   return (
     <div className="crm-add-creator__next-followup-fields">
-      <div className="crm-add-creator__date-field">
-        <Popover
-          active={popoverActive}
-          activator={dateActivator}
-          onClose={() => setPopoverActive(false)}
-          preferredAlignment="left"
-        >
-          <Box padding="300" minWidth="320px">
-            <DatePicker
-              month={visibleMonth}
-              year={visibleYear}
-              onChange={handleDateSelection}
-              onMonthChange={handleMonthChange}
-              selected={pickerSelected}
-            />
-          </Box>
-        </Popover>
-      </div>
+      <div className="crm-add-creator__followup-row">
+        <div className="crm-add-creator__date-field">
+          <Popover
+            active={popoverActive}
+            activator={dateActivator}
+            onClose={() => setPopoverActive(false)}
+            preferredAlignment="left"
+          >
+            <Box padding="300" minWidth="320px">
+              <DatePicker
+                month={visibleMonth}
+                year={visibleYear}
+                onChange={handleDateSelection}
+                onMonthChange={handleMonthChange}
+                selected={pickerSelected}
+              />
+            </Box>
+          </Popover>
+        </div>
 
-      <div className="crm-add-creator__reminder-time">
-        <p className="crm-add-creator__reminder-time-label">Reminder Time</p>
-        <div className="crm-add-creator__reminder-time-controls">
-          <TimePopoverSelect
-            label="Hour"
-            options={HOUR_12_OPTIONS}
-            value={hour12}
-            onChange={(nextHour) => handleTimeChange(nextHour, minute, period)}
-          />
-          <TimePopoverSelect
-            label="Minute"
-            options={MINUTE_OPTIONS}
-            value={minute}
-            onChange={(nextMinute) => handleTimeChange(hour12, nextMinute, period)}
-          />
-          <TimePopoverSelect
-            label="AM/PM"
-            options={PERIOD_OPTIONS}
-            value={period}
-            onChange={(nextPeriod) => handleTimeChange(hour12, minute, nextPeriod)}
-          />
+        <div className="crm-add-creator__reminder-time">
+          <label className="crm-add-creator__reminder-time-label" id="creator-reminder-time-label">
+            {t('creatorCreate.reminderTime')}
+          </label>
+          <div
+            className="crm-add-creator__time-field-control"
+            aria-labelledby="creator-reminder-time-label"
+          >
+            <TimePopoverSelect
+              label={t('common.hour')}
+              options={HOUR_12_OPTIONS}
+              value={hour12}
+              variant="hour"
+              onChange={(nextHour) => handleTimeChange(nextHour, minute, period)}
+            />
+            <span className="crm-add-creator__reminder-time-separator" aria-hidden="true">:</span>
+            <TimePopoverSelect
+              label={t('common.minute')}
+              options={MINUTE_OPTIONS}
+              value={minute}
+              variant="minute"
+              onChange={(nextMinute) => handleTimeChange(hour12, nextMinute, period)}
+            />
+            <TimePopoverSelect
+              label={t('common.amPm')}
+              options={PERIOD_OPTIONS}
+              value={period}
+              variant="period"
+              onChange={(nextPeriod) => handleTimeChange(hour12, minute, nextPeriod)}
+            />
+          </div>
         </div>
       </div>
     </div>

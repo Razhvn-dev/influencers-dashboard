@@ -22,14 +22,19 @@ import {
   buildSavePayload,
   previewAmbassadorLevel,
 } from '../constants';
+import CreatorDetailEditForm from '../components/CreatorDetailEditForm';
 import CreatorDetailSummaryMetrics from '../components/CreatorDetailSummaryMetrics';
 import CreatorMonthlyProgressSection from '../components/CreatorMonthlyProgressSection';
 import CreatorNotesCard from '../components/CreatorNotesCard';
 import CreatorPlatformAccounts from '../components/CreatorPlatformAccounts';
 import CreatorProfileHeader from '../components/CreatorProfileHeader';
+import PageBackButton from '../components/PageBackButton';
 import CreatorProfilePanel from '../components/CreatorProfilePanel';
 import CreatorRecentActivity from '../components/CreatorRecentActivity';
 import CreatorSponsorshipDetails from '../components/CreatorSponsorshipDetails';
+import CreatorDetailSupportingSurface from '../components/CreatorDetailSupportingSurface';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 import { useAutoDismiss } from '../hooks/useAutoDismiss';
 
 const SUCCESS_DISMISS_MS = 3000;
@@ -38,6 +43,7 @@ export default function CreatorDetailPage({ localPreview = false }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [record, setRecord] = useState(null);
   const [form, setForm] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -67,7 +73,7 @@ export default function CreatorDetailPage({ localPreview = false }) {
     } catch (err) {
       setRecord(null);
       setForm(null);
-      setLoadError(err.message || 'Failed to load creator record');
+      setLoadError(err.message || t('creatorDetail.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -107,6 +113,11 @@ export default function CreatorDetailPage({ localPreview = false }) {
   const handleSave = async () => {
     if (!record || !form) return;
 
+    if (!form.name.trim()) {
+      setError(t('addCreator.nameRequired'));
+      return;
+    }
+
     setSaving(true);
     setError('');
     setSuccess('');
@@ -116,9 +127,17 @@ export default function CreatorDetailPage({ localPreview = false }) {
       setRecord(updated);
       setForm(buildFormStateFromRecord(updated));
       setIsEditing(false);
-      setSuccess('Creator record updated successfully.');
+      setSuccess(t('detail.updatedSuccess'));
     } catch (err) {
-      setError(err.message || 'Failed to update record');
+      let message = err.message || t('detail.unableToSave');
+
+      if (message.includes('Unable to reach the app server')) {
+        message = t('detail.saveNetworkError');
+      } else if (message.includes('Session expired')) {
+        message = t('detail.saveSessionError');
+      }
+
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -166,10 +185,10 @@ export default function CreatorDetailPage({ localPreview = false }) {
     try {
       await deleteSponsorshipRecord(record.id);
       navigate('/', {
-        state: { success: 'Creator record deleted successfully.' },
+        state: { success: t('detail.deletedSuccess') },
       });
     } catch (err) {
-      setError(err.message || 'Failed to delete record');
+      setError(err.message || t('detail.deleteFailed'));
       setDeleting(false);
     }
   };
@@ -181,9 +200,9 @@ export default function CreatorDetailPage({ localPreview = false }) {
           <Layout.Section>
             <Box padding="800">
               <InlineStack align="center" blockAlign="center" gap="300">
-                <Spinner accessibilityLabel="Loading creator" size="large" />
+                <Spinner accessibilityLabel={t('detail.loading')} size="large" />
                 <Text as="span" tone="subdued">
-                  Loading creator profile…
+                  {t('detail.loading')}
                 </Text>
               </InlineStack>
             </Box>
@@ -200,10 +219,10 @@ export default function CreatorDetailPage({ localPreview = false }) {
           <Layout.Section>
             <BlockStack gap="400">
               <Button variant="plain" onClick={() => navigate('/')} className="crm-back-link">
-                ← Back to Dashboard
+                {t('detail.backToDashboard')}
               </Button>
-              <Banner tone="critical" title="Creator not found">
-                <p>{loadError || 'This creator record could not be loaded.'}</p>
+              <Banner tone="critical" title={t('detail.notFound')}>
+                <p>{loadError || t('detail.notFoundBody')}</p>
               </Banner>
             </BlockStack>
           </Layout.Section>
@@ -223,12 +242,12 @@ export default function CreatorDetailPage({ localPreview = false }) {
     handleBack();
   };
 
+  const detailPageClassName = `crm-page crm-detail-page${showFooter ? ' crm-detail-page--footer-visible' : ''}${isEditing ? ' crm-detail-page--editing' : ''}`;
+
   return (
     <>
-      <Page
-        fullWidth
-        className={`crm-page crm-detail-page${showFooter ? ' crm-detail-page--footer-visible' : ''}${isEditing ? ' crm-detail-page--editing' : ''}`}
-      >
+      <div className={detailPageClassName}>
+      <Page fullWidth>
         <Layout>
           <Layout.Section>
             <BlockStack gap="500" className="crm-detail-stack">
@@ -241,131 +260,157 @@ export default function CreatorDetailPage({ localPreview = false }) {
               ) : null}
 
               {error ? (
-                <Banner tone="critical" title="Unable to save changes">
+                <Banner tone="critical" title={t('detail.unableToSave')}>
                   <p>{error}</p>
                 </Banner>
               ) : null}
 
-              <CreatorProfileHeader
-                form={form}
-                ambassadorLevel={ambassadorLevel}
-                onBack={handleBack}
-                onStartEdit={() => setIsEditing(true)}
-                onDelete={() => setDeleteConfirmOpen(true)}
-                isEditing={isEditing}
-                saving={saving}
-                deleting={deleting}
-                metrics={
-                  isEditing ? null : (
-                    <CreatorDetailSummaryMetrics record={record} form={form} />
-                  )
-                }
-              />
+              <div className="crm-detail-page__nav">
+                <PageBackButton label={t('detail.backToCreators')} onClick={handleBack} />
+                <div className="crm-detail-page__nav-end">
+                  <LanguageSwitcher className="crm-language-switcher" />
+                  {!isEditing ? (
+                    <InlineStack gap="200" wrap={false} blockAlign="center">
+                      <Button
+                        tone="critical"
+                        onClick={() => setDeleteConfirmOpen(true)}
+                        disabled={saving || deleting}
+                      >
+                        {t('common.delete')}
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={() => setIsEditing(true)}
+                        disabled={saving || deleting}
+                      >
+                        {t('detail.editCreator')}
+                      </Button>
+                    </InlineStack>
+                  ) : null}
+                </div>
+              </div>
 
-              {isEditing ? (
-                <BlockStack gap="600" className="crm-detail-edit-stack">
-                  <CreatorProfilePanel
+              {!isEditing ? (
+                <section className="crm-detail-hero">
+                  <CreatorProfileHeader
                     form={form}
-                    record={record}
-                    onChange={setForm}
-                    editing
+                    ambassadorLevel={ambassadorLevel}
+                    onBack={handleBack}
+                    onStartEdit={() => setIsEditing(true)}
+                    onDelete={() => setDeleteConfirmOpen(true)}
+                    isEditing={isEditing}
+                    saving={saving}
+                    deleting={deleting}
+                    hideBack
+                    hideActions
+                    embeddedInHero
+                    metricsSlot={<CreatorDetailSummaryMetrics form={form} layout="hero-side" />}
                   />
-                  <CreatorNotesCard
-                    record={record}
-                    form={form}
-                    onChange={setForm}
-                    editing
-                  />
-                  <CreatorPlatformAccounts form={form} onChange={setForm} editing />
-                  <CreatorSponsorshipDetails form={form} onChange={setForm} editing />
-                  <CreatorMonthlyProgressSection
-                    periods={form.monthly_progress}
-                    onChange={(monthly_progress) =>
-                      setForm((current) => ({ ...current, monthly_progress }))
-                    }
-                    editing
-                  />
-                </BlockStack>
+                </section>
               ) : (
-                <Box className="crm-detail-layout crm-detail-layout--two-col">
-                  <BlockStack gap="400" className="crm-detail-column crm-detail-column--person">
-                    <CreatorProfilePanel
-                      form={form}
-                      record={record}
-                      onChange={setForm}
-                      editing={false}
-                    />
-                    <CreatorNotesCard
-                      record={record}
-                      form={form}
-                      onChange={setForm}
-                      editing={false}
-                    />
-                    <CreatorRecentActivity record={record} form={form} />
-                  </BlockStack>
-
-                  <BlockStack gap="400" className="crm-detail-column crm-detail-column--business">
-                    <CreatorPlatformAccounts form={form} onChange={setForm} editing={false} />
-                    <CreatorSponsorshipDetails form={form} onChange={setForm} editing={false} />
-                    <CreatorMonthlyProgressSection
-                      periods={form.monthly_progress}
-                      onChange={(monthly_progress) =>
-                        setForm((current) => ({ ...current, monthly_progress }))
-                      }
-                      editing={false}
-                    />
-                  </BlockStack>
-                </Box>
+                <CreatorProfileHeader
+                  form={form}
+                  ambassadorLevel={ambassadorLevel}
+                  onBack={handleBack}
+                  onStartEdit={() => setIsEditing(true)}
+                  onDelete={() => setDeleteConfirmOpen(true)}
+                  isEditing={isEditing}
+                  saving={saving}
+                  deleting={deleting}
+                  hideBack
+                />
               )}
+
+              <Box className="crm-detail-primary-content">
+                {isEditing ? (
+                  <CreatorDetailEditForm
+                    form={form}
+                    onChange={setForm}
+                    nameError={error && !form.name.trim() ? t('addCreator.nameRequired') : ''}
+                  />
+                ) : (
+                  <Box className="crm-detail-view-layout">
+                    <main className="crm-detail-view-layout__main">
+                      <CreatorPlatformAccounts form={form} onChange={setForm} editing={false} />
+                      <CreatorSponsorshipDetails form={form} onChange={setForm} editing={false} embedded />
+                      <CreatorMonthlyProgressSection
+                        periods={form.monthly_progress}
+                        onChange={(monthly_progress) => setForm((current) => ({ ...current, monthly_progress }))}
+                        editing={false}
+                        embedded
+                      />
+                    </main>
+                    <CreatorDetailSupportingSurface>
+                      <CreatorNotesCard record={record} form={form} onChange={setForm} editing={false} embedded />
+                      <CreatorProfilePanel
+                        form={form}
+                        record={record}
+                        onChange={setForm}
+                        editing={false}
+                        embedded
+                        onEditRequest={() => setIsEditing(true)}
+                      />
+                      <CreatorRecentActivity record={record} form={form} embedded />
+                    </CreatorDetailSupportingSurface>
+                  </Box>
+                )}
+              </Box>
             </BlockStack>
           </Layout.Section>
         </Layout>
 
         {showFooter ? (
           <Box className="crm-detail-footer">
-            <InlineStack align="end" blockAlign="center" wrap gap="400">
-              <InlineStack gap="300" wrap={false}>
-                <Button
-                  variant="secondary"
-                  className="crm-detail-footer__cancel"
-                  onClick={handleFooterCancel}
-                  disabled={deleting || saving}
-                >
-                  {isDirty ? 'Discard changes' : 'Cancel editing'}
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={handleSave}
-                  loading={saving}
-                  disabled={deleting || !isDirty}
-                >
-                  Save Changes
-                </Button>
-              </InlineStack>
+            {isDirty ? (
+              <p className="crm-detail-footer__hint">{t('detail.unsavedChangesHint')}</p>
+            ) : null}
+            <InlineStack gap="300" wrap={false}>
+              <Button
+                variant="secondary"
+                className="crm-detail-footer__cancel"
+                onClick={handleFooterCancel}
+                disabled={deleting || saving}
+              >
+                {isDirty ? t('detail.discardChangesBtn') : t('detail.cancelEditing')}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                loading={saving}
+                disabled={deleting || !isDirty}
+              >
+                {t('detail.saveChanges')}
+              </Button>
             </InlineStack>
           </Box>
         ) : null}
       </Page>
+      </div>
 
       <Modal
         open={leaveConfirmOpen}
         onClose={dismissLeaveConfirm}
-        title={leaveConfirmMode === 'back' ? 'Leave without saving?' : 'Discard unsaved changes?'}
+        title={
+          leaveConfirmMode === 'back' ? t('detail.leaveTitle') : t('detail.discardTitle')
+        }
         primaryAction={{
-          content: leaveConfirmMode === 'back' ? 'Leave without saving' : 'Discard changes',
+          content:
+            leaveConfirmMode === 'back'
+              ? t('detail.leaveWithoutSaving')
+              : t('detail.discardChanges'),
           onAction: handleConfirmLeave,
           destructive: true,
         }}
         secondaryActions={[
           {
-            content: 'Keep editing',
+            content: t('detail.keepEditing'),
             onAction: dismissLeaveConfirm,
           },
         ]}
       >
         <Modal.Section>
           <Text as="p" variant="bodyMd">
-            You have unsaved changes that will be lost if you leave this page.
+            {t('detail.leaveBody')}
           </Text>
         </Modal.Section>
       </Modal>
@@ -377,16 +422,16 @@ export default function CreatorDetailPage({ localPreview = false }) {
             setDeleteConfirmOpen(false);
           }
         }}
-        title="Delete creator?"
+        title={t('detail.deleteTitle')}
         primaryAction={{
-          content: 'Delete',
+          content: t('common.delete'),
           onAction: handleDeleteConfirm,
           loading: deleting,
           destructive: true,
         }}
         secondaryActions={[
           {
-            content: 'Cancel',
+            content: t('common.cancel'),
             onAction: () => setDeleteConfirmOpen(false),
             disabled: deleting,
           },
@@ -395,7 +440,7 @@ export default function CreatorDetailPage({ localPreview = false }) {
         <Modal.Section>
           <BlockStack gap="300">
             <Text as="p" variant="bodyMd">
-              Delete <strong>{record.name}</strong>? This action cannot be undone.
+              {t('detail.deleteBody', { name: record.name })}
             </Text>
           </BlockStack>
         </Modal.Section>

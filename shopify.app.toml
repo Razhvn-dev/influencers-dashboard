@@ -1,0 +1,22 @@
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "fda3a850e6079fde314a9f06466d4ed5"
+name = "Influencer Dashboard"
+application_url = "https://ejvhcshygemh.sealosbja.site"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "huang-mvqquz1p.myshopify.com"
+
+[webhooks]
+api_version = "2026-01"
+
+[access_scopes]
+scopes = "read_products,read_orders,read_customers"
+
+[auth]
+redirect_urls = [
+  "https://ejvhcshygemh.sealosbja.site/api/auth/callback",
+  "https://ejvhcshygemh.sealosbja.site/auth/callback",
+]

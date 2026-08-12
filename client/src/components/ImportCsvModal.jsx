@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Banner, BlockStack, Modal, Text } from '@shopify/polaris';
 import { importSponsorshipCsv } from '../api';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 export default function ImportCsvModal({ open, onClose, onImported }) {
+  const { t } = useTranslation();
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +25,7 @@ export default function ImportCsvModal({ open, onClose, onImported }) {
       onImported(result);
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to import CSV');
+      setError(err.message || t('importCsv.failedFallback'));
     } finally {
       setLoading(false);
     }
@@ -33,24 +35,23 @@ export default function ImportCsvModal({ open, onClose, onImported }) {
     <Modal
       open={open}
       onClose={onClose}
-      title="Import Sponsorship CSV"
+      title={t('importCsv.title')}
       primaryAction={{
-        content: loading ? 'Importing...' : 'Choose CSV File',
+        content: loading ? t('importCsv.importing') : t('importCsv.chooseFile'),
         onAction: () => document.getElementById('sponsorship-csv-input')?.click(),
         loading,
       }}
-      secondaryActions={[{ content: 'Cancel', onAction: onClose, disabled: loading }]}
+      secondaryActions={[{ content: t('common.cancel'), onAction: onClose, disabled: loading }]}
     >
       <Modal.Section>
         <BlockStack gap="300">
           {error ? (
-            <Banner tone="critical" title="Import failed">
+            <Banner tone="critical" title={t('importCsv.failed')}>
               <p>{error}</p>
             </Banner>
           ) : null}
           <Text as="p" variant="bodyMd">
-            Upload the same spreadsheet export your team uses today. Column order must
-            match the Sponsorship Progress Tracking sheet.
+            {t('importCsv.description')}
           </Text>
           <input
             id="sponsorship-csv-input"

@@ -4,13 +4,9 @@ import {
   Banner,
   BlockStack,
   Box,
-  Card,
-  EmptyState,
   IndexTable,
-  InlineStack,
   Modal,
   Page,
-  Pagination,
   Text,
   useIndexResourceState,
 } from '@shopify/polaris';
@@ -21,108 +17,72 @@ import {
   fetchSponsorshipStats,
 } from '../api';
 import {
-  creatorHandle,
-  formatCompactNumber,
-  formatFollowupDate,
-  formatLastContactLabel,
   getFollowupEmphasis,
 } from '../constants';
 import ImportCsvModal from '../components/ImportCsvModal';
-import DashboardFilterBar from '../components/DashboardFilterBar';
-import DashboardPageHeader from '../components/DashboardPageHeader';
-import LevelBadge from '../components/dashboard/LevelBadge';
-import ToolbarPopoverSelect from '../components/dashboard/ToolbarPopoverSelect';
-import CreatorTableAvatar from '../components/dashboard/CreatorTableAvatar';
-import StatusBadge from '../components/dashboard/StatusBadge';
-import PlatformIndicators from '../components/PlatformIndicators';
+import CreatorListContent from '../components/creator-list/CreatorListContent';
+import CreatorListEmptyState from '../components/creator-list/CreatorListEmptyState';
+import CreatorListHeader from '../components/creator-list/CreatorListHeader';
+import CreatorListPagination from '../components/creator-list/CreatorListPagination';
+import CreatorListResultsBar from '../components/creator-list/CreatorListResultsBar';
+import CreatorListToolbar from '../components/creator-list/CreatorListToolbar';
+import CreatorMobileCardList from '../components/creator-list/CreatorMobileCardList';
+import CreatorResourceRow from '../components/creator-list/CreatorResourceRow';
 import StatsCards from '../components/StatsCards';
 import { useAutoDismiss } from '../hooks/useAutoDismiss';
+import { useIndexTableColumnLayout } from '../hooks/useIndexTableColumnLayout.js';
+import { useTranslation } from '../i18n/LanguageContext.jsx';
 
-function VerifiedTimestampCell({ timestamp }) {
-  if (!timestamp) {
-    return <span className="crm-table-muted">—</span>;
-  }
+const SUCCESS_DISMISS_MS = 4000;
 
-  return <span className="crm-verified-primary">{formatLastContactLabel(timestamp)}</span>;
-}
-
-function LastContactCell({ timestamp }) {
-  if (!timestamp) {
-    return <span className="crm-table-muted">—</span>;
-  }
-
-  return <span className="crm-contact-primary">{formatLastContactLabel(timestamp)}</span>;
-}
-
-function FollowupCell({ record, followupEmphasis }) {
-  if (!record.next_followup_at || !followupEmphasis) {
-    return <span className="crm-table-muted">—</span>;
-  }
-
-  const dateLabel = formatFollowupDate(record.next_followup_at);
-
-  if (followupEmphasis.tone === 'critical') {
-    return (
-      <BlockStack gap="050">
-        <span className="crm-followup-overdue">{followupEmphasis.label}</span>
-        <span className="crm-date-secondary crm-followup-overdue-date">{dateLabel}</span>
-      </BlockStack>
-    );
-  }
-
-  if (followupEmphasis.tone === 'success') {
-    return (
-      <BlockStack gap="050">
-        <span className="crm-followup-positive">{followupEmphasis.label}</span>
-        <span className="crm-date-secondary">{dateLabel}</span>
-      </BlockStack>
-    );
-  }
-
-  if (followupEmphasis.tone === 'warning') {
-    return (
-      <BlockStack gap="050">
-        <span className="crm-followup-positive">{followupEmphasis.label}</span>
-        <span className="crm-date-secondary">{dateLabel}</span>
-      </BlockStack>
-    );
-  }
-
+function filtersEqual(left, right) {
   return (
-    <BlockStack gap="050">
-      <span className="crm-contact-primary">{dateLabel}</span>
-    </BlockStack>
+    left.search === right.search &&
+    left.status === right.status &&
+    left.ambassador_level === right.ambassador_level &&
+    left.platform === right.platform &&
+    left.commission === right.commission &&
+    left.due_followup === right.due_followup &&
+    left.sort_by === right.sort_by &&
+    left.sort_dir === right.sort_dir
   );
 }
 
-const SUCCESS_DISMISS_MS = 4000;
-const resourceName = { singular: 'creator', plural: 'creators' };
-const PAGE_SIZE_OPTIONS = [
-  { label: '10 per page', value: '10' },
-  { label: '20 per page', value: '20' },
-  { label: '50 per page', value: '50' },
-];
-
 const SORTABLE_COLUMNS = [
   'name',
+  null,
+  'total_followers',
   'status',
   'ambassador_level',
   null,
-  'total_followers',
-  'followers_last_verified_at',
-  'last_contacted_at',
   'next_followup_at',
 ];
 
 export default function DashboardPage({ localPreview = false }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
+  const resourceName = useMemo(
+    () => ({ singular: t('common.creator'), plural: t('common.creators') }),
+    [t]
+  );
+  const pageSizeOptions = useMemo(
+    () => [
+      { label: t('dashboard.pageSize10'), value: '10' },
+      { label: t('dashboard.pageSize20'), value: '20' },
+      { label: t('dashboard.pageSize50'), value: '50' },
+    ],
+    [t]
+  );
   const [records, setRecords] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [statsLoading, setStatsLoading] = useState(true);
   const hasLoadedRecordsRef = useRef(false);
+  const recordsRequestIdRef = useRef(0);
+  const tableContainerRef = useRef(null);
+  const [recordsError, setRecordsError] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [search, setSearch] = useState('');
@@ -168,11 +128,20 @@ export default function DashboardPage({ localPreview = false }) {
     return displayRecords.slice(start, start + pageSize);
   }, [displayRecords, page, pageSize]);
 
+  useIndexTableColumnLayout(tableContainerRef, !loading && displayRecords.length > 0);
+
   const paginationLabel =
     displayRecords.length === 0
-      ? 'Showing 0 creators'
-      : `Showing ${(page - 1) * pageSize + 1} to ${Math.min(page * pageSize, displayRecords.length)} of ${displayRecords.length} creators`;
-  const resultSummary = `${displayRecords.length.toLocaleString('en-US')} creator${displayRecords.length === 1 ? '' : 's'} found`;
+      ? t('dashboard.showingZero')
+      : t('dashboard.showing', {
+          from: (page - 1) * pageSize + 1,
+          to: Math.min(page * pageSize, displayRecords.length),
+          total: displayRecords.length,
+        });
+  const resultSummary =
+    displayRecords.length === 1
+      ? t('dashboard.creatorsFound', { count: displayRecords.length })
+      : t('dashboard.creatorsFoundPlural', { count: displayRecords.length });
 
   const currentFilterState = useMemo(
     () => ({
@@ -222,6 +191,7 @@ export default function DashboardPage({ localPreview = false }) {
   const apiFilters = appliedFilters;
 
   const loadRecords = useCallback(async () => {
+    const requestId = recordsRequestIdRef.current += 1;
     const isInitialLoad = !hasLoadedRecordsRef.current;
 
     if (isInitialLoad) {
@@ -230,16 +200,23 @@ export default function DashboardPage({ localPreview = false }) {
       setRefreshing(true);
     }
 
-    setError('');
+    setRecordsError('');
 
     try {
       const data = await fetchSponsorshipRecords(apiFilters);
+      if (requestId !== recordsRequestIdRef.current) return;
+
       setRecords(data);
       setRecordsFilters(apiFilters);
+      setRecordsError('');
       hasLoadedRecordsRef.current = true;
     } catch (err) {
-      setError(err.message || 'Failed to load creator records');
+      if (requestId !== recordsRequestIdRef.current) return;
+
+      setRecordsError(err.message || 'Failed to load creator records');
     } finally {
+      if (requestId !== recordsRequestIdRef.current) return;
+
       setLoading(false);
       setRefreshing(false);
     }
@@ -255,24 +232,30 @@ export default function DashboardPage({ localPreview = false }) {
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setAppliedFilters((current) => ({
-        ...current,
-        search: search.trim(),
-      }));
+      setAppliedFilters((current) => {
+        const next = {
+          ...current,
+          search: search.trim(),
+        };
+        return filtersEqual(current, next) ? current : next;
+      });
     }, 350);
 
     return () => window.clearTimeout(timer);
   }, [search]);
 
   useEffect(() => {
-    setAppliedFilters((current) => ({
-      ...current,
-      status: statusFilter,
-      ambassador_level: levelFilter,
-      platform: platformFilter,
-      commission: commissionFilter,
-      due_followup: dueFollowupFilter,
-    }));
+    setAppliedFilters((current) => {
+      const next = {
+        ...current,
+        status: statusFilter,
+        ambassador_level: levelFilter,
+        platform: platformFilter,
+        commission: commissionFilter,
+        due_followup: dueFollowupFilter,
+      };
+      return filtersEqual(current, next) ? current : next;
+    });
   }, [statusFilter, levelFilter, platformFilter, commissionFilter, dueFollowupFilter]);
 
   useEffect(() => {
@@ -325,6 +308,18 @@ export default function DashboardPage({ localPreview = false }) {
     setPlatformFilter('');
     setDueFollowupFilter('');
   };
+
+  const handleKpiClick = useCallback((filterKey, filterValue) => {
+    if (filterKey !== 'due_followup') {
+      return;
+    }
+
+    setDueFollowupFilter(filterValue);
+    setPage(1);
+    window.requestAnimationFrame(() => {
+      tableContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
 
   const hasActiveFilters =
     search.trim() ||
@@ -388,60 +383,30 @@ export default function DashboardPage({ localPreview = false }) {
     const followupEmphasis = getFollowupEmphasis(record.next_followup_at);
 
     return (
-      <IndexTable.Row
-        id={String(record.id)}
+      <CreatorResourceRow
         key={record.id}
         position={index}
+        record={record}
         selected={selectedResources.includes(String(record.id))}
-        onClick={() => navigate(`/creators/${record.id}`)}
-      >
-        <IndexTable.Cell className="crm-creator-table__creator-cell">
-          <div className="crm-v2-creator-stack">
-            <CreatorTableAvatar record={record} />
-            <div className="crm-v2-creator-text">
-              <span className="crm-v2-creator-name">{record.name}</span>
-              <span className="crm-v2-creator-handle">{creatorHandle(record)}</span>
-            </div>
-          </div>
-        </IndexTable.Cell>
-        <IndexTable.Cell className="crm-v2-table__status-cell">
-          <StatusBadge status={record.status} />
-        </IndexTable.Cell>
-        <IndexTable.Cell className="crm-v2-table__level-cell">
-          <LevelBadge level={record.ambassador_level} />
-        </IndexTable.Cell>
-        <IndexTable.Cell className="crm-v2-table__platform-cell">
-          <PlatformIndicators record={record} showEmpty size="table" />
-        </IndexTable.Cell>
-        <IndexTable.Cell className="crm-v2-table__followers-cell">
-          <Text as="span" className="crm-v2-followers-value">
-            {formatCompactNumber(record.total_followers)}
-          </Text>
-        </IndexTable.Cell>
-        <IndexTable.Cell className="crm-v2-table__verified-cell">
-          <VerifiedTimestampCell timestamp={record.followers_last_verified_at} />
-        </IndexTable.Cell>
-        <IndexTable.Cell className="crm-v2-table__contact-cell">
-          <LastContactCell timestamp={record.last_contacted_at} />
-        </IndexTable.Cell>
-        <IndexTable.Cell className="crm-v2-table__followup-cell">
-          <FollowupCell record={record} followupEmphasis={followupEmphasis} />
-        </IndexTable.Cell>
-      </IndexTable.Row>
+        onNavigate={() => navigate(`/creators/${record.id}`)}
+        followupEmphasis={followupEmphasis}
+      />
     );
   });
 
   return (
     <Page fullWidth className="crm-page crm-dashboard-v2">
-      <Box className="crm-dashboard-v2__shell">
+      <Box className="crm-dashboard-v2__shell crm-dashboard-v2">
         <Box className="crm-dashboard-v2__container">
-          <BlockStack gap="600">
-          <DashboardPageHeader
+          <BlockStack gap="500">
+          <CreatorListHeader
             search={search}
             onSearchChange={setSearch}
             onExport={handleExport}
             exportDisabled={records.length === 0}
             onAddCreator={() => navigate('/creators/new')}
+            onRefresh={refreshDashboard}
+            refreshing={refreshing || loading || statsLoading}
           />
 
           {success ? (
@@ -450,16 +415,19 @@ export default function DashboardPage({ localPreview = false }) {
             </Banner>
           ) : null}
 
-          {error ? (
-            <Banner tone="critical" title="Something went wrong">
-              <p>{error}</p>
+          {recordsError || error ? (
+            <Banner tone="critical" title={t('dashboard.somethingWrong')}>
+              <p>{recordsError || error}</p>
             </Banner>
           ) : null}
 
-          <StatsCards stats={stats} loading={statsLoading} />
+          <section className="crm-creator-list__overview" aria-label={t('creatorList.overview')}>
+            <StatsCards stats={stats} loading={statsLoading} onKpiClick={handleKpiClick} />
+          </section>
 
-          <DashboardFilterBar
+          <CreatorListToolbar
             search={search}
+            onSearchChange={setSearch}
             statusFilter={statusFilter}
             onStatusFilterChange={setStatusFilter}
             levelFilter={levelFilter}
@@ -470,31 +438,39 @@ export default function DashboardPage({ localPreview = false }) {
             onDueFollowupFilterChange={setDueFollowupFilter}
             commissionFilter={commissionFilter}
             onCommissionFilterChange={setCommissionFilter}
-            hasActiveFilters={hasActiveFilters}
-            onClearFilters={clearFilters}
-            resultSummary={resultSummary}
-            resultsPending={loading || refreshing || !recordsMatchFilters}
-            refreshing={refreshing}
           />
 
-          <Card
-            padding="0"
-            className={`crm-v2-table${refreshing ? ' crm-v2-table--refreshing' : ''}`}
-          >
+          <CreatorListContent itemCount={displayRecords.length}>
+            <Box
+              ref={tableContainerRef}
+              className={`crm-v2-table${refreshing ? ' crm-v2-table--refreshing' : ''}`}
+            >
+            <CreatorListResultsBar
+              resultSummary={resultSummary}
+              resultsPending={loading || refreshing}
+              refreshing={refreshing}
+              hasActiveFilters={hasActiveFilters}
+              onClearFilters={clearFilters}
+              search={search}
+              statusFilter={statusFilter}
+              levelFilter={levelFilter}
+              platformFilter={platformFilter}
+              dueFollowupFilter={dueFollowupFilter}
+              commissionFilter={commissionFilter}
+            />
             <IndexTable
               resourceName={resourceName}
               itemCount={displayRecords.length}
               headings={[
-                { title: 'Creator' },
-                { title: 'Status' },
-                { title: 'Ambassador Level' },
-                { title: 'Platforms' },
-                { title: 'Followers' },
-                { title: 'Last Verified' },
-                { title: 'Last Contact' },
-                { title: 'Next Follow-up' },
+                { title: t('dashboard.columns.creator') },
+                { title: t('dashboard.columns.platforms') },
+                { title: t('dashboard.columns.followers') },
+                { title: t('dashboard.columns.status') },
+                { title: t('dashboard.columns.level') },
+                { title: t('dashboard.columns.activity') },
+                { title: t('dashboard.columns.nextFollowup') },
               ]}
-              sortable={[true, true, true, false, true, true, true, true]}
+              sortable={[true, false, true, true, true, false, true]}
               sortDirection={sortDirection}
               sortColumnIndex={sortColumnIndex}
               onSort={handleSort}
@@ -504,72 +480,73 @@ export default function DashboardPage({ localPreview = false }) {
               onSelectionChange={handleSelectionChange}
               promotedBulkActions={[
                 {
-                  content: 'Delete selected',
+                  content: t('dashboard.deleteSelected'),
                   onAction: () => setBulkDeleteOpen(true),
                   destructive: true,
                 },
               ]}
               emptyState={
-                hasActiveFilters && !loading ? (
-                  <EmptyState
-                    heading="No creators match your filters"
-                    image=""
-                    action={{
-                      content: 'Clear filters',
-                      onAction: clearFilters,
-                    }}
-                  >
-                    <p>Try adjusting or clearing your filters to see more creators.</p>
-                  </EmptyState>
-                ) : (
-                  <EmptyState
-                    heading="No creators yet"
-                    image=""
-                    action={{
-                      content: 'Import CSV',
-                      onAction: () => setImportModalOpen(true),
-                    }}
-                    secondaryAction={{
-                      content: 'Add Creator',
-                      onAction: () => navigate('/creators/new'),
-                    }}
-                  >
-                    <p>Import the team spreadsheet or add the first creator manually.</p>
-                  </EmptyState>
-                )
+                <CreatorListEmptyState
+                  hasActiveFilters={hasActiveFilters && !loading}
+                  onClearFilters={clearFilters}
+                  onAddCreator={() => navigate('/creators/new')}
+                  onImport={() => setImportModalOpen(true)}
+                />
               }
             >
               {rowMarkup}
             </IndexTable>
             {displayRecords.length > 0 ? (
-              <Box className="crm-v2-table__footer">
-                <InlineStack align="space-between" blockAlign="center" wrap gap="400">
-                  <Text as="p" tone="subdued" variant="bodySm">
-                    {paginationLabel}
-                  </Text>
-                  <Pagination
-                    hasPrevious={page > 1}
-                    onPrevious={() => setPage((current) => Math.max(1, current - 1))}
-                    hasNext={page < totalPages}
-                    onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
-                  />
-                  <Box className="crm-v2-table__page-size">
-                    <ToolbarPopoverSelect
-                      label="Per page"
-                      labelHidden
-                      compact
-                      options={PAGE_SIZE_OPTIONS}
-                      value={String(pageSize)}
-                      onChange={(value) => {
-                        setPageSize(Number(value));
-                        setPage(1);
-                      }}
-                    />
-                  </Box>
-                </InlineStack>
-              </Box>
+              <CreatorListPagination
+                className="crm-creator-list__pagination--desktop"
+                paginationLabel={paginationLabel}
+                page={page}
+                totalPages={totalPages}
+                onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+                onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+                pageSize={pageSize}
+                pageSizeOptions={pageSizeOptions}
+                onPageSizeChange={(value) => {
+                  setPageSize(Number(value));
+                  setPage(1);
+                }}
+                perPageLabel={t('dashboard.perPage')}
+              />
             ) : null}
-          </Card>
+            </Box>
+            <div className="crm-creator-list__mobile-content">
+              {displayRecords.length > 0 ? (
+                <>
+                  <CreatorMobileCardList
+                    records={paginatedRecords}
+                    onNavigate={(record) => navigate(`/creators/${record.id}`)}
+                  />
+                  <CreatorListPagination
+                    className="crm-creator-list__pagination--mobile"
+                    paginationLabel={paginationLabel}
+                    page={page}
+                    totalPages={totalPages}
+                    onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+                    onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+                    pageSize={pageSize}
+                    pageSizeOptions={pageSizeOptions}
+                    onPageSizeChange={(value) => {
+                      setPageSize(Number(value));
+                      setPage(1);
+                    }}
+                    perPageLabel={t('dashboard.perPage')}
+                  />
+                </>
+              ) : !loading ? (
+                <CreatorListEmptyState
+                  hasActiveFilters={hasActiveFilters}
+                  onClearFilters={clearFilters}
+                  onAddCreator={() => navigate('/creators/new')}
+                  onImport={() => setImportModalOpen(true)}
+                />
+              ) : null}
+            </div>
+          </CreatorListContent>
           </BlockStack>
         </Box>
       </Box>
@@ -587,16 +564,16 @@ export default function DashboardPage({ localPreview = false }) {
             setBulkDeleteOpen(false);
           }
         }}
-        title="Delete selected creators?"
+        title={t('dashboard.deleteSelectedTitle')}
         primaryAction={{
-          content: 'Delete',
+          content: t('common.delete'),
           onAction: handleBulkDeleteConfirm,
           loading: bulkDeleting,
           destructive: true,
         }}
         secondaryActions={[
           {
-            content: 'Cancel',
+            content: t('common.cancel'),
             onAction: () => setBulkDeleteOpen(false),
             disabled: bulkDeleting,
           },
@@ -604,8 +581,13 @@ export default function DashboardPage({ localPreview = false }) {
       >
         <Modal.Section>
           <Text as="p" variant="bodyMd">
-            Delete {selectedItemsCount === 'All' ? 'all' : selectedItemsCount}{' '}
-            {selectedItemsCount === 1 ? 'creator' : 'creators'}? This action cannot be undone.
+            {t('dashboard.deleteConfirm', {
+              count: selectedItemsCount === 'All' ? t('common.all') : selectedItemsCount,
+              unit:
+                selectedItemsCount === 1 || selectedItemsCount === 'All'
+                  ? t('common.creator')
+                  : t('common.creators'),
+            })}
           </Text>
         </Modal.Section>
       </Modal>

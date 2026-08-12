@@ -1,6 +1,8 @@
 import { displayAmbassadorLevel, getAmbassadorLevelClass } from '../../constants';
+import { translateLevel, useTranslation } from '../../i18n/LanguageContext.jsx';
 
 export default function LevelBadge({ level }) {
+  const { t } = useTranslation();
   const label = displayAmbassadorLevel(level);
 
   if (label === '—') {
@@ -9,7 +11,7 @@ export default function LevelBadge({ level }) {
 
   return (
     <span className={`crm-level-pill crm-v2-table-level-badge ${getAmbassadorLevelClass(level)}`}>
-      {label}
+      {translateLevel(t, label)}
     </span>
   );
 }

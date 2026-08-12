@@ -38,7 +38,7 @@ const shopify = shopifyApp({
       .filter(Boolean),
     hostName: getHostName(),
     hostScheme: getHostScheme(),
-    apiVersion: ApiVersion.October24,
+    apiVersion: ApiVersion.January26,
     isEmbeddedApp: true,
   },
   auth: {

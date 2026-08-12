@@ -13,6 +13,7 @@ const {
   normalizeProfilePayload,
 } = require('../lib/creatorProfile');
 const { applyFollowerVerification } = require('../lib/followerVerification');
+const { getCached, invalidateShop } = require('../lib/shopCache');
 const {
   buildAmbassadorLevelOrderClause,
   enrichInfluencerRecord,
@@ -57,6 +58,42 @@ const INFLUENCER_ROW_SELECT = `
   i.updated_at
 `;
 
+const INFLUENCER_RETURNING_COLUMNS = `
+  id,
+  name,
+  channel,
+  sponsored_products,
+  affiliate_code,
+  commission,
+  order_numbers,
+  required_deliverables,
+  email,
+  region,
+  status,
+  notes,
+  youtube_url,
+  facebook_url,
+  instagram_url,
+  tiktok_url,
+  youtube_followers,
+  facebook_followers,
+  instagram_followers,
+  tiktok_followers,
+  total_followers,
+  ambassador_level,
+  contract_status,
+  last_contacted_at,
+  next_followup_at,
+  followers_last_verified_at,
+  followers_verified_by,
+  niche_category,
+  bio,
+  tags,
+  manager_owner,
+  created_at,
+  updated_at
+`;
+
 const SORT_COLUMNS = {
   name: 'i.name',
   channel: 'i.channel',
@@ -79,7 +116,15 @@ const PLATFORM_URL_COLUMNS = {
 };
 
 function getShop(res) {
-  return res.locals.shopify.session.shop;
+  const shop = res.locals?.shopify?.session?.shop;
+
+  if (!shop) {
+    const error = new Error('Missing shop session. Please refresh the page and try again.');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  return shop;
 }
 
 function buildOrderClause(query) {
@@ -251,8 +296,8 @@ function buildRecordPayload(body, existing = {}) {
   };
 }
 
-async function fetchMonthlyProgress(influencerId, shop) {
-  const result = await pool.query(
+async function fetchMonthlyProgress(influencerId, shop, client = pool) {
+  const result = await client.query(
     `
       SELECT period_index, monthly_check_in, content_delivered, link
       FROM influencer_monthly_progress
@@ -269,8 +314,46 @@ async function fetchMonthlyProgress(influencerId, shop) {
   return normalizeMonthlyProgress(result.rows);
 }
 
-async function fetchInfluencerRecord(id, shop) {
-  const result = await pool.query(
+function groupMonthlyProgressRows(rows) {
+  const grouped = new Map();
+
+  for (const row of rows) {
+    const influencerId = String(row.influencer_id);
+    if (!grouped.has(influencerId)) {
+      grouped.set(influencerId, []);
+    }
+    grouped.get(influencerId).push(row);
+  }
+
+  return grouped;
+}
+
+async function fetchMonthlyProgressForIds(influencerIds, shop, client = pool) {
+  if (!influencerIds.length) {
+    return new Map();
+  }
+
+  const result = await client.query(
+    `
+      SELECT influencer_id, period_index, monthly_check_in, content_delivered, link
+      FROM influencer_monthly_progress
+      WHERE shop = $1 AND influencer_id = ANY($2::bigint[])
+      ORDER BY influencer_id ASC, period_index ASC
+    `,
+    [shop, influencerIds]
+  );
+
+  return groupMonthlyProgressRows(result.rows);
+}
+
+function composeEnrichedRecord(row, monthlyProgress) {
+  const record = enrichInfluencerRecord(row);
+  record.monthly_progress = monthlyProgress;
+  return record;
+}
+
+async function fetchInfluencerRow(id, shop, client = pool) {
+  const result = await client.query(
     `
       SELECT ${INFLUENCER_ROW_SELECT.replace(/\s+/g, ' ').trim()}
       FROM influencers i
@@ -283,101 +366,187 @@ async function fetchInfluencerRecord(id, shop) {
     return null;
   }
 
-  const record = enrichInfluencerRecord(result.rows[0]);
-  record.monthly_progress = await fetchMonthlyProgress(id, shop);
-  return record;
+  return result.rows[0];
+}
+
+async function fetchInfluencerRecord(id, shop) {
+  const [row, progressResult] = await Promise.all([
+    fetchInfluencerRow(id, shop),
+    pool.query(
+      `
+        SELECT period_index, monthly_check_in, content_delivered, link
+        FROM influencer_monthly_progress
+        WHERE influencer_id = $1 AND shop = $2
+        ORDER BY period_index ASC
+      `,
+      [id, shop]
+    ),
+  ]);
+
+  if (!row) {
+    return null;
+  }
+
+  const monthlyProgress =
+    progressResult.rowCount === 0
+      ? emptyMonthlyProgress()
+      : normalizeMonthlyProgress(progressResult.rows);
+
+  return composeEnrichedRecord(row, monthlyProgress);
+}
+
+async function fetchInfluencerRecordsForExport(shop, conditions, values, orderClause) {
+  const result = await pool.query(
+    `
+      SELECT ${INFLUENCER_ROW_SELECT.replace(/\s+/g, ' ').trim()}
+      FROM influencers i
+      WHERE ${conditions.join(' AND ')}
+      ${orderClause}
+    `,
+    values
+  );
+
+  if (result.rowCount === 0) {
+    return [];
+  }
+
+  const influencerIds = result.rows.map((row) => row.id);
+  const progressById = await fetchMonthlyProgressForIds(influencerIds, shop);
+
+  return result.rows.map((row) => {
+    const progressRows = progressById.get(String(row.id)) || [];
+    const monthlyProgress =
+      progressRows.length === 0
+        ? emptyMonthlyProgress()
+        : normalizeMonthlyProgress(progressRows);
+
+    return composeEnrichedRecord(row, monthlyProgress);
+  });
 }
 
 async function saveMonthlyProgress(client, influencerId, shop, monthlyProgress) {
-  await client.query(
-    'DELETE FROM influencer_monthly_progress WHERE influencer_id = $1 AND shop = $2',
-    [influencerId, shop]
-  );
+  const toUpsert = [];
+  const toDelete = [];
 
   for (const period of monthlyProgress) {
     const hasValues =
       period.monthly_check_in || period.content_delivered || period.link;
 
-    if (!hasValues) {
-      continue;
+    if (hasValues) {
+      toUpsert.push(period);
+    } else {
+      toDelete.push(period.period_index);
     }
+  }
 
+  if (toDelete.length) {
     await client.query(
       `
-        INSERT INTO influencer_monthly_progress (
-          influencer_id,
-          shop,
-          period_index,
-          monthly_check_in,
-          content_delivered,
-          link
-        )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        DELETE FROM influencer_monthly_progress
+        WHERE influencer_id = $1 AND shop = $2 AND period_index = ANY($3::int[])
       `,
-      [
-        influencerId,
-        shop,
-        period.period_index,
-        period.monthly_check_in,
-        period.content_delivered,
-        period.link,
-      ]
+      [influencerId, shop, toDelete]
     );
   }
+
+  if (!toUpsert.length) {
+    return;
+  }
+
+  const values = [];
+  const placeholders = [];
+
+  for (let index = 0; index < toUpsert.length; index += 1) {
+    const period = toUpsert[index];
+    const offset = index * 6;
+    placeholders.push(
+      `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`
+    );
+    values.push(
+      influencerId,
+      shop,
+      period.period_index,
+      period.monthly_check_in,
+      period.content_delivered,
+      period.link
+    );
+  }
+
+  await client.query(
+    `
+      INSERT INTO influencer_monthly_progress (
+        influencer_id,
+        shop,
+        period_index,
+        monthly_check_in,
+        content_delivered,
+        link
+      )
+      VALUES ${placeholders.join(', ')}
+      ON CONFLICT (influencer_id, period_index)
+      DO UPDATE SET
+        shop = EXCLUDED.shop,
+        monthly_check_in = EXCLUDED.monthly_check_in,
+        content_delivered = EXCLUDED.content_delivered,
+        link = EXCLUDED.link
+    `,
+    values
+  );
 }
 
 router.get('/stats/summary', async (req, res) => {
   try {
     const shop = getShop(res);
-    const result = await pool.query(
-      `
-        SELECT
-          COUNT(*)::INT AS total,
-          COUNT(*) FILTER (
-            WHERE status IN ('Active Ambassador', 'Partnered')
-          )::INT AS partnered,
-          COUNT(*) FILTER (
-            WHERE status IN ('Applied', 'Contacted', 'Call Scheduled', 'Under Review')
-          )::INT AS in_discussion,
-          COUNT(*) FILTER (
-            WHERE status IN ('Active Ambassador', 'Partnered', 'Approved')
-          )::INT AS contract_signed,
-          COUNT(*) FILTER (
-            WHERE total_followers >= 100000
-          )::INT AS elevated_levels,
-          COUNT(*) FILTER (
-            WHERE next_followup_at IS NOT NULL
-              AND next_followup_at < NOW()
-          )::INT AS followups_overdue,
-          COUNT(*) FILTER (
-            WHERE next_followup_at IS NOT NULL
-              AND next_followup_at >= NOW()
-              AND next_followup_at <= NOW() + INTERVAL '7 days'
-          )::INT AS followups_due_7d,
-          COUNT(*) FILTER (
-            WHERE affiliate_code IS NOT NULL AND affiliate_code <> ''
-          )::INT AS with_affiliate_code,
-          COUNT(*) FILTER (WHERE commission = 'YES')::INT AS with_commission,
-          COUNT(*) FILTER (
-            WHERE EXISTS (
-              SELECT 1
+    const data = await getCached(`${shop}:stats`, 30_000, async () => {
+      const result = await pool.query(
+        `
+          SELECT
+            COUNT(*)::INT AS total,
+            COUNT(*) FILTER (
+              WHERE status IN ('Active Ambassador', 'Partnered')
+            )::INT AS partnered,
+            COUNT(*) FILTER (
+              WHERE status IN ('Applied', 'Contacted', 'Call Scheduled', 'Under Review')
+            )::INT AS in_discussion,
+            COUNT(*) FILTER (
+              WHERE status IN ('Active Ambassador', 'Partnered', 'Approved')
+            )::INT AS contract_signed,
+            COUNT(*) FILTER (
+              WHERE total_followers >= 100000
+            )::INT AS elevated_levels,
+            COUNT(*) FILTER (
+              WHERE next_followup_at IS NOT NULL
+                AND next_followup_at < NOW()
+            )::INT AS followups_overdue,
+            COUNT(*) FILTER (
+              WHERE next_followup_at IS NOT NULL
+                AND next_followup_at >= NOW()
+                AND next_followup_at <= NOW() + INTERVAL '7 days'
+            )::INT AS followups_due_7d,
+            COUNT(*) FILTER (
+              WHERE affiliate_code IS NOT NULL AND affiliate_code <> ''
+            )::INT AS with_affiliate_code,
+            COUNT(*) FILTER (WHERE commission = 'YES')::INT AS with_commission,
+            (
+              SELECT COUNT(DISTINCT mp.influencer_id)::INT
               FROM influencer_monthly_progress mp
-              WHERE mp.influencer_id = influencers.id
-                AND mp.shop = influencers.shop
+              WHERE mp.shop = $1
                 AND (
                   mp.content_delivered IS NOT NULL
                   OR mp.link IS NOT NULL
                 )
-            )
-          )::INT AS with_content_logged,
-          COALESCE(SUM(total_followers), 0)::BIGINT AS total_followers_sum
-        FROM influencers
-        WHERE shop = $1
-      `,
-      [shop]
-    );
+            ) AS with_content_logged,
+            COALESCE(SUM(total_followers), 0)::BIGINT AS total_followers_sum
+          FROM influencers
+          WHERE shop = $1
+        `,
+        [shop]
+      );
 
-    res.json({ success: true, data: result.rows[0] });
+      return result.rows[0];
+    });
+
+    res.json({ success: true, data });
   } catch (err) {
     console.error('Failed to fetch influencer stats:', err.message);
     res.status(500).json({
@@ -403,12 +572,7 @@ router.get('/', async (req, res) => {
       values
     );
 
-    const records = await Promise.all(
-      result.rows.map(async (row) => {
-        row.monthly_progress = await fetchMonthlyProgress(row.id, shop);
-        return enrichInfluencerRecord(row);
-      })
-    );
+    const records = result.rows.map((row) => enrichInfluencerRecord(row));
 
     res.json({
       success: true,
@@ -430,18 +594,11 @@ router.get('/export/xlsx', async (req, res) => {
     const { conditions, values } = buildListFilters(shop, req.query);
     const orderClause = buildOrderClause(req.query);
 
-    const result = await pool.query(
-      `
-        SELECT id
-        FROM influencers i
-        WHERE ${conditions.join(' AND ')}
-        ${orderClause}
-      `,
-      values
-    );
-
-    const records = await Promise.all(
-      result.rows.map((row) => fetchInfluencerRecord(row.id, shop))
+    const records = await fetchInfluencerRecordsForExport(
+      shop,
+      conditions,
+      values,
+      orderClause
     );
 
     const buffer = await exportInfluencersXlsx(records);
@@ -467,18 +624,11 @@ router.get('/export/csv', async (req, res) => {
     const { conditions, values } = buildListFilters(shop, req.query);
     const orderClause = buildOrderClause(req.query);
 
-    const result = await pool.query(
-      `
-        SELECT id
-        FROM influencers i
-        WHERE ${conditions.join(' AND ')}
-        ${orderClause}
-      `,
-      values
-    );
-
-    const records = await Promise.all(
-      result.rows.map((row) => fetchInfluencerRecord(row.id, shop))
+    const records = await fetchInfluencerRecordsForExport(
+      shop,
+      conditions,
+      values,
+      orderClause
     );
 
     const useSpreadsheetFormat = req.query.format === 'spreadsheet';
@@ -579,6 +729,7 @@ router.post('/import-csv', async (req, res) => {
     }
 
     await client.query('COMMIT');
+    invalidateShop(shop);
 
     res.json({
       success: true,
@@ -627,6 +778,7 @@ router.post('/bulk-delete', async (req, res) => {
     );
 
     console.log(`Bulk deleted ${result.rowCount} record(s), shop=${shop}`);
+    invalidateShop(shop);
 
     res.json({
       success: true,
@@ -719,7 +871,7 @@ router.post('/', async (req, res) => {
           manager_owner
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
-        RETURNING id
+        RETURNING ${INFLUENCER_RETURNING_COLUMNS.replace(/\s+/g, ' ').trim()}
       `,
       [shop, ...rowValues]
     );
@@ -727,8 +879,9 @@ router.post('/', async (req, res) => {
     const influencerId = result.rows[0].id;
     await saveMonthlyProgress(client, influencerId, shop, payload.monthly_progress);
     await client.query('COMMIT');
+    invalidateShop(shop);
 
-    const record = await fetchInfluencerRecord(influencerId, shop);
+    const record = composeEnrichedRecord(result.rows[0], payload.monthly_progress);
 
     console.log(`Sponsorship record created: id=${influencerId}, shop=${shop}`);
 
@@ -764,14 +917,20 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    const existing = await fetchInfluencerRecord(id, shop);
+    const existingRow = await fetchInfluencerRow(id, shop);
 
-    if (!existing) {
+    if (!existingRow) {
       return res.status(404).json({
         success: false,
         message: 'Sponsorship record not found',
       });
     }
+
+    const existingMonthlyProgress =
+      req.body.monthly_progress === undefined
+        ? await fetchMonthlyProgress(id, shop)
+        : normalizeMonthlyProgress(req.body.monthly_progress);
+    const existing = composeEnrichedRecord(existingRow, existingMonthlyProgress);
 
     const payload = applyFollowerVerification(
       existing,
@@ -782,7 +941,7 @@ router.put('/:id', async (req, res) => {
 
     await client.query('BEGIN');
 
-    await client.query(
+    const updateResult = await client.query(
       `
         UPDATE influencers
         SET
@@ -818,14 +977,24 @@ router.put('/:id', async (req, res) => {
           manager_owner = $30,
           updated_at = NOW()
         WHERE id = $31 AND shop = $32
+        RETURNING ${INFLUENCER_RETURNING_COLUMNS.replace(/\s+/g, ' ').trim()}
       `,
       [...rowValues, id, shop]
     );
 
+    if (updateResult.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        success: false,
+        message: 'Sponsorship record not found',
+      });
+    }
+
     await saveMonthlyProgress(client, id, shop, payload.monthly_progress);
     await client.query('COMMIT');
+    invalidateShop(shop);
 
-    const record = await fetchInfluencerRecord(id, shop);
+    const record = composeEnrichedRecord(updateResult.rows[0], payload.monthly_progress);
 
     console.log(`Sponsorship record updated: id=${id}, shop=${shop}`);
 
@@ -835,7 +1004,11 @@ router.put('/:id', async (req, res) => {
       data: record,
     });
   } catch (err) {
-    await client.query('ROLLBACK');
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      // Transaction may not have started.
+    }
     console.error('Failed to update sponsorship record:', err.message);
 
     res.status(err.statusCode || 500).json({
@@ -872,6 +1045,7 @@ router.delete('/:id', async (req, res) => {
     }
 
     console.log(`Sponsorship record deleted: id=${id}, shop=${shop}`);
+    invalidateShop(shop);
 
     res.json({
       success: true,
