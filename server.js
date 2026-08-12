@@ -1,7 +1,13 @@
 require('dotenv').config();
 const express = require('express');
+const net = require('net');
 const path = require('path');
 const fs = require('fs');
+
+// Sealos currently has no working IPv6 path to the production Shopify shop.
+// Select the reachable IPv4 address before Shopify initializes HTTP clients.
+net.setDefaultAutoSelectFamily(false);
+
 const { testConnection } = require('./db');
 const shopify = require('./shopify');
 const influencerRoutes = require('./routes/influencers');

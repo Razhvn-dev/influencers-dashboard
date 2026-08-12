@@ -17,6 +17,15 @@ test('production Shopify configuration targets a supported API version', () => {
   assert.match(runtimeConfig, /apiVersion:\s*ApiVersion\.January26/);
 });
 
+test('server startup disables automatic IPv6 selection before Shopify clients initialize', () => {
+  const server = read('server.js');
+  const networkSetup = server.indexOf("net.setDefaultAutoSelectFamily(false)");
+  const shopifyImport = server.indexOf("require('./shopify')");
+
+  assert.ok(networkSetup >= 0, 'server startup must prefer the reachable IPv4 path');
+  assert.ok(networkSetup < shopifyImport, 'network setup must run before Shopify initializes its HTTP clients');
+});
+
 test('production app URL and OAuth callbacks use the Sealos deployment host', () => {
   const appConfig = read('shopify.app.toml');
   const host = 'https://ejvhcshygemh.sealosbja.site';
