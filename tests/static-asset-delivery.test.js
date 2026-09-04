@@ -36,3 +36,12 @@ test('hashed frontend assets are immutable while HTML remains non-cacheable', ()
   assert.match(server, /public, max-age=31536000, immutable/);
   assert.match(server, /no-cache, no-store, must-revalidate/);
 });
+
+test('frontend splits large framework dependencies into parallel cacheable chunks', () => {
+  const viteConfig = read('client/vite.config.js');
+
+  assert.match(viteConfig, /manualChunks\(id\)/);
+  assert.match(viteConfig, /id\.includes\('@shopify\/polaris'\)/);
+  assert.match(viteConfig, /return 'polaris'/);
+  assert.match(viteConfig, /return 'react-vendor'/);
+});

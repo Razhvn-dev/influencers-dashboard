@@ -26,6 +26,27 @@ export default defineConfig(({ mode }) => {
       commonjsOptions: {
         include: [/lib\//, /node_modules/],
       },
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes('@shopify/polaris-icons')) return 'polaris-icons';
+            if (id.includes('@shopify/polaris')) return 'polaris';
+            if (
+              id.includes('/node_modules/react/') ||
+              id.includes('/node_modules/react-dom/') ||
+              id.includes('/node_modules/scheduler/')
+            ) {
+              return 'react-vendor';
+            }
+            if (
+              id.includes('/node_modules/react-router') ||
+              id.includes('/node_modules/@remix-run/')
+            ) {
+              return 'router';
+            }
+          },
+        },
+      },
     },
     resolve: {
       alias: {
