@@ -2,7 +2,7 @@
 
 client_id = "fda3a850e6079fde314a9f06466d4ed5"
 name = "Influencer Dashboard"
-application_url = "https://ejvhcshygemh.sealosbja.site"
+application_url = "https://osjgakhffqyk.sealosbja.site"
 embedded = true
 
 [build]
@@ -17,6 +17,6 @@ scopes = "read_products,read_orders,read_customers"
 
 [auth]
 redirect_urls = [
-  "https://ejvhcshygemh.sealosbja.site/api/auth/callback",
-  "https://ejvhcshygemh.sealosbja.site/auth/callback",
+  "https://osjgakhffqyk.sealosbja.site/api/auth/callback",
+  "https://osjgakhffqyk.sealosbja.site/auth/callback",
 ]

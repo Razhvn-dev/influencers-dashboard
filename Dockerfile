@@ -33,4 +33,4 @@ COPY --from=client-builder /app/client/dist ./client/dist
 
 EXPOSE 3000
 
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npm run migrate && exec npm start"]
