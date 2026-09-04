@@ -32,9 +32,11 @@
             '</p></main>';
         }
 
+        // Resource-load failures (including a blocked module script) do not bubble,
+        // so this listener must run during the capture phase.
         window.addEventListener('error', function (event) {
           showStartupError(event.message);
-        });
+        }, true);
         window.addEventListener('unhandledrejection', function (event) {
           showStartupError(event.reason && event.reason.message ? event.reason.message : event.reason);
         });
