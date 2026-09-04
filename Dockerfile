@@ -8,9 +8,6 @@ RUN npm ci
 
 COPY client/ ./
 
-ARG SHOPIFY_API_KEY
-ENV SHOPIFY_API_KEY=$SHOPIFY_API_KEY
-
 RUN npm run build
 
 # Stage 2: Production runtime (Express API + static frontend)

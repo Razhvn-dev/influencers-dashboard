@@ -21,3 +21,10 @@ test('the production server injects the public Shopify API key when it serves in
   assert.match(serverSource, /replaceAll\('__SHOPIFY_API_KEY__', process\.env\.SHOPIFY_API_KEY \|\| ''\)/);
   assert.match(serverSource, /res\.type\('html'\)\.send\(html\)/);
 });
+
+test('the image does not bake the Shopify API key into the frontend build', () => {
+  const dockerfile = fs.readFileSync(path.join(__dirname, '..', 'Dockerfile'), 'utf8');
+
+  assert.doesNotMatch(dockerfile, /^ARG SHOPIFY_API_KEY$/m);
+  assert.doesNotMatch(dockerfile, /^ENV SHOPIFY_API_KEY=/m);
+});
