@@ -78,12 +78,12 @@ test('frontend contains a runtime revision marker after an asset delivery repair
   );
 });
 
-test('Shopify App Bridge cannot block the React module from starting', () => {
+test('frontend does not include an App Bridge script that can replace the embedded iframe', () => {
   const html = read('client/index.html');
-  assert.match(
+  assert.doesNotMatch(
     html,
-    /<script\s+async\s+src="https:\/\/cdn\.shopify\.com\/shopifycloud\/app-bridge\.js"/,
-    'App Bridge must load asynchronously so an unavailable CDN response cannot leave the app blank'
+    /cdn\.shopify\.com\/shopifycloud\/app-bridge\.js/,
+    'The app uses Shopify-provided URL session tokens and must not load a script that can replace its iframe'
   );
 });
 
