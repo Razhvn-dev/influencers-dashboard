@@ -78,6 +78,15 @@ test('frontend contains a runtime revision marker after an asset delivery repair
   );
 });
 
+test('Shopify App Bridge cannot block the React module from starting', () => {
+  const html = read('client/index.html');
+  assert.match(
+    html,
+    /<script\s+async\s+src="https:\/\/cdn\.shopify\.com\/shopifycloud\/app-bridge\.js"/,
+    'App Bridge must load asynchronously so an unavailable CDN response cannot leave the app blank'
+  );
+});
+
 test('small runtime HTML is not converted into a chunked compressed stream', () => {
   const server = read('server.js');
 
