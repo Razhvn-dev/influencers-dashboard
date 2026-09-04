@@ -8,7 +8,7 @@ type = "ui_extension"
 
 [[extensions.targeting]]
 module = "./src/CreatorProgram.jsx"
-target = "customer-account.page.render"
+target = "customer-account.profile.block.render"
 
 [extensions.capabilities]
 network_access = true

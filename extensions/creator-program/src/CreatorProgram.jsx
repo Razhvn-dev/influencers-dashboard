@@ -3,7 +3,7 @@ import '@shopify/ui-extensions/preact';
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 
-const APP_URL = 'https://ejvhcshygemh.sealosbja.site';
+const APP_URL = 'https://osjgakhffqyk.sealosbja.site';
 
 export default async () => {
   render(<CreatorProgram />, document.body);
@@ -38,36 +38,31 @@ function CreatorProgram() {
   }, []);
 
   if (state.loading) {
-    return <s-page heading="Creator Program"><s-spinner accessibilityLabel="Loading creator program" /></s-page>;
+    return <s-section heading="Creator Program"><s-spinner accessibilityLabel="Loading creator program" /></s-section>;
   }
 
   if (state.error) {
-    return <s-page heading="Creator Program"><s-banner heading="We could not load your program details" tone="critical">{state.error}</s-banner></s-page>;
+    return <s-section heading="Creator Program"><s-banner heading="We could not load your program details" tone="critical">{state.error}</s-banner></s-section>;
   }
 
   if (!state.profile) {
-    return <s-page heading="Creator Program"><s-section heading="You are not currently enrolled"><s-paragraph>If you believe this is an error, please contact our team.</s-paragraph></s-section></s-page>;
+    return null;
   }
 
   const profile = state.profile;
   const legalName = [profile.first_name, profile.last_name].filter(Boolean).join(' ');
 
   return (
-    <s-page heading="Creator Program" subheading={profile.business_name || legalName}>
-      <s-section heading="Your creator profile">
-        <s-stack direction="block" gap="base">
-          {legalName ? <s-text>Name: {legalName}</s-text> : null}
-          {profile.channel ? <s-text>Handle: {profile.channel}</s-text> : null}
-          {profile.niche_category ? <s-text>Category: {profile.niche_category}</s-text> : null}
-          {profile.bio ? <s-paragraph>{profile.bio}</s-paragraph> : null}
-        </s-stack>
-      </s-section>
-      <s-section heading="Program status">
-        <s-stack direction="block" gap="base">
-          <s-text>Status: {profile.status || 'Active'}</s-text>
-          {profile.affiliate_code ? <s-clipboard-item text={profile.affiliate_code} /> : <s-text>No affiliate code is available yet.</s-text>}
-        </s-stack>
-      </s-section>
-    </s-page>
+    <s-section heading="Creator Program">
+      <s-stack direction="block" gap="base">
+        <s-text type="strong">{profile.business_name || legalName}</s-text>
+        {legalName ? <s-text>Name: {legalName}</s-text> : null}
+        {profile.channel ? <s-text>Handle: {profile.channel}</s-text> : null}
+        {profile.niche_category ? <s-text>Category: {profile.niche_category}</s-text> : null}
+        <s-text>Status: {profile.status || 'Active'}</s-text>
+        {profile.bio ? <s-paragraph>{profile.bio}</s-paragraph> : null}
+        {profile.affiliate_code ? <s-clipboard-item text={profile.affiliate_code} /> : <s-text>No affiliate code is available yet.</s-text>}
+      </s-stack>
+    </s-section>
   );
 }
