@@ -233,8 +233,10 @@ process.on('uncaughtException', (err) => {
 });
 
 if (fs.existsSync(clientDist)) {
-  // Do not serve index.html from static middleware — ensureInstalledOnShop must
-  // run first so the install/OAuth flow is not skipped on the first request to /.
+  // Do not serve index.html from static middleware — runtime values must be
+  // injected before returning the shell. The API routes validate Shopify session
+  // tokens independently; running ensureInstalledOnShop here can block an
+  // already-installed embedded app before its frontend is allowed to load.
   app.use(
     express.static(clientDist, {
       index: false,
@@ -251,7 +253,7 @@ if (fs.existsSync(clientDist)) {
     })
   );
 
-  app.use('/*', shopify.ensureInstalledOnShop(), (req, res) => {
+  app.use('/*', (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
     const html = readRuntimeIndexHtml(req);
     res.type('html').send(html);
