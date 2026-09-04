@@ -12,6 +12,10 @@ import App from './App.jsx';
 import { setSessionTokenFetcher } from './api.js';
 import { LanguageProvider, useTranslation } from './i18n/LanguageContext.jsx';
 
+// This revision intentionally changes the hashed Vite entry after a corrected
+// asset response was previously cached by browsers as immutable.
+window.__INFLUENCER_ASSET_REVISION__ = 'mime-cache-bust-5d09aa1';
+
 function getHostFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const host = params.get('host');

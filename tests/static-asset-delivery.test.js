@@ -68,6 +68,16 @@ test('compressed assets keep a browser-safe MIME type', () => {
   assert.doesNotMatch(server, /res\.type\(assetPath\)/);
 });
 
+test('frontend contains a runtime revision marker after an asset delivery repair', () => {
+  const entry = read('client/src/main.jsx');
+
+  assert.match(
+    entry,
+    /window\.__INFLUENCER_ASSET_REVISION__\s*=\s*['\"]mime-cache-bust-5d09aa1['\"]/,
+    'the Vite entry must change so browsers request a fresh hashed asset after the MIME repair'
+  );
+});
+
 test('small runtime HTML is not converted into a chunked compressed stream', () => {
   const server = read('server.js');
 
