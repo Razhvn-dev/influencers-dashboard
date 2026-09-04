@@ -16,6 +16,8 @@ import { LanguageProvider, useTranslation } from './i18n/LanguageContext.jsx';
 // asset response was previously cached by browsers as immutable.
 window.__INFLUENCER_ASSET_REVISION__ = 'mime-cache-bust-5d09aa1';
 
+let initialShopifySessionToken = null;
+
 function getHostFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const host = params.get('host');
@@ -30,7 +32,13 @@ function getHostFromUrl() {
 
 function getSessionTokenFromUrl() {
   const params = new URLSearchParams(window.location.search);
-  return params.get('id_token');
+  const token = params.get('id_token');
+
+  if (token) {
+    initialShopifySessionToken = token;
+  }
+
+  return initialShopifySessionToken;
 }
 
 function PolarisLocaleProvider({ children }) {
