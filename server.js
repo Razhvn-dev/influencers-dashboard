@@ -4,6 +4,7 @@ const express = require('express');
 const net = require('net');
 const path = require('path');
 const fs = require('fs');
+const zlib = require('zlib');
 
 // Sealos currently has no working IPv6 path to the production Shopify shop.
 // Select the reachable IPv4 address before Shopify initializes HTTP clients.
@@ -24,6 +25,7 @@ const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const clientDist = path.join(__dirname, 'client', 'dist');
 const isLocalDev = process.env.LOCAL_DEV === 'true';
+const compressedAssetCache = new Map();
 
 function readFrontendBuildInfo() {
   try {
@@ -57,7 +59,49 @@ const authCallback = shopify.auth.callback();
 const redirectAfterAuth = shopify.redirectToShopifyOrAppRoot();
 
 app.set('trust proxy', true);
-app.use(compression({ threshold: 1024 }));
+app.get('/assets/:file', (req, res, next) => {
+  const requestedFile = req.params.file;
+  if (requestedFile !== path.basename(requestedFile)) return next();
+
+  const assetPath = path.join(clientDist, 'assets', requestedFile);
+  if (!fs.existsSync(assetPath) || !fs.statSync(assetPath).isFile()) return next();
+
+  const encoding = req.acceptsEncodings('br', 'gzip');
+  if (encoding !== 'br' && encoding !== 'gzip') return next();
+
+  const cacheKey = `${encoding}:${requestedFile}`;
+  let body = compressedAssetCache.get(cacheKey);
+  if (!body) {
+    const source = fs.readFileSync(assetPath);
+    body =
+      encoding === 'br'
+        ? zlib.brotliCompressSync(source, {
+            params: {
+              [zlib.constants.BROTLI_PARAM_QUALITY]: 5,
+            },
+          })
+        : zlib.gzipSync(source, { level: 6 });
+    compressedAssetCache.set(cacheKey, body);
+  }
+
+  res.set({
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    'Content-Encoding': encoding,
+    'Content-Length': String(body.length),
+    Vary: 'Accept-Encoding',
+  });
+  res.type(assetPath).send(body);
+});
+app.use(
+  compression({
+    threshold: 1024,
+    filter(req, res) {
+      const contentType = String(res.getHeader('Content-Type') || '');
+      if (contentType.startsWith('text/html')) return false;
+      return compression.filter(req, res);
+    },
+  })
+);
 app.use(express.json());
 app.use(shopify.cspHeaders());
 

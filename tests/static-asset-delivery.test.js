@@ -16,7 +16,7 @@ test('production compresses JavaScript and CSS responses before static delivery'
   assert.equal(packageJson.dependencies.compression, '^1.8.1');
   assert.match(server, /const compression = require\('compression'\);/);
 
-  const compressionSetup = server.indexOf('app.use(compression(');
+  const compressionSetup = server.search(/app\.use\(\s*compression\(/);
   const staticSetup = server.indexOf('express.static(clientDist');
 
   assert.ok(compressionSetup >= 0, 'compression middleware must be registered');
@@ -44,4 +44,29 @@ test('frontend splits large framework dependencies into parallel cacheable chunk
   assert.match(viteConfig, /id\.includes\('@shopify\/polaris'\)/);
   assert.match(viteConfig, /return 'polaris'/);
   assert.match(viteConfig, /return 'react-vendor'/);
+});
+
+test('production serves compressed Vite assets with a fixed content length', () => {
+  const server = read('server.js');
+
+  assert.match(server, /const zlib = require\('zlib'\);/);
+  assert.match(server, /app\.get\('\/assets\/:file'/);
+  assert.match(server, /zlib\.brotliCompressSync/);
+  assert.match(server, /zlib\.gzipSync/);
+  assert.match(server, /Content-Encoding/);
+  assert.match(server, /Content-Length/);
+
+  const bufferedAssetRoute = server.indexOf("app.get('/assets/:file'");
+  const compressionSetup = server.search(/app\.use\(\s*compression\(/);
+  assert.ok(
+    bufferedAssetRoute >= 0 && bufferedAssetRoute < compressionSetup,
+    'buffered assets must bypass streaming compression'
+  );
+});
+
+test('small runtime HTML is not converted into a chunked compressed stream', () => {
+  const server = read('server.js');
+
+  assert.match(server, /contentType\.startsWith\('text\/html'\)/);
+  assert.match(server, /return false;/);
 });
