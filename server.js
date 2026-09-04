@@ -90,7 +90,7 @@ app.get('/assets/:file', (req, res, next) => {
     'Content-Length': String(body.length),
     Vary: 'Accept-Encoding',
   });
-  res.type(assetPath).send(body);
+  res.type(path.extname(assetPath)).send(body);
 });
 app.use(
   compression({

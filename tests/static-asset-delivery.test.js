@@ -61,6 +61,13 @@ test('production serves compressed Vite assets with a fixed content length', () 
   );
 });
 
+test('compressed assets keep a browser-safe MIME type', () => {
+  const server = read('server.js');
+
+  assert.match(server, /res\.type\(path\.extname\(assetPath\)\)\.send\(body\);/);
+  assert.doesNotMatch(server, /res\.type\(assetPath\)/);
+});
+
 test('small runtime HTML is not converted into a chunked compressed stream', () => {
   const server = read('server.js');
 
