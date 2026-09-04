@@ -103,6 +103,12 @@ function getBearerToken(req) {
   return authorization.startsWith('Bearer ') ? authorization.slice(7) : null;
 }
 
+function readRuntimeIndexHtml() {
+  const indexPath = path.join(clientDist, 'index.html');
+  const html = fs.readFileSync(indexPath, 'utf8');
+  return html.replaceAll('__SHOPIFY_API_KEY__', process.env.SHOPIFY_API_KEY || '');
+}
+
 function getShopFromSessionToken(payload) {
   return normalizeCustomerAccountDestination(payload.dest);
 }
@@ -245,7 +251,8 @@ if (fs.existsSync(clientDist)) {
 
   app.use('/*', shopify.ensureInstalledOnShop(), (_req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.sendFile(path.join(clientDist, 'index.html'));
+    const html = readRuntimeIndexHtml();
+    res.type('html').send(html);
   });
 } else {
   app.get('/', (_req, res) => {

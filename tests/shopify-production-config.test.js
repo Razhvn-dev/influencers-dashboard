@@ -28,7 +28,7 @@ test('server startup disables automatic IPv6 selection before Shopify clients in
 
 test('production app URL and OAuth callbacks use the Sealos deployment host', () => {
   const appConfig = read('shopify.app.toml');
-  const host = 'https://ejvhcshygemh.sealosbja.site';
+  const host = 'https://osjgakhffqyk.sealosbja.site';
 
   assert.match(appConfig, new RegExp(`application_url\\s*=\\s*"${host}"`));
   assert.match(appConfig, new RegExp(`${host}/api/auth/callback`));
