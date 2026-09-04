@@ -223,6 +223,7 @@ export default {
     commercialTermsDescription: '商业条款与交付要求',
     sponsoredProducts: '赞助产品',
     affiliateCode: '联盟代码',
+    customerAccount: '客户账户',
     shopifyCustomerId: 'Shopify Customer ID',
     shopifyCustomerIdHelp: '粘贴数字客户 ID 或 gid://shopify/Customer/... 格式的值。',
     customerAccountVisible: '在该客户账户显示达人计划',

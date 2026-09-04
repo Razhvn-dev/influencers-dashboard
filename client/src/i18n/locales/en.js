@@ -224,6 +224,7 @@ export default {
     commercialTermsDescription: 'Commercial terms and delivery requirements',
     sponsoredProducts: 'Sponsored Product(s)',
     affiliateCode: 'Affiliate Code',
+    customerAccount: 'Customer account',
     shopifyCustomerId: 'Shopify Customer ID',
     shopifyCustomerIdHelp: 'Paste the numeric customer ID or gid://shopify/Customer/... value.',
     customerAccountVisible: 'Show Creator Program in this customer account',

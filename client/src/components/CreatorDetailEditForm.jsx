@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BlockStack, FormLayout, Select, Text, TextField } from '@shopify/polaris';
+import { BlockStack, Checkbox, FormLayout, Select, Text, TextField } from '@shopify/polaris';
 import {
   getTranslatedCommissionOptions,
   getTranslatedStatusOptions,
@@ -16,6 +16,7 @@ import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 const EDIT_SECTIONS = [
   { id: 'creator-profile', labelKey: 'addCreator.basicInfo' },
+  { id: 'creator-customer-account', labelKey: 'creatorDetail.customerAccount' },
   { id: 'creator-platforms', labelKey: 'addCreator.platforms' },
   { id: 'creator-partnership', labelKey: 'creatorDetail.partnershipAndFollowup' },
   { id: 'creator-details', labelKey: 'creatorCreate.addSupportingDetails' },
@@ -108,6 +109,28 @@ export default function CreatorDetailEditForm({ form, onChange, nameError = '' }
             onFieldChange={updateField}
             nameError={nameError}
           />
+
+          <AddCreatorFormCard
+            title={t('creatorDetail.customerAccount')}
+            sectionId="creator-customer-account"
+          >
+            <FormLayout>
+              <TextField
+                label={t('creatorDetail.shopifyCustomerId')}
+                value={form.shopify_customer_id}
+                onChange={updateField('shopify_customer_id')}
+                helpText={t('creatorDetail.shopifyCustomerIdHelp')}
+                autoComplete="off"
+              />
+              <Checkbox
+                label={t('creatorDetail.customerAccountVisible')}
+                checked={form.customer_account_visible}
+                disabled={!form.shopify_customer_id.trim()}
+                onChange={(checked) => onChange({ ...form, customer_account_visible: checked })}
+                helpText={t('creatorDetail.customerAccountVisibleHelp')}
+              />
+            </FormLayout>
+          </AddCreatorFormCard>
 
           <PlatformsCard
             form={form}
