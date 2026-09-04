@@ -14,6 +14,7 @@ const shopify = require('./shopify');
 const influencerRoutes = require('./routes/influencers');
 const { renderExitIframePage } = require('./lib/exitiframe');
 const { toCustomerAccountProfile } = require('./lib/customerAccountProfile');
+const { normalizeCustomerAccountSubject } = require('./lib/customerAccountToken');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -135,15 +136,18 @@ app.get('/api/customer-account/creator-program', async (req, res) => {
     // represented as either a string or an array. Verify the signature and
     // expiry with Shopify's SDK, then enforce our API key against both forms.
     const payload = await shopify.api.session.decodeSessionToken(token, { checkAudience: false });
-    const customerId = String(payload.sub || '');
+    const customerId = normalizeCustomerAccountSubject(payload.sub);
     const shop = getShopFromSessionToken(payload);
 
-    if (
-      !hasExpectedCustomerAccountAudience(payload) ||
-      !shop ||
-      !/^gid:\/\/shopify\/Customer\/\d+$/.test(customerId)
-    ) {
+    if (!hasExpectedCustomerAccountAudience(payload) || !shop) {
       return res.status(401).json({ success: false, message: 'Customer account session is invalid' });
+    }
+
+    if (!customerId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Customer identity is unavailable in this account session',
+      });
     }
 
     const result = await pool.query(
