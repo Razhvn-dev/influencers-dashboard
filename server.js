@@ -107,6 +107,11 @@ function getShopFromSessionToken(payload) {
   }
 }
 
+function hasExpectedCustomerAccountAudience(payload) {
+  const audiences = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+  return audiences.includes(process.env.SHOPIFY_API_KEY);
+}
+
 function setCustomerAccountCors(res) {
   res.set('Access-Control-Allow-Origin', '*');
   res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
@@ -126,11 +131,18 @@ app.get('/api/customer-account/creator-program', async (req, res) => {
       return res.status(401).json({ success: false, message: 'Customer account session token is required' });
     }
 
-    const payload = await shopify.api.session.decodeSessionToken(token);
+    // Customer Account session tokens are valid JWTs whose `aud` claim may be
+    // represented as either a string or an array. Verify the signature and
+    // expiry with Shopify's SDK, then enforce our API key against both forms.
+    const payload = await shopify.api.session.decodeSessionToken(token, { checkAudience: false });
     const customerId = String(payload.sub || '');
     const shop = getShopFromSessionToken(payload);
 
-    if (!shop || !/^gid:\/\/shopify\/Customer\/\d+$/.test(customerId)) {
+    if (
+      !hasExpectedCustomerAccountAudience(payload) ||
+      !shop ||
+      !/^gid:\/\/shopify\/Customer\/\d+$/.test(customerId)
+    ) {
       return res.status(401).json({ success: false, message: 'Customer account session is invalid' });
     }
 

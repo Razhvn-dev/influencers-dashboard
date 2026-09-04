@@ -21,6 +21,9 @@ test('stores a scoped customer account link and visibility flag', () => {
 test('exposes the customer program endpoint separately from staff-authenticated APIs', () => {
   assert.match(serverSource, /\/api\/customer-account\/creator-program/);
   assert.match(serverSource, /decodeSessionToken/);
+  assert.match(serverSource, /checkAudience:\s*false/);
+  assert.match(serverSource, /Array\.isArray\(payload\.aud\)/);
+  assert.match(serverSource, /includes\(process\.env\.SHOPIFY_API_KEY\)/);
   assert.match(serverSource, /customer_account_visible = TRUE/);
   assert.match(serverSource, /shopify_customer_id = \$2/);
   assert.match(serverSource, /Access-Control-Allow-Headers/);
