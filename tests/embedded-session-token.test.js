@@ -21,4 +21,9 @@ test('embedded navigation keeps the initial Shopify session token after the URL 
     /return initialShopifySessionToken;/,
     'API calls on nested client routes must read the retained token'
   );
+  assert.match(
+    main,
+    /typeof window\.shopify\?\.idToken === 'function'/,
+    'fresh App Bridge tokens must take precedence over the initial URL token'
+  );
 });

@@ -88,12 +88,21 @@ test('frontend CSS has a delivery revision to rotate immutable styles after a MI
   );
 });
 
-test('frontend does not include an App Bridge script that can replace the embedded iframe', () => {
+test('embedded frontend loads the required synchronous App Bridge script for fresh session tokens', () => {
   const html = read('client/index.html');
+  const appBridge = html.indexOf('https://cdn.shopify.com/shopifycloud/app-bridge.js');
+  const appEntry = html.indexOf('<script type="module" src="/src/main.jsx"></script>');
+
+  assert.match(
+    html,
+    /<script src="https:\/\/cdn\.shopify\.com\/shopifycloud\/app-bridge\.js"><\/script>/,
+    'App Bridge must load synchronously so window.shopify.idToken can refresh embedded session tokens'
+  );
+  assert.ok(appBridge >= 0 && appBridge < appEntry, 'App Bridge must initialize before the React entry module');
   assert.doesNotMatch(
     html,
-    /cdn\.shopify\.com\/shopifycloud\/app-bridge\.js/,
-    'The app uses Shopify-provided URL session tokens and must not load a script that can replace its iframe'
+    /app-bridge\.js"\s+async/,
+    'App Bridge must not be asynchronous because the app can start before token support is available'
   );
 });
 
