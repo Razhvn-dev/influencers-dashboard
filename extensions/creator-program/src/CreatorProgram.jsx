@@ -16,8 +16,22 @@ function CreatorProgram() {
     let active = true;
 
     async function loadProfile() {
+      let token;
       try {
-        const token = await shopify.sessionToken.get();
+        token = await shopify.sessionToken.get();
+      } catch (error) {
+        console.error('Creator Program session token request failed:', error);
+        if (active) {
+          setState({
+            loading: false,
+            profile: null,
+            error: 'Unable to establish a secure customer account session',
+          });
+        }
+        return;
+      }
+
+      try {
         const response = await fetch(`${APP_URL}/api/customer-account/creator-program`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -29,7 +43,16 @@ function CreatorProgram() {
 
         if (active) setState({ loading: false, profile: result.data, error: null });
       } catch (error) {
-        if (active) setState({ loading: false, profile: null, error: error.message });
+        console.error('Creator Program backend request failed:', error);
+        if (active) {
+          setState({
+            loading: false,
+            profile: null,
+            error: error.message === 'Failed to fetch'
+              ? 'Unable to reach the Creator Program service'
+              : error.message,
+          });
+        }
       }
     }
 

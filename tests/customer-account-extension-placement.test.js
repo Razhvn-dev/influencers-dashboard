@@ -12,3 +12,8 @@ test('Creator Program is a profile widget and uses the active production API', (
   assert.match(extensionSource, /https:\/\/osjgakhffqyk\.sealosbja\.site/);
   assert.doesNotMatch(extensionSource, /ejvhcshygemh\.sealosbja\.site/);
 });
+
+test('Creator Program distinguishes session-token failures from backend connection failures', () => {
+  assert.match(extensionSource, /Unable to establish a secure customer account session/);
+  assert.match(extensionSource, /Unable to reach the Creator Program service/);
+});
