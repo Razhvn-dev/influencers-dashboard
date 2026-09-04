@@ -8,7 +8,7 @@ import {
   Popover,
 } from '@shopify/polaris';
 import { MenuHorizontalIcon } from '@shopify/polaris-icons';
-import { creatorHandle, formatFollowupDate } from '../constants';
+import { creatorHandle, creatorLegalName, creatorPrimaryName, formatFollowupDate } from '../constants';
 import CreatorTableAvatar from './dashboard/CreatorTableAvatar';
 import LevelBadge from './dashboard/LevelBadge';
 import StatusBadge from './dashboard/StatusBadge';
@@ -86,6 +86,8 @@ export default function CreatorProfileHeader({
 }) {
   const { t } = useTranslation();
   const handle = displayHandle(form);
+  const legalName = creatorLegalName(form);
+  const primaryName = creatorPrimaryName(form);
   const [moreActionsOpen, setMoreActionsOpen] = useState(false);
   const inlineHeroLayout = embeddedInHero && hideBack;
 
@@ -143,7 +145,10 @@ export default function CreatorProfileHeader({
       </Box>
 
       <BlockStack gap="0" className="crm-detail-header__identity-text">
-        <h1 className="crm-detail-header__name">{form.name || t('creatorDetail.profileFallback')}</h1>
+        <h1 className="crm-detail-header__name">{primaryName || t('creatorDetail.profileFallback')}</h1>
+        {legalName && legalName !== primaryName ? (
+          <p className="crm-detail-header__handle">{legalName}</p>
+        ) : null}
         <p className="crm-detail-header__handle">{handle}</p>
 
         <div className="crm-detail-header__identity-meta">

@@ -1,5 +1,9 @@
 const AVATAR_BG_COLORS = ['#DBEAFE', '#DCFCE7', '#FCE7F3', '#FEF3C7', '#FEE2E2', '#E5E7EB'];
 
+function getIdentityName(record) {
+  return String(record?.business_name || record?.name || '').trim();
+}
+
 function getTableAvatarInitials(name, emptyInitials = '?') {
   const parts = String(name || '')
     .trim()
@@ -46,8 +50,9 @@ function getCreatorAvatarUrl(record) {
 
 export default function CreatorTableAvatar({ record, emptyInitials, className = '' }) {
   const avatarUrl = getCreatorAvatarUrl(record);
-  const initials = getTableAvatarInitials(record?.name, emptyInitials);
-  const background = getAvatarBackground(record?.name);
+  const identityName = getIdentityName(record);
+  const initials = getTableAvatarInitials(identityName, emptyInitials);
+  const background = getAvatarBackground(identityName);
   const avatarClassName = ['crm-v2-creator-avatar', className].filter(Boolean).join(' ');
 
   if (avatarUrl) {

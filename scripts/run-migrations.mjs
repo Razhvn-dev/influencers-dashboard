@@ -20,6 +20,7 @@ const files = [
   "migrations/003_sponsorship_tracking_schema.sql",
   "migrations/004_add_followers_verification.sql",
   "migrations/005_add_creator_profile_fields.sql",
+  "migrations/006_add_creator_identity_fields.sql",
 ];
 
 for (const file of files) {

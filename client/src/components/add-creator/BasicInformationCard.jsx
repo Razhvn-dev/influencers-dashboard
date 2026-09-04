@@ -12,16 +12,34 @@ export default function BasicInformationCard({ form, onFieldChange, nameError = 
       className="crm-add-creator__basic-card"
     >
       <FormLayout>
+        <TextField
+          label={t('creatorCreate.businessChannelName')}
+          value={form.business_name}
+          onChange={onFieldChange('business_name')}
+          placeholder={t('creatorCreate.businessChannelNamePlaceholder')}
+          autoComplete="organization"
+          requiredIndicator
+          error={nameError || undefined}
+        />
         <FormLayout.Group>
           <TextField
-            label={t('creatorCreate.creatorName')}
-            value={form.name}
-            onChange={onFieldChange('name')}
-            placeholder={t('creatorCreate.creatorNamePlaceholder')}
-            autoComplete="name"
+            label={t('creatorCreate.firstName')}
+            value={form.first_name}
+            onChange={onFieldChange('first_name')}
+            placeholder={t('creatorCreate.firstNamePlaceholder')}
+            autoComplete="given-name"
             requiredIndicator
             error={nameError || undefined}
           />
+          <TextField
+            label={t('creatorCreate.lastName')}
+            value={form.last_name}
+            onChange={onFieldChange('last_name')}
+            placeholder={t('creatorCreate.lastNamePlaceholder')}
+            autoComplete="family-name"
+          />
+        </FormLayout.Group>
+        <FormLayout.Group>
           <TextField
             label={t('creatorCreate.usernameHandle')}
             value={form.channel}

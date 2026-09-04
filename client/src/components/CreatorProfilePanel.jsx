@@ -22,12 +22,27 @@ export default function CreatorProfilePanel({
   const editContent = (
     <FormLayout>
       <TextField
-        label={t('creatorDetail.fullName')}
-        value={form.name}
-        onChange={updateField('name')}
-        autoComplete="name"
+        label={t('creatorCreate.businessChannelName')}
+        value={form.business_name}
+        onChange={updateField('business_name')}
+        autoComplete="organization"
         requiredIndicator
       />
+      <FormLayout.Group>
+        <TextField
+          label={t('creatorCreate.firstName')}
+          value={form.first_name}
+          onChange={updateField('first_name')}
+          autoComplete="given-name"
+          requiredIndicator
+        />
+        <TextField
+          label={t('creatorCreate.lastName')}
+          value={form.last_name}
+          onChange={updateField('last_name')}
+          autoComplete="family-name"
+        />
+      </FormLayout.Group>
       <TextField
         label={t('creatorDetail.email')}
         type="email"
@@ -43,7 +58,7 @@ export default function CreatorProfilePanel({
         autoComplete="off"
       />
       <TextField
-        label={t('creatorDetail.channelBrand')}
+        label={t('creatorCreate.usernameHandle')}
         value={form.channel}
         onChange={updateField('channel')}
         autoComplete="off"

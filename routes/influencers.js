@@ -13,6 +13,7 @@ const {
   normalizeProfilePayload,
 } = require('../lib/creatorProfile');
 const { applyFollowerVerification } = require('../lib/followerVerification');
+const { normalizeCreatorIdentity } = require('../lib/creatorIdentity');
 const { getCached, invalidateShop } = require('../lib/shopCache');
 const {
   buildAmbassadorLevelOrderClause,
@@ -25,6 +26,9 @@ const router = express.Router();
 const INFLUENCER_ROW_SELECT = `
   i.id,
   i.name,
+  i.business_name,
+  i.first_name,
+  i.last_name,
   i.channel,
   i.sponsored_products,
   i.affiliate_code,
@@ -61,6 +65,9 @@ const INFLUENCER_ROW_SELECT = `
 const INFLUENCER_RETURNING_COLUMNS = `
   id,
   name,
+  business_name,
+  first_name,
+  last_name,
   channel,
   sponsored_products,
   affiliate_code,
@@ -96,6 +103,7 @@ const INFLUENCER_RETURNING_COLUMNS = `
 
 const SORT_COLUMNS = {
   name: 'i.name',
+  business_name: 'i.business_name',
   channel: 'i.channel',
   affiliate_code: 'i.affiliate_code',
   commission: 'i.commission',
@@ -146,6 +154,9 @@ function buildListFilters(shop, query) {
     values.push(`%${search}%`);
     conditions.push(
       `(i.name ILIKE $${values.length}
+        OR i.business_name ILIKE $${values.length}
+        OR i.first_name ILIKE $${values.length}
+        OR i.last_name ILIKE $${values.length}
         OR i.channel ILIKE $${values.length}
         OR i.sponsored_products ILIKE $${values.length}
         OR i.affiliate_code ILIKE $${values.length}
@@ -196,6 +207,9 @@ function buildListFilters(shop, query) {
 function influencerRowValues(payload) {
   return [
     payload.name,
+    payload.business_name,
+    payload.first_name,
+    payload.last_name,
     payload.channel,
     payload.sponsored_products,
     payload.affiliate_code,
@@ -246,7 +260,8 @@ function normalizeMonthlyProgress(input) {
 }
 
 function buildRecordPayload(body, existing = {}) {
-  const name = cleanCell(body.name ?? existing.name);
+  const identity = normalizeCreatorIdentity(body, existing);
+  const name = identity.name;
 
   if (!name) {
     const error = new Error('Field "name" is required');
@@ -276,6 +291,7 @@ function buildRecordPayload(body, existing = {}) {
 
   return {
     name,
+    ...identity,
     channel: cleanCell(body.channel ?? existing.channel),
     sponsored_products: cleanCell(body.sponsored_products ?? existing.sponsored_products),
     affiliate_code: cleanCell(body.affiliate_code ?? existing.affiliate_code),
@@ -687,6 +703,9 @@ router.post('/import-csv', async (req, res) => {
           INSERT INTO influencers (
             shop,
             name,
+            business_name,
+            first_name,
+            last_name,
             channel,
             sponsored_products,
             affiliate_code,
@@ -717,7 +736,7 @@ router.post('/import-csv', async (req, res) => {
             tags,
             manager_owner
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
           RETURNING id
         `,
         [shop, ...rowValues]
@@ -840,6 +859,9 @@ router.post('/', async (req, res) => {
         INSERT INTO influencers (
           shop,
           name,
+          business_name,
+          first_name,
+          last_name,
           channel,
           sponsored_products,
           affiliate_code,
@@ -870,7 +892,7 @@ router.post('/', async (req, res) => {
           tags,
           manager_owner
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34)
         RETURNING ${INFLUENCER_RETURNING_COLUMNS.replace(/\s+/g, ' ').trim()}
       `,
       [shop, ...rowValues]
@@ -934,7 +956,7 @@ router.put('/:id', async (req, res) => {
 
     const payload = applyFollowerVerification(
       existing,
-      buildRecordPayload({ ...existing, ...req.body }),
+      buildRecordPayload(req.body, existing),
       res
     );
     const rowValues = influencerRowValues(payload);
@@ -946,37 +968,40 @@ router.put('/:id', async (req, res) => {
         UPDATE influencers
         SET
           name = $1,
-          channel = $2,
-          sponsored_products = $3,
-          affiliate_code = $4,
-          commission = $5,
-          order_numbers = $6,
-          required_deliverables = $7,
-          email = $8,
-          region = $9,
-          status = $10,
-          notes = $11,
-          youtube_url = $12,
-          facebook_url = $13,
-          instagram_url = $14,
-          tiktok_url = $15,
-          youtube_followers = $16,
-          facebook_followers = $17,
-          instagram_followers = $18,
-          tiktok_followers = $19,
-          total_followers = $20,
-          ambassador_level = $21,
-          contract_status = $22,
-          last_contacted_at = $23,
-          next_followup_at = $24,
-          followers_last_verified_at = $25,
-          followers_verified_by = $26,
-          niche_category = $27,
-          bio = $28,
-          tags = $29,
-          manager_owner = $30,
+          business_name = $2,
+          first_name = $3,
+          last_name = $4,
+          channel = $5,
+          sponsored_products = $6,
+          affiliate_code = $7,
+          commission = $8,
+          order_numbers = $9,
+          required_deliverables = $10,
+          email = $11,
+          region = $12,
+          status = $13,
+          notes = $14,
+          youtube_url = $15,
+          facebook_url = $16,
+          instagram_url = $17,
+          tiktok_url = $18,
+          youtube_followers = $19,
+          facebook_followers = $20,
+          instagram_followers = $21,
+          tiktok_followers = $22,
+          total_followers = $23,
+          ambassador_level = $24,
+          contract_status = $25,
+          last_contacted_at = $26,
+          next_followup_at = $27,
+          followers_last_verified_at = $28,
+          followers_verified_by = $29,
+          niche_category = $30,
+          bio = $31,
+          tags = $32,
+          manager_owner = $33,
           updated_at = NOW()
-        WHERE id = $31 AND shop = $32
+        WHERE id = $34 AND shop = $35
         RETURNING ${INFLUENCER_RETURNING_COLUMNS.replace(/\s+/g, ' ').trim()}
       `,
       [...rowValues, id, shop]

@@ -1,4 +1,4 @@
-import { creatorHandle, formatCompactNumber, formatFollowupDate, getFollowupEmphasis, normalizeExternalUrl, PLATFORM_META } from '../../constants';
+import { creatorHandle, creatorPrimaryName, formatCompactNumber, formatFollowupDate, getFollowupEmphasis, normalizeExternalUrl, PLATFORM_META } from '../../constants';
 import { translateFollowupLabel, useTranslation } from '../../i18n/LanguageContext.jsx';
 import PlatformIcon from '../PlatformIcon';
 import CreatorTableAvatar from '../dashboard/CreatorTableAvatar';
@@ -17,11 +17,11 @@ export default function CreatorMobileCard({ record, onNavigate }) {
   const followup = getFollowupEmphasis(record.next_followup_at);
 
   return (
-    <button type="button" className="crm-creator-mobile-card" onClick={onNavigate} aria-label={t('creatorList.viewCreator', { name: record.name })}>
+    <button type="button" className="crm-creator-mobile-card" onClick={onNavigate} aria-label={t('creatorList.viewCreator', { name: creatorPrimaryName(record) })}>
       <span className="crm-creator-mobile-card__header">
         <CreatorTableAvatar record={record} />
         <span className="crm-creator-mobile-card__identity">
-          <span className="crm-creator-mobile-card__name">{record.name}</span>
+          <span className="crm-creator-mobile-card__name">{creatorPrimaryName(record)}</span>
           <span className="crm-creator-mobile-card__handle">{creatorHandle(record)}</span>
         </span>
       </span>

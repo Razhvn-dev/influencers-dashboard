@@ -1,4 +1,4 @@
-import { creatorHandle, formatFollowupDate } from '../constants';
+import { creatorHandle, creatorLegalName, formatFollowupDate } from '../constants';
 import { useTranslation } from '../i18n/LanguageContext.jsx';
 
 function hasValue(value) {
@@ -67,9 +67,12 @@ function splitChannelDisplay(form) {
 export default function CreatorProfileSummary({ form, record }) {
   const { t } = useTranslation();
   const { brand } = splitChannelDisplay(form);
+  const legalName = creatorLegalName(form);
   const niche = String(form.niche_category || '').trim();
 
   const details = [
+    form.business_name ? { label: t('creatorCreate.businessChannelName'), value: form.business_name } : null,
+    legalName ? { label: `${t('creatorCreate.firstName')} / ${t('creatorCreate.lastName')}`, value: legalName } : null,
     brand ? { label: t('creatorDetail.channelBrand'), value: brand } : null,
     niche ? { label: t('creatorDetail.categoryField'), value: niche } : null,
     hasValue(form.email) ? { label: t('creatorDetail.email'), value: form.email } : null,

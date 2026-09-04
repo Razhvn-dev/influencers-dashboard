@@ -316,6 +316,17 @@ export function creatorHandle(record) {
   return '—';
 }
 
+export function creatorPrimaryName(record) {
+  return String(record?.business_name || record?.name || '').trim();
+}
+
+export function creatorLegalName(record) {
+  return [record?.first_name, record?.last_name]
+    .map((value) => String(value || '').trim())
+    .filter(Boolean)
+    .join(' ');
+}
+
 export function creatorTagline(record, max = 42) {
   const products = String(record?.sponsored_products || '').trim();
   if (products) {
@@ -580,6 +591,9 @@ export function buildFormStateFromRecord(record) {
 
   return {
     name: record.name || '',
+    business_name: record.business_name || '',
+    first_name: record.first_name || '',
+    last_name: record.last_name || '',
     channel: record.channel || '',
     primary_channel: derivePrimaryChannel({
       ...record,
@@ -631,6 +645,9 @@ export function buildEmptyCreatorForm() {
 export function buildSavePayload(form) {
   return {
     name: form.name.trim(),
+    business_name: form.business_name.trim() || null,
+    first_name: form.first_name.trim() || null,
+    last_name: form.last_name.trim() || null,
     channel: form.channel.trim() || null,
     sponsored_products: form.sponsored_products.trim() || null,
     affiliate_code: form.affiliate_code.trim() || null,

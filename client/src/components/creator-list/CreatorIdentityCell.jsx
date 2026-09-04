@@ -1,4 +1,4 @@
-import { creatorHandle, derivePrimaryChannel } from '../../constants';
+import { creatorHandle, creatorLegalName, creatorPrimaryName, derivePrimaryChannel } from '../../constants';
 import { useTranslation } from '../../i18n/LanguageContext.jsx';
 import CreatorTableAvatar from '../dashboard/CreatorTableAvatar';
 
@@ -11,7 +11,10 @@ export default function CreatorIdentityCell({ record }) {
     <div className="crm-resource-identity">
       <CreatorTableAvatar record={record} />
       <div className="crm-resource-identity__body">
-        <span className="crm-resource-identity__name">{record.name}</span>
+        <span className="crm-resource-identity__name">{creatorPrimaryName(record)}</span>
+        {creatorLegalName(record) && creatorLegalName(record) !== creatorPrimaryName(record) ? (
+          <span className="crm-resource-identity__handle">{creatorLegalName(record)}</span>
+        ) : null}
         <span className="crm-resource-identity__handle">{creatorHandle(record)}</span>
         <div className="crm-resource-identity__meta">
           <span>{category}</span>

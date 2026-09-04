@@ -71,7 +71,7 @@ export default function AddCreatorPage() {
 
   const updateField = (field) => (value) => {
     setForm((current) => ({ ...current, [field]: value }));
-    if (field === 'name' && String(value).trim()) {
+    if ((field === 'business_name' || field === 'first_name') && String(value).trim()) {
       setSaveAttempted(false);
       setError('');
     }
@@ -93,7 +93,7 @@ export default function AddCreatorPage() {
   const platformPreview = deriveAddCreatorPlatformPreview(form);
   const statusOptions = useMemo(() => getTranslatedStatusOptions(t), [t]);
   const commissionOptions = useMemo(() => getTranslatedCommissionOptions(t), [t]);
-  const canSave = Boolean(form.name.trim());
+  const canSave = Boolean(form.business_name.trim() && form.first_name.trim());
   const nameError = saveAttempted && !canSave ? t('addCreator.nameRequired') : '';
 
   const handleCancel = () => {
@@ -105,7 +105,7 @@ export default function AddCreatorPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) {
+    if (!form.business_name.trim() || !form.first_name.trim()) {
       setSaveAttempted(true);
       setError(t('addCreator.nameRequired'));
       return;

@@ -1,4 +1,4 @@
-import { formatCompactNumber, formatFollowupDateTime, getPrimaryChannelPlatformKey, previewAmbassadorLevel } from '../../constants';
+import { creatorLegalName, creatorPrimaryName, formatCompactNumber, formatFollowupDateTime, getPrimaryChannelPlatformKey, previewAmbassadorLevel } from '../../constants';
 import CreatorTableAvatar from '../dashboard/CreatorTableAvatar';
 import LevelBadge from '../dashboard/LevelBadge';
 import PlatformIcon from '../PlatformIcon';
@@ -13,7 +13,8 @@ function previewHandle(channel, fallback) {
 
 export default function CreatorPreviewCard({ form, platformPreview, nextFollowupAt }) {
   const { t } = useTranslation();
-  const displayName = form.name.trim() || t('creatorCreate.newCreator');
+  const displayName = creatorPrimaryName(form) || t('creatorCreate.newCreator');
+  const legalName = creatorLegalName(form);
   const { platforms, primaryChannel } = platformPreview;
   const hasPlatformSignal = platforms.some((platform) => platform.isConnected || platform.followers > 0);
   const ambassadorLevel = hasPlatformSignal ? previewAmbassadorLevel(form) : t('common.notSet');
@@ -28,9 +29,10 @@ export default function CreatorPreviewCard({ form, platformPreview, nextFollowup
     <section className="crm-add-creator__preview-card crm-creator-preview" aria-labelledby="creator-preview-title">
       <div className="crm-creator-preview__card-label">{t('creatorCreate.liveProfile')}</div>
       <div className="crm-creator-preview__identity">
-        <CreatorTableAvatar record={{ name: form.name }} emptyInitials="+" className="crm-creator-preview__avatar" />
+        <CreatorTableAvatar record={form} emptyInitials="+" className="crm-creator-preview__avatar" />
         <div className="crm-creator-preview__identity-copy">
           <h2 id="creator-preview-title">{displayName}</h2>
+          {legalName && legalName !== displayName ? <p>{legalName}</p> : null}
           <p>{previewHandle(form.channel, t('creatorCreate.addHandle'))}</p>
         </div>
       </div>
