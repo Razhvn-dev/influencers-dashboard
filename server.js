@@ -1,4 +1,5 @@
 require('dotenv').config();
+const compression = require('compression');
 const express = require('express');
 const net = require('net');
 const path = require('path');
@@ -56,6 +57,7 @@ const authCallback = shopify.auth.callback();
 const redirectAfterAuth = shopify.redirectToShopifyOrAppRoot();
 
 app.set('trust proxy', true);
+app.use(compression({ threshold: 1024 }));
 app.use(express.json());
 app.use(shopify.cspHeaders());
 
@@ -246,8 +248,8 @@ if (fs.existsSync(clientDist)) {
           return;
         }
 
-        if (filePath.endsWith('.js') || filePath.endsWith('.css')) {
-          res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         }
       },
     })
