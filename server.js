@@ -103,10 +103,12 @@ function getBearerToken(req) {
   return authorization.startsWith('Bearer ') ? authorization.slice(7) : null;
 }
 
-function readRuntimeIndexHtml() {
+function readRuntimeIndexHtml(req) {
   const indexPath = path.join(clientDist, 'index.html');
   const html = fs.readFileSync(indexPath, 'utf8');
-  return html.replaceAll('__SHOPIFY_API_KEY__', process.env.SHOPIFY_API_KEY || '');
+  return html
+    .replaceAll('__SHOPIFY_API_KEY__', process.env.SHOPIFY_API_KEY || '')
+    .replaceAll('__SHOPIFY_HOST__', String(req.query.host || ''));
 }
 
 function getShopFromSessionToken(payload) {
@@ -249,9 +251,9 @@ if (fs.existsSync(clientDist)) {
     })
   );
 
-  app.use('/*', shopify.ensureInstalledOnShop(), (_req, res) => {
+  app.use('/*', shopify.ensureInstalledOnShop(), (req, res) => {
     res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-    const html = readRuntimeIndexHtml();
+    const html = readRuntimeIndexHtml(req);
     res.type('html').send(html);
   });
 } else {
