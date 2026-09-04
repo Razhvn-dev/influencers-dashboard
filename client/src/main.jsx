@@ -62,7 +62,9 @@ function LocalDevApp() {
 
 function ShopifyAppRoot() {
   const host = useMemo(() => getHostFromUrl(), []);
-  const apiKey = import.meta.env.VITE_SHOPIFY_API_KEY;
+  const apiKey =
+    document.querySelector('meta[name="shopify-api-key"]')?.getAttribute('content') ||
+    import.meta.env.VITE_SHOPIFY_API_KEY;
   const isLocalDev = import.meta.env.VITE_LOCAL_DEV === 'true';
 
   if (isLocalDev) {
