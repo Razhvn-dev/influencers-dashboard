@@ -16,6 +16,30 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        function showStartupError(error) {
+          var root = document.getElementById('root');
+          if (!root || root.childNodes.length) return;
+
+          root.innerHTML =
+            '<main style="max-width:720px;margin:48px auto;padding:24px;font:16px/1.5 system-ui,sans-serif">' +
+            '<h1 style="margin:0 0 12px">Influencer Dashboard could not start</h1>' +
+            '<p style="margin:0;color:#5c5f62">' +
+            String(error || 'Unknown frontend startup error').replace(/[&<>"']/g, function (character) {
+              return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character];
+            }) +
+            '</p></main>';
+        }
+
+        window.addEventListener('error', function (event) {
+          showStartupError(event.message);
+        });
+        window.addEventListener('unhandledrejection', function (event) {
+          showStartupError(event.reason && event.reason.message ? event.reason.message : event.reason);
+        });
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
