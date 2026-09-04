@@ -14,7 +14,10 @@ const shopify = require('./shopify');
 const influencerRoutes = require('./routes/influencers');
 const { renderExitIframePage } = require('./lib/exitiframe');
 const { toCustomerAccountProfile } = require('./lib/customerAccountProfile');
-const { normalizeCustomerAccountSubject } = require('./lib/customerAccountToken');
+const {
+  normalizeCustomerAccountSubject,
+  normalizeCustomerAccountDestination,
+} = require('./lib/customerAccountToken');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -101,11 +104,7 @@ function getBearerToken(req) {
 }
 
 function getShopFromSessionToken(payload) {
-  try {
-    return new URL(String(payload.dest || '')).hostname;
-  } catch {
-    return null;
-  }
+  return normalizeCustomerAccountDestination(payload.dest);
 }
 
 function hasExpectedCustomerAccountAudience(payload) {
@@ -144,6 +143,7 @@ app.get('/api/customer-account/creator-program', async (req, res) => {
       console.warn('Customer account token claims did not match this app', {
         audienceMatched,
         destinationHost: shop,
+        destinationClaimType: Array.isArray(payload.dest) ? 'array' : typeof payload.dest,
         hasCustomerSubject: Boolean(customerId),
       });
       return res.status(401).json({ success: false, message: 'Customer account session is invalid' });
