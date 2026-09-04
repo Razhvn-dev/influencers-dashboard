@@ -28,3 +28,9 @@ test('exposes the customer program endpoint separately from staff-authenticated 
   assert.match(serverSource, /shopify_customer_id = \$2/);
   assert.match(serverSource, /Access-Control-Allow-Headers/);
 });
+
+test('logs only safe token-claim diagnostics when customer-account validation rejects a request', () => {
+  assert.match(serverSource, /Customer account token claims did not match this app/);
+  assert.match(serverSource, /audienceMatched/);
+  assert.match(serverSource, /hasCustomerSubject/);
+});

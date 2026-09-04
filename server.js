@@ -139,7 +139,13 @@ app.get('/api/customer-account/creator-program', async (req, res) => {
     const customerId = normalizeCustomerAccountSubject(payload.sub);
     const shop = getShopFromSessionToken(payload);
 
-    if (!hasExpectedCustomerAccountAudience(payload) || !shop) {
+    const audienceMatched = hasExpectedCustomerAccountAudience(payload);
+    if (!audienceMatched || !shop) {
+      console.warn('Customer account token claims did not match this app', {
+        audienceMatched,
+        destinationHost: shop,
+        hasCustomerSubject: Boolean(customerId),
+      });
       return res.status(401).json({ success: false, message: 'Customer account session is invalid' });
     }
 
