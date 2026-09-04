@@ -78,6 +78,16 @@ test('frontend contains a runtime revision marker after an asset delivery repair
   );
 });
 
+test('frontend CSS has a delivery revision to rotate immutable styles after a MIME repair', () => {
+  const css = read('client/src/styles/crm-ui.css');
+
+  assert.match(
+    css,
+    /--influencer-dashboard-css-delivery-revision:\s*2;/,
+    'CSS source must change to issue a new Vite fingerprint after corrected MIME headers'
+  );
+});
+
 test('frontend does not include an App Bridge script that can replace the embedded iframe', () => {
   const html = read('client/index.html');
   assert.doesNotMatch(

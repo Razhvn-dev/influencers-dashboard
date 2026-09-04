@@ -3,6 +3,10 @@
  * Uses Polaris design tokens via CSS variables where available.
  */
 
+:root {
+  --influencer-dashboard-css-delivery-revision: 2;
+}
+
 .crm-page {
   --crm-card-radius: var(--p-border-radius-300, 12px);
   --crm-section-gap: var(--p-space-800, 32px);
