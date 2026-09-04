@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import ReactDOM from 'react-dom/client';
 import { AppProvider as PolarisAppProvider } from '@shopify/polaris';
-import { NavMenu, useAppBridge } from '@shopify/app-bridge-react';
 import enTranslations from '@shopify/polaris/locales/en.json';
 import zhTranslations from '@shopify/polaris/locales/zh-CN.json';
 import '@shopify/polaris/build/esm/styles.css';
@@ -25,6 +24,11 @@ function getHostFromUrl() {
   return window.sessionStorage.getItem('shopify-host');
 }
 
+function getSessionTokenFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('id_token');
+}
+
 function PolarisLocaleProvider({ children }) {
   const { locale } = useTranslation();
   const polarisI18n = locale === 'zh' ? zhTranslations : enTranslations;
@@ -33,23 +37,20 @@ function PolarisLocaleProvider({ children }) {
 }
 
 function AuthenticatedApp({ children }) {
-  const shopify = useAppBridge();
-  const { t } = useTranslation();
-
   useEffect(() => {
-    setSessionTokenFetcher(() => shopify.idToken());
-  }, [shopify]);
+    setSessionTokenFetcher(async () => {
+      if (typeof window.shopify?.idToken === 'function') {
+        return window.shopify.idToken();
+      }
 
-  return (
-    <>
-      <NavMenu>
-        <a href="/" rel="home">
-          {t('nav.appName')}
-        </a>
-      </NavMenu>
-      {children}
-    </>
-  );
+      const token = getSessionTokenFromUrl();
+      if (token) return token;
+
+      throw new Error('Shopify session token is unavailable. Please refresh the page and try again.');
+    });
+  }, []);
+
+  return children;
 }
 
 function LocalDevApp() {

@@ -11,6 +11,9 @@ test('the embedded app can read the Shopify API key injected into index.html', (
 
   assert.match(source, /meta\[name="shopify-api-key"\]/);
   assert.match(source, /VITE_SHOPIFY_API_KEY/);
+  assert.match(source, /params\.get\('id_token'\)/);
+  assert.match(source, /window\.shopify\?\.idToken/);
+  assert.doesNotMatch(source, /useAppBridge/);
 });
 
 test('the production server injects the public Shopify API key when it serves index.html', () => {
