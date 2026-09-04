@@ -21,6 +21,7 @@ const files = [
   "migrations/004_add_followers_verification.sql",
   "migrations/005_add_creator_profile_fields.sql",
   "migrations/006_add_creator_identity_fields.sql",
+  "migrations/007_add_customer_account_creator_link.sql",
 ];
 
 for (const file of files) {

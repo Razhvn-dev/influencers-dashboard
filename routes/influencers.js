@@ -14,6 +14,7 @@ const {
 } = require('../lib/creatorProfile');
 const { applyFollowerVerification } = require('../lib/followerVerification');
 const { normalizeCreatorIdentity } = require('../lib/creatorIdentity');
+const { normalizeCustomerAccountLink } = require('../lib/customerAccountProfile');
 const { getCached, invalidateShop } = require('../lib/shopCache');
 const {
   buildAmbassadorLevelOrderClause,
@@ -29,6 +30,8 @@ const INFLUENCER_ROW_SELECT = `
   i.business_name,
   i.first_name,
   i.last_name,
+  i.shopify_customer_id,
+  i.customer_account_visible,
   i.channel,
   i.sponsored_products,
   i.affiliate_code,
@@ -68,6 +71,8 @@ const INFLUENCER_RETURNING_COLUMNS = `
   business_name,
   first_name,
   last_name,
+  shopify_customer_id,
+  customer_account_visible,
   channel,
   sponsored_products,
   affiliate_code,
@@ -809,6 +814,42 @@ router.post('/bulk-delete', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to bulk delete records',
+    });
+  }
+});
+
+router.patch('/:id/customer-account', async (req, res) => {
+  try {
+    const shop = getShop(res);
+    const id = Number.parseInt(req.params.id, 10);
+
+    if (Number.isNaN(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid record ID' });
+    }
+
+    const existing = await fetchInfluencerRow(id, shop);
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Sponsorship record not found' });
+    }
+
+    const link = normalizeCustomerAccountLink(req.body, existing);
+    const result = await pool.query(
+      `
+        UPDATE influencers
+        SET shopify_customer_id = $1, customer_account_visible = $2, updated_at = NOW()
+        WHERE id = $3 AND shop = $4
+        RETURNING ${INFLUENCER_RETURNING_COLUMNS.replace(/\s+/g, ' ').trim()}
+      `,
+      [link.shopify_customer_id, link.customer_account_visible, id, shop]
+    );
+
+    invalidateShop(shop);
+    res.json({ success: true, data: result.rows[0] });
+  } catch (err) {
+    console.error('Failed to update customer account link:', err.message);
+    res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.statusCode ? err.message : 'Failed to update customer account link',
     });
   }
 });

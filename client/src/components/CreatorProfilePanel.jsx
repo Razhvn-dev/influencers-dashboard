@@ -1,4 +1,4 @@
-import { FormLayout, Select, TextField } from '@shopify/polaris';
+import { Checkbox, FormLayout, Select, TextField } from '@shopify/polaris';
 import { getTranslatedManagerOwnerOptions } from '../constants';
 import CreatorSectionCard from './CreatorSectionCard';
 import CreatorProfileSummary from './CreatorProfileSummary';
@@ -94,6 +94,20 @@ export default function CreatorProfilePanel({
         value={form.affiliate_code}
         onChange={updateField('affiliate_code')}
         autoComplete="off"
+      />
+      <TextField
+        label={t('creatorDetail.shopifyCustomerId')}
+        value={form.shopify_customer_id}
+        onChange={updateField('shopify_customer_id')}
+        helpText={t('creatorDetail.shopifyCustomerIdHelp')}
+        autoComplete="off"
+      />
+      <Checkbox
+        label={t('creatorDetail.customerAccountVisible')}
+        checked={form.customer_account_visible}
+        disabled={!form.shopify_customer_id.trim()}
+        onChange={(checked) => onChange({ ...form, customer_account_visible: checked })}
+        helpText={t('creatorDetail.customerAccountVisibleHelp')}
       />
     </FormLayout>
   );

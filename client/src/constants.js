@@ -594,6 +594,8 @@ export function buildFormStateFromRecord(record) {
     business_name: record.business_name || '',
     first_name: record.first_name || '',
     last_name: record.last_name || '',
+    shopify_customer_id: record.shopify_customer_id || '',
+    customer_account_visible: Boolean(record.customer_account_visible),
     channel: record.channel || '',
     primary_channel: derivePrimaryChannel({
       ...record,

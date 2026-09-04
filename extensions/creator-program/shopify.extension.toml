@@ -1,0 +1,13 @@
+api_version = "2026-07"
+
+[[extensions]]
+name = "Creator Program"
+handle = "creator-program"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/CreatorProgram.jsx"
+target = "customer-account.page.render"
+
+[extensions.capabilities]
+network_access = true

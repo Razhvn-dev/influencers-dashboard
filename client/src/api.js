@@ -123,6 +123,15 @@ export async function updateSponsorshipRecord(id, payload) {
   return data.data;
 }
 
+export async function updateCustomerAccountLink(id, payload) {
+  const response = await authFetch(`${API_BASE}/${id}/customer-account`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  });
+  const data = await parseResponse(response);
+  return data.data;
+}
+
 export async function deleteSponsorshipRecord(id) {
   const response = await authFetch(`${API_BASE}/${id}`, {
     method: 'DELETE',

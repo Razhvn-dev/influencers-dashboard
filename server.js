@@ -9,9 +9,11 @@ const fs = require('fs');
 net.setDefaultAutoSelectFamily(false);
 
 const { testConnection } = require('./db');
+const { pool } = require('./db');
 const shopify = require('./shopify');
 const influencerRoutes = require('./routes/influencers');
 const { renderExitIframePage } = require('./lib/exitiframe');
+const { toCustomerAccountProfile } = require('./lib/customerAccountProfile');
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -90,6 +92,69 @@ app.get('/api/config', (_req, res) => {
     success: true,
     apiKey: process.env.SHOPIFY_API_KEY,
   });
+});
+
+function getBearerToken(req) {
+  const authorization = String(req.get('authorization') || '');
+  return authorization.startsWith('Bearer ') ? authorization.slice(7) : null;
+}
+
+function getShopFromSessionToken(payload) {
+  try {
+    return new URL(String(payload.dest || '')).hostname;
+  } catch {
+    return null;
+  }
+}
+
+function setCustomerAccountCors(res) {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+  res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+}
+
+app.options('/api/customer-account/creator-program', (_req, res) => {
+  setCustomerAccountCors(res);
+  res.sendStatus(204);
+});
+
+app.get('/api/customer-account/creator-program', async (req, res) => {
+  try {
+    setCustomerAccountCors(res);
+    const token = getBearerToken(req);
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'Customer account session token is required' });
+    }
+
+    const payload = await shopify.api.session.decodeSessionToken(token);
+    const customerId = String(payload.sub || '');
+    const shop = getShopFromSessionToken(payload);
+
+    if (!shop || !/^gid:\/\/shopify\/Customer\/\d+$/.test(customerId)) {
+      return res.status(401).json({ success: false, message: 'Customer account session is invalid' });
+    }
+
+    const result = await pool.query(
+      `
+        SELECT business_name, first_name, last_name, channel, status,
+               affiliate_code, commission, niche_category, bio
+        FROM influencers
+        WHERE shop = $1
+          AND shopify_customer_id = $2
+          AND customer_account_visible = TRUE
+        LIMIT 1
+      `,
+      [shop, customerId]
+    );
+
+    res.json({
+      success: true,
+      data: result.rowCount ? toCustomerAccountProfile(result.rows[0]) : null,
+    });
+  } catch (err) {
+    console.error('Failed to fetch customer account creator program:', err.message);
+    res.status(401).json({ success: false, message: 'Customer account session is invalid' });
+  }
 });
 
 if (isLocalDev) {

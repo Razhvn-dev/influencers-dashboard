@@ -15,6 +15,7 @@ import {
 import {
   deleteSponsorshipRecord,
   fetchSponsorshipRecord,
+  updateCustomerAccountLink,
   updateSponsorshipRecord,
 } from '../api';
 import {
@@ -123,6 +124,10 @@ export default function CreatorDetailPage({ localPreview = false }) {
     setSuccess('');
 
     try {
+      await updateCustomerAccountLink(record.id, {
+        shopify_customer_id: form.shopify_customer_id,
+        customer_account_visible: form.customer_account_visible,
+      });
       const updated = await updateSponsorshipRecord(record.id, buildSavePayload(form));
       setRecord(updated);
       setForm(buildFormStateFromRecord(updated));
