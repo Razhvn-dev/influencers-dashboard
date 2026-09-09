@@ -312,7 +312,12 @@ if (fs.existsSync(clientDist)) {
 
 async function startServer() {
   try {
-    await testConnection();
+    const skipDatabaseConnectionForTest =
+      process.env.NODE_ENV === 'test' && process.env.TEST_SKIP_DB_CONNECTION === 'true';
+
+    if (!skipDatabaseConnectionForTest) {
+      await testConnection();
+    }
 
     app.listen(PORT, () => {
       console.log(`Server is running on http://localhost:${PORT}`);

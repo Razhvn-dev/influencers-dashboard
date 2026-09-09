@@ -21,11 +21,11 @@ test('the production server injects the public Shopify API key when it serves in
   const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'client', 'index.html'), 'utf8');
 
   assert.match(indexHtml, /__SHOPIFY_API_KEY__/);
-  assert.match(indexHtml, /__SHOPIFY_HOST__/);
-  assert.match(indexHtml, /app-bridge\.js"\s+data-api-key="__SHOPIFY_API_KEY__"/);
-  assert.match(indexHtml, /data-host="__SHOPIFY_HOST__"/);
+  assert.match(
+    indexHtml,
+    /<script src="https:\/\/cdn\.shopify\.com\/shopifycloud\/app-bridge\.js"><\/script>/
+  );
   assert.match(serverSource, /replaceAll\('__SHOPIFY_API_KEY__', process\.env\.SHOPIFY_API_KEY \|\| ''\)/);
-  assert.match(serverSource, /replaceAll\('__SHOPIFY_HOST__', String\(req\.query\.host \|\| ''\)\)/);
   assert.match(serverSource, /res\.type\('html'\)\.send\(html\)/);
 });
 

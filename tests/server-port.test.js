@@ -18,7 +18,12 @@ function requestHealth() {
 test('server listens on the PORT supplied by Shopify CLI', async () => {
   const server = spawn(process.execPath, ['server.js'], {
     cwd: process.cwd(),
-    env: { ...process.env, PORT: String(port) },
+    env: {
+      ...process.env,
+      PORT: String(port),
+      NODE_ENV: 'test',
+      TEST_SKIP_DB_CONNECTION: 'true',
+    },
     stdio: 'ignore',
   });
 
