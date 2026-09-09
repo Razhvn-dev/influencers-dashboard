@@ -37,6 +37,34 @@ function applyColumnLayout(tableRoot) {
   });
 }
 
+function syncStickyHeaderLayout(tableRoot) {
+  const tableHeadings = Array.from(
+    tableRoot.querySelectorAll('[data-index-table-heading]')
+  );
+  const stickyHeadings = Array.from(
+    tableRoot.querySelectorAll('[data-index-table-sticky-heading]')
+  );
+
+  if (tableHeadings.length === 0 || tableHeadings.length !== stickyHeadings.length) {
+    return;
+  }
+
+  stickyHeadings.forEach((stickyHeading, index) => {
+    const tableHeading = tableHeadings[index];
+    if (!tableHeading || tableHeading.offsetWidth === 0) {
+      return;
+    }
+
+    stickyHeading.style.minWidth = `${tableHeading.offsetWidth}px`;
+  });
+
+  // Polaris keeps the selectable creator column pinned. Its cloned header needs
+  // the same offset after our colgroup changes the checkbox column width.
+  if (tableHeadings.length > 1 && tableHeadings[0].offsetWidth > 0) {
+    stickyHeadings[1].style.left = `${tableHeadings[0].offsetWidth}px`;
+  }
+}
+
 export function useIndexTableColumnLayout(tableRootRef, ready = true) {
   useLayoutEffect(() => {
     if (!ready) {
@@ -48,8 +76,15 @@ export function useIndexTableColumnLayout(tableRootRef, ready = true) {
       return undefined;
     }
 
-    applyColumnLayout(tableRoot);
-    const frame = window.requestAnimationFrame(() => applyColumnLayout(tableRoot));
+    const syncLayout = () => {
+      applyColumnLayout(tableRoot);
+      // Polaris measures the sticky header before this hook adds the colgroup.
+      // Re-measure from the rendered table so the scrolled header uses its final widths.
+      syncStickyHeaderLayout(tableRoot);
+    };
+
+    syncLayout();
+    const frame = window.requestAnimationFrame(syncLayout);
 
     return () => window.cancelAnimationFrame(frame);
   }, [tableRootRef, ready]);
