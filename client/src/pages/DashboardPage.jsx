@@ -75,6 +75,7 @@ export default function DashboardPage({ localPreview = false }) {
     [t]
   );
   const [records, setRecords] = useState([]);
+  const [totalRecords, setTotalRecords] = useState(0);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -121,12 +122,8 @@ export default function DashboardPage({ localPreview = false }) {
 
   const displayRecords = records;
 
-  const totalPages = Math.max(1, Math.ceil(displayRecords.length / pageSize));
-
-  const paginatedRecords = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return displayRecords.slice(start, start + pageSize);
-  }, [displayRecords, page, pageSize]);
+  const totalPages = Math.max(1, Math.ceil(totalRecords / pageSize));
+  const paginatedRecords = records;
 
   useIndexTableColumnLayout(tableContainerRef, !loading && displayRecords.length > 0);
 
@@ -135,13 +132,13 @@ export default function DashboardPage({ localPreview = false }) {
       ? t('dashboard.showingZero')
       : t('dashboard.showing', {
           from: (page - 1) * pageSize + 1,
-          to: Math.min(page * pageSize, displayRecords.length),
-          total: displayRecords.length,
+          to: Math.min(page * pageSize, totalRecords),
+          total: totalRecords,
         });
   const resultSummary =
-    displayRecords.length === 1
-      ? t('dashboard.creatorsFound', { count: displayRecords.length })
-      : t('dashboard.creatorsFoundPlural', { count: displayRecords.length });
+    totalRecords === 1
+      ? t('dashboard.creatorsFound', { count: totalRecords })
+      : t('dashboard.creatorsFoundPlural', { count: totalRecords });
 
   const currentFilterState = useMemo(
     () => ({
@@ -163,7 +160,7 @@ export default function DashboardPage({ localPreview = false }) {
     recordsFilters.commission === currentFilterState.commission &&
     recordsFilters.due_followup === currentFilterState.due_followup;
 
-  const selectedItemsCount = allResourcesSelected ? 'All' : selectedResources.length;
+  const selectedItemsCount = allResourcesSelected ? records.length : selectedResources.length;
 
   const dismissSuccess = useCallback(() => setSuccess(''), []);
   useAutoDismiss(success, dismissSuccess, SUCCESS_DISMISS_MS);
@@ -188,7 +185,10 @@ export default function DashboardPage({ localPreview = false }) {
     }
   }, []);
 
-  const apiFilters = appliedFilters;
+  const apiFilters = useMemo(
+    () => ({ ...appliedFilters, page, page_size: pageSize }),
+    [appliedFilters, page, pageSize]
+  );
 
   const loadRecords = useCallback(async () => {
     const requestId = recordsRequestIdRef.current += 1;
@@ -206,7 +206,8 @@ export default function DashboardPage({ localPreview = false }) {
       const data = await fetchSponsorshipRecords(apiFilters);
       if (requestId !== recordsRequestIdRef.current) return;
 
-      setRecords(data);
+      setRecords(data.records);
+      setTotalRecords(data.pagination?.total ?? data.records.length);
       setRecordsFilters(apiFilters);
       setRecordsError('');
       hasLoadedRecordsRef.current = true;
@@ -582,9 +583,9 @@ export default function DashboardPage({ localPreview = false }) {
         <Modal.Section>
           <Text as="p" variant="bodyMd">
             {t('dashboard.deleteConfirm', {
-              count: selectedItemsCount === 'All' ? t('common.all') : selectedItemsCount,
+              count: selectedItemsCount,
               unit:
-                selectedItemsCount === 1 || selectedItemsCount === 'All'
+                selectedItemsCount === 1
                   ? t('common.creator')
                   : t('common.creators'),
             })}

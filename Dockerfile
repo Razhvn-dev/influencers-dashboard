@@ -15,7 +15,12 @@ FROM node:20-alpine AS production
 
 WORKDIR /app
 
+ARG BUILD_GIT_SHA=unknown
+ARG BUILD_TIME=unknown
+
 ENV NODE_ENV=production
+ENV BUILD_GIT_SHA=$BUILD_GIT_SHA
+ENV BUILD_TIME=$BUILD_TIME
 
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund

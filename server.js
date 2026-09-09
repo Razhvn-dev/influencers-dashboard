@@ -59,6 +59,7 @@ const authCallback = shopify.auth.callback();
 const redirectAfterAuth = shopify.redirectToShopifyOrAppRoot();
 
 app.set('trust proxy', true);
+app.disable('x-powered-by');
 app.get('/assets/:file', (req, res, next) => {
   const requestedFile = req.params.file;
   if (requestedFile !== path.basename(requestedFile)) return next();
@@ -102,7 +103,7 @@ app.use(
     },
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '1mb' }));
 app.use(shopify.cspHeaders());
 
 app.get(shopify.config.auth.path, authBegin);
@@ -134,13 +135,6 @@ app.get('/api/version', (_req, res) => {
     commit: process.env.BUILD_GIT_SHA || null,
     builtAt: process.env.BUILD_TIME || null,
     frontend: readFrontendBuildInfo(),
-  });
-});
-
-app.get('/api/config', (_req, res) => {
-  res.json({
-    success: true,
-    apiKey: process.env.SHOPIFY_API_KEY,
   });
 });
 
@@ -264,9 +258,10 @@ app.use((err, _req, res, next) => {
     return;
   }
 
-  res.status(err.statusCode || 500).json({
+  const isPayloadTooLarge = err.type === 'entity.too.large';
+  res.status(isPayloadTooLarge ? 413 : err.statusCode || 500).json({
     success: false,
-    message: err.message || 'Internal server error',
+    message: isPayloadTooLarge ? 'Request body exceeds the 1 MB limit' : err.message || 'Internal server error',
   });
 });
 

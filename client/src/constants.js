@@ -650,6 +650,8 @@ export function buildSavePayload(form) {
     business_name: form.business_name.trim() || null,
     first_name: form.first_name.trim() || null,
     last_name: form.last_name.trim() || null,
+    shopify_customer_id: form.shopify_customer_id.trim() || null,
+    customer_account_visible: Boolean(form.customer_account_visible),
     channel: form.channel.trim() || null,
     sponsored_products: form.sponsored_products.trim() || null,
     affiliate_code: form.affiliate_code.trim() || null,

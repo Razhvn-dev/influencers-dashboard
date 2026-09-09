@@ -23,6 +23,13 @@ test('server listens on the PORT supplied by Shopify CLI', async () => {
       PORT: String(port),
       NODE_ENV: 'test',
       TEST_SKIP_DB_CONNECTION: 'true',
+      SHOPIFY_API_KEY: 'test-api-key',
+      SHOPIFY_API_SECRET: 'test-api-secret',
+      HOST: 'localhost',
+      DB_USER: 'postgres',
+      DB_PASSWORD: 'test-password',
+      DB_HOST: '127.0.0.1',
+      DB_NAME: 'postgres',
     },
     stdio: 'ignore',
   });

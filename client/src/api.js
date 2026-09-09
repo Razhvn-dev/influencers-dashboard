@@ -80,6 +80,8 @@ function buildFilterParams(filters = {}) {
   if (filters.due_followup) params.set('due_followup', filters.due_followup);
   if (filters.sort_by) params.set('sort_by', filters.sort_by);
   if (filters.sort_dir) params.set('sort_dir', filters.sort_dir);
+  if (filters.page) params.set('page', filters.page);
+  if (filters.page_size) params.set('page_size', filters.page_size);
 
   return params;
 }
@@ -96,7 +98,21 @@ export async function fetchSponsorshipRecords(filters = {}) {
   const url = query ? `${API_BASE}?${query}` : API_BASE;
   const response = await authFetch(url);
   const data = await parseResponse(response);
-  return data.data;
+  return {
+    records: data.data,
+    pagination: data.pagination,
+  };
+}
+
+export async function reportWebVitals(metrics) {
+  const response = await authFetch(`${API_BASE}/telemetry/web-vitals`, {
+    method: 'POST',
+    body: JSON.stringify({ metrics }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to report web vitals');
+  }
 }
 
 export async function fetchSponsorshipRecord(id) {

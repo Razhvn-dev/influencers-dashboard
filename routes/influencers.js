@@ -16,6 +16,7 @@ const { applyFollowerVerification } = require('../lib/followerVerification');
 const { normalizeCreatorIdentity } = require('../lib/creatorIdentity');
 const { normalizeCustomerAccountLink } = require('../lib/customerAccountProfile');
 const { getCached, invalidateShop } = require('../lib/shopCache');
+const { sanitizeWebVitals } = require('../lib/webVitals');
 const {
   buildAmbassadorLevelOrderClause,
   enrichInfluencerRecord,
@@ -207,6 +208,17 @@ function buildListFilters(shop, query) {
   }
 
   return { conditions, values };
+}
+
+function normalizePagination(query) {
+  const requestedPage = Number.parseInt(query.page, 10);
+  const requestedPageSize = Number.parseInt(query.page_size, 10);
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const pageSize = Number.isInteger(requestedPageSize)
+    ? Math.min(Math.max(requestedPageSize, 1), 100)
+    : 25;
+
+  return { page, pageSize, offset: (page - 1) * pageSize };
 }
 
 function influencerRowValues(payload) {
@@ -577,11 +589,30 @@ router.get('/stats/summary', async (req, res) => {
   }
 });
 
+router.post('/telemetry/web-vitals', (req, res) => {
+  const shop = getShop(res);
+  const metrics = sanitizeWebVitals(req.body);
+
+  if (metrics.length) {
+    console.log(JSON.stringify({ event: 'web_vitals', shop, metrics }));
+  }
+
+  res.sendStatus(204);
+});
+
 router.get('/', async (req, res) => {
   try {
     const shop = getShop(res);
     const { conditions, values } = buildListFilters(shop, req.query);
     const orderClause = buildOrderClause(req.query);
+    const { page, pageSize, offset } = normalizePagination(req.query);
+
+    const totalResult = await pool.query(
+      `SELECT COUNT(*)::INT AS total FROM influencers i WHERE ${conditions.join(' AND ')}`,
+      values
+    );
+
+    const queryValues = [...values, pageSize, offset];
 
     const result = await pool.query(
       `
@@ -589,8 +620,9 @@ router.get('/', async (req, res) => {
         FROM influencers i
         WHERE ${conditions.join(' AND ')}
         ${orderClause}
+        LIMIT $${queryValues.length - 1} OFFSET $${queryValues.length}
       `,
-      values
+      queryValues
     );
 
     const records = result.rows.map((row) => enrichInfluencerRecord(row));
@@ -599,6 +631,11 @@ router.get('/', async (req, res) => {
       success: true,
       count: records.length,
       data: records,
+      pagination: {
+        page,
+        pageSize,
+        total: totalResult.rows[0].total,
+      },
     });
   } catch (err) {
     console.error('Failed to fetch sponsorship records:', err.message);
@@ -1001,6 +1038,7 @@ router.put('/:id', async (req, res) => {
       res
     );
     const rowValues = influencerRowValues(payload);
+    const customerAccountLink = normalizeCustomerAccountLink(req.body, existing);
 
     await client.query('BEGIN');
 
@@ -1041,11 +1079,19 @@ router.put('/:id', async (req, res) => {
           bio = $31,
           tags = $32,
           manager_owner = $33,
+          shopify_customer_id = $34,
+          customer_account_visible = $35,
           updated_at = NOW()
-        WHERE id = $34 AND shop = $35
+        WHERE id = $36 AND shop = $37
         RETURNING ${INFLUENCER_RETURNING_COLUMNS.replace(/\s+/g, ' ').trim()}
       `,
-      [...rowValues, id, shop]
+      [
+        ...rowValues,
+        customerAccountLink.shopify_customer_id,
+        customerAccountLink.customer_account_visible,
+        id,
+        shop,
+      ]
     );
 
     if (updateResult.rowCount === 0) {

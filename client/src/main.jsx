@@ -9,7 +9,7 @@ import './styles/crm-dashboard.css';
 import './styles/add-creator.css';
 import './styles/creator-detail.css';
 import App from './App.jsx';
-import { setSessionTokenFetcher } from './api.js';
+import { reportWebVitals, setSessionTokenFetcher } from './api.js';
 import { LanguageProvider, useTranslation } from './i18n/LanguageContext.jsx';
 
 // This revision intentionally changes the hashed Vite entry after a corrected
@@ -60,6 +60,14 @@ function AuthenticatedApp({ children }) {
 
       throw new Error('Shopify session token is unavailable. Please refresh the page and try again.');
     });
+
+    const unsubscribe = window.shopify?.webVitals?.onReport?.((metrics) => {
+      reportWebVitals(metrics).catch(() => {
+        // Performance reporting must never affect the embedded app workflow.
+      });
+    });
+
+    return typeof unsubscribe === 'function' ? unsubscribe : undefined;
   }, []);
 
   return children;
